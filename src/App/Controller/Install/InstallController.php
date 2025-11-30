@@ -2,7 +2,6 @@
 namespace App\Controller\Install;
 
 use App\Service\Mail;
-use App\Service\EmailTemplateManager;
 use RedBeanPHP\R as R;
 
 class InstallController
@@ -124,9 +123,6 @@ class InstallController
                 `email` VARCHAR(191) NOT NULL UNIQUE,
                 `password` VARCHAR(255) NOT NULL,
                 `role` VARCHAR(50) NOT NULL DEFAULT 'editor',
-                `is_banned` TINYINT(1) NOT NULL DEFAULT 0,
-                `ban_reason` TEXT DEFAULT NULL,
-                `banned_at` DATETIME DEFAULT NULL,
                 `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
                 `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
@@ -184,17 +180,6 @@ class InstallController
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
 
-        R::exec(
-            "CREATE TABLE IF NOT EXISTS `email_template` (
-                `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                `event` VARCHAR(191) NOT NULL UNIQUE,
-                `subject` VARCHAR(255) NOT NULL,
-                `body_html` TEXT NOT NULL,
-                `body_text` TEXT NOT NULL,
-                `updated_at` DATETIME NOT NULL
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-        );
-
         $contentColumns = R::inspect('content');
         if (!isset($contentColumns['thumbnail_id'])) {
             R::exec("ALTER TABLE `content` ADD COLUMN `thumbnail_id` INT UNSIGNED DEFAULT NULL AFTER `body`");
@@ -202,23 +187,6 @@ class InstallController
 
         if (!isset($contentColumns['thumbnail_alt'])) {
             R::exec("ALTER TABLE `content` ADD COLUMN `thumbnail_alt` VARCHAR(255) DEFAULT '' AFTER `thumbnail_id`");
-        }
-
-        $userColumns = R::inspect('user');
-        if (!isset($userColumns['is_banned'])) {
-            R::exec("ALTER TABLE `user` ADD COLUMN `is_banned` TINYINT(1) NOT NULL DEFAULT 0 AFTER `role`");
-        }
-        if (!isset($userColumns['ban_reason'])) {
-            R::exec("ALTER TABLE `user` ADD COLUMN `ban_reason` TEXT DEFAULT NULL AFTER `is_banned`");
-        }
-        if (!isset($userColumns['banned_at'])) {
-            R::exec("ALTER TABLE `user` ADD COLUMN `banned_at` DATETIME DEFAULT NULL AFTER `ban_reason`");
-        }
-
-        foreach (EmailTemplateManager::defaults() as $event => $template) {
-            if (!R::findOne('email_template', ' event = ? ', [$event])) {
-                EmailTemplateManager::updateTemplate($event, $template);
-            }
         }
     }
 }

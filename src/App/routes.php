@@ -17,8 +17,6 @@ if (!$isInstalled) {
 
 // FRONT
 $router->get('/', 'App\\Controller\\Front\\HomeController@index');
-$router->get('/register', 'App\\Controller\\Front\\AuthController@registerForm');
-$router->post('/register', 'App\\Controller\\Front\\AuthController@register');
 
 // ADMIN login – veřejné
 $router->get('/admin/login', 'App\\Controller\\Admin\\AuthController@loginForm');
@@ -26,7 +24,7 @@ $router->post('/admin/login', 'App\\Controller\\Admin\\AuthController@login');
 
 // ochrana všech /admin* kromě /admin/login
 $router->before('GET|POST', '/admin(?!/login).*', function () {
-    \App\Service\Auth::requirePanelAccess();
+    \App\Service\Auth::requireLogin();
 });
 
 // ADMIN routy
@@ -37,8 +35,6 @@ $router->get('/admin/users/create', 'App\\Controller\\Admin\\UserController@crea
 $router->post('/admin/users/create', 'App\\Controller\\Admin\\UserController@create');
 $router->get('/admin/users/(\\d+)/edit', 'App\\Controller\\Admin\\UserController@editForm');
 $router->post('/admin/users/(\\d+)/edit', 'App\\Controller\\Admin\\UserController@update');
-$router->post('/admin/users/(\\d+)/ban', 'App\\Controller\\Admin\\UserController@ban');
-$router->post('/admin/users/(\\d+)/unban', 'App\\Controller\\Admin\\UserController@unban');
 $router->post('/admin/users/(\\d+)/delete', 'App\\Controller\\Admin\\UserController@delete');
 $router->get('/admin/pages', 'App\\Controller\\Admin\\ContentController@index');
 $router->get('/admin/pages/create', 'App\\Controller\\Admin\\ContentController@createForm');
@@ -56,6 +52,3 @@ $router->get('/admin/media', 'App\\Controller\\Admin\\MediaController@index');
 $router->post('/admin/media/upload', 'App\\Controller\\Admin\\MediaController@upload');
 $router->get('/admin/settings', 'App\\Controller\\Admin\\SettingController@index');
 $router->post('/admin/settings', 'App\\Controller\\Admin\\SettingController@update');
-$router->get('/admin/email-templates', 'App\\Controller\\Admin\\EmailTemplateController@index');
-$router->get('/admin/email-templates/(.+)', 'App\\Controller\\Admin\\EmailTemplateController@editForm');
-$router->post('/admin/email-templates/(.+)', 'App\\Controller\\Admin\\EmailTemplateController@update');

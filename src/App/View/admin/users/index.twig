@@ -18,7 +18,6 @@
                         <tr>
                             <th>E-mail</th>
                             <th>Role</th>
-                            <th>Stav</th>
                             <th class="text-end">Akce</th>
                         </tr>
                     </thead>
@@ -28,26 +27,8 @@
                             <tr>
                                 <td>{{ user.email }}</td>
                                 <td>{{ roles[user.role] ?? user.role }}</td>
-                                <td>
-                                    {% if user.is_banned %}
-                                        <span class="badge bg-danger">Zablokován</span>
-                                        {% if user.ban_reason %}<div class="small text-muted">{{ user.ban_reason }}</div>{% endif %}
-                                    {% else %}
-                                        <span class="badge bg-success">Aktivní</span>
-                                    {% endif %}
-                                </td>
                                 <td class="text-end">
                                     <a href="/admin/users/{{ user.id }}/edit" class="btn btn-sm btn-outline-secondary">Upravit</a>
-                                    {% if user.is_banned %}
-                                        <form method="post" action="/admin/users/{{ user.id }}/unban" class="d-inline">
-                                            <button type="submit" class="btn btn-sm btn-outline-success">Odblokovat</button>
-                                        </form>
-                                    {% else %}
-                                        <form method="post" action="/admin/users/{{ user.id }}/ban" class="d-inline">
-                                            <input type="text" name="reason" class="form-control form-control-sm d-inline w-auto" placeholder="Důvod" aria-label="Důvod blokace">
-                                            <button type="submit" class="btn btn-sm btn-outline-warning">Zablokovat</button>
-                                        </form>
-                                    {% endif %}
                                     <form method="post" action="/admin/users/{{ user.id }}/delete" class="d-inline" onsubmit="return confirm('Opravdu smazat tohoto uživatele?');">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>
                                     </form>
@@ -56,7 +37,7 @@
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="4" class="text-center p-4 text-muted">Zatím žádní uživatelé.</td>
+                            <td colspan="3" class="text-center p-4 text-muted">Zatím žádní uživatelé.</td>
                         </tr>
                     {% endif %}
                     </tbody>

@@ -4,6 +4,7 @@ namespace App\Controller\Admin;
 use App\Service\Auth;
 use App\Service\Flash;
 use App\Service\ContentType;
+use App\Service\TermType;
 
 abstract class BaseAdminController
 {
@@ -24,6 +25,7 @@ abstract class BaseAdminController
             'flash_success' => $flash['success'],
             'flash_error'   => $flash['error'],
             'content_type_menu' => ContentType::definitions(),
+            'term_type_menu' => TermType::definitions(),
         ], $context));
     }
 }

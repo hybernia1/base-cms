@@ -11,38 +11,45 @@ class TermController extends BaseAdminController
 {
     public function index()
     {
-        Auth::requireRole(['admin', 'editor']);
+        $this->renderIndex();
+    }
 
-        $items = R::findAll('term', ' ORDER BY updated_at DESC ');
-        $termTypeDefinitions = TermType::definitions();
-        foreach ($items as $item) {
-            $item->allowed_for = $termTypeDefinitions[$item->type]['content_types'] ?? [];
+    public function indexByType($typeKey)
+    {
+        $definitions = TermType::definitions();
+        $typeKey = trim((string) $typeKey);
+
+        if (!isset($definitions[$typeKey])) {
+            Flash::addError('Zvolený typ termů nebyl nalezen.');
+            header('Location: /admin/terms');
+            exit;
         }
 
-        $this->render('admin/terms/index.twig', [
-            'items' => $items,
-            'types' => TermType::all(),
-            'content_types' => ContentType::definitions(),
-            'current_menu' => 'terms',
-        ]);
+        $this->renderIndex($typeKey);
     }
 
     public function createForm()
     {
         Auth::requireRole(['admin', 'editor']);
 
+        $preferredType = trim($_GET['type'] ?? '');
+        $definitions = TermType::definitions();
+        if ($preferredType === '' || !isset($definitions[$preferredType])) {
+            $preferredType = array_key_first($definitions) ?: 'tag';
+        }
+
         $this->render('admin/terms/form.twig', [
             'types' => TermType::all(),
             'values' => [
                 'name' => '',
                 'slug' => '',
-                'type' => 'tag',
+                'type' => $preferredType,
                 'description' => '',
             ],
             'errors' => [],
             'heading' => 'Nový term',
             'form_action' => '/admin/terms/create',
-            'current_menu' => 'terms',
+            'current_menu' => 'terms:' . $preferredType,
         ]);
     }
 
@@ -60,7 +67,7 @@ class TermController extends BaseAdminController
                 'errors' => $errors,
                 'heading' => 'Nový term',
                 'form_action' => '/admin/terms/create',
-                'current_menu' => 'terms',
+                'current_menu' => 'terms:' . $data['type'],
             ]);
             return;
         }
@@ -102,7 +109,7 @@ class TermController extends BaseAdminController
             'errors' => [],
             'heading' => 'Upravit term',
             'form_action' => "/admin/terms/{$term->id}/edit",
-            'current_menu' => 'terms',
+            'current_menu' => 'terms:' . $term->type,
             'term_id' => $term->id,
         ]);
     }
@@ -128,7 +135,7 @@ class TermController extends BaseAdminController
                 'errors' => $errors,
                 'heading' => 'Upravit term',
                 'form_action' => "/admin/terms/{$term->id}/edit",
-                'current_menu' => 'terms',
+                'current_menu' => 'terms:' . $term->type,
                 'term_id' => $term->id,
             ]);
             return;
@@ -162,6 +169,34 @@ class TermController extends BaseAdminController
         Flash::addSuccess('Term byl smazán.');
         header('Location: /admin/terms');
         exit;
+    }
+
+    private function renderIndex(?string $typeFilter = null): void
+    {
+        Auth::requireRole(['admin', 'editor']);
+
+        $termTypeDefinitions = TermType::definitions();
+        $contentTypeDefinitions = ContentType::definitions();
+        $query = ' ORDER BY updated_at DESC ';
+        $params = [];
+
+        if ($typeFilter !== null) {
+            $query = ' type = ? ORDER BY updated_at DESC ';
+            $params[] = $typeFilter;
+        }
+
+        $items = R::findAll('term', $query, $params);
+        foreach ($items as $item) {
+            $item->allowed_for = $termTypeDefinitions[$item->type]['content_types'] ?? [];
+        }
+
+        $this->render('admin/terms/index.twig', [
+            'items' => $items,
+            'types' => TermType::all(),
+            'content_types' => $contentTypeDefinitions,
+            'current_menu' => $typeFilter ? 'terms:' . $typeFilter : 'terms',
+            'current_term_type' => $typeFilter ? ($termTypeDefinitions[$typeFilter] ?? null) : null,
+        ]);
     }
 
     private function sanitizeInput(): array

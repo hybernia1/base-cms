@@ -28,20 +28,7 @@
             </div>
 
             <div class="mb-3">
-                <label for="type" class="form-label">Typ obsahu</label>
-                <select name="type" id="type" class="form-select {% if errors.type %}is-invalid{% endif %}">
-                    {% for key, label in types %}
-                        <option value="{{ key }}" {% if values.type == key %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-                {% if errors.type %}
-                    <div class="invalid-feedback">{{ errors.type }}</div>
-                {% endif %}
-            </div>
-
-            <div class="mb-3">
                 <label class="form-label">Náhledový obrázek</label>
-                <input type="file" name="thumbnail_upload" class="form-control mb-2">
                 <div class="d-flex flex-wrap gap-2 mb-2">
                     <select name="thumbnail_id" id="thumbnailSelect" class="form-select" style="max-width: 320px;">
                         <option value="">Vyberte z médií</option>
@@ -65,16 +52,39 @@
                         {% endfor %}
                     {% endif %}
                 </div>
-                <div class="form-text">Můžete nahrát nový obrázek nebo vybrat existující.</div>
+                <div class="form-text">Vyberte existující obrázek nebo použijte knihovnu médií pro nahrání.</div>
                 {% if errors.thumbnail %}
                     <div class="text-danger small">{{ errors.thumbnail }}</div>
                 {% endif %}
             </div>
 
-            <div class="mb-3">
-                <label for="thumbnail_alt" class="form-label">Alt text</label>
-                <input type="text" name="thumbnail_alt" id="thumbnail_alt" value="{{ values.thumbnail_alt }}" class="form-control">
-            </div>
+            {% if allowed_term_types is not empty %}
+                <div class="mb-4">
+                    <label class="form-label">Přidat term</label>
+                    <form id="newTermForm" class="card card-body bg-light border" action="/admin/content/{{ current_type.slug }}/terms" method="post">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-lg-5">
+                                <label class="form-label" for="newTermName">Název</label>
+                                <input type="text" id="newTermName" name="name" class="form-control" placeholder="např. Kategorie A" required>
+                            </div>
+                            <div class="col-lg-4">
+                                <label class="form-label" for="newTermType">Typ</label>
+                                <select id="newTermType" name="type" class="form-select">
+                                    {% for typeKey, typeDef in allowed_term_types %}
+                                        <option value="{{ typeKey }}">{{ typeDef.label|default(typeKey) }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-lg-3">
+                                <label class="form-label" for="newTermSlug">Slug (volitelně)</label>
+                                <input type="text" id="newTermSlug" name="slug" class="form-control" placeholder="např. kategorie-a">
+                            </div>
+                        </div>
+                        <div class="text-danger small mt-2" id="newTermError" style="display:none;"></div>
+                        <div class="text-muted small mt-1">Nové termy se po uložení automaticky zaškrtnou a přidají do seznamu.</div>
+                    </form>
+                </div>
+            {% endif %}
 
             {% if terms is not empty %}
                 <div class="mb-4">
@@ -82,15 +92,19 @@
                     {% for typeKey, typeTerms in terms %}
                         <div class="mb-2">
                             <div class="fw-semibold">{{ term_types[typeKey].label|default(typeKey) }}</div>
-                            <div class="row g-2">
-                                {% for term in typeTerms %}
-                                    <div class="col-md-4">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="terms[{{ typeKey }}][]" value="{{ term.id }}" id="term-{{ term.id }}" {% if term.id in selected_terms %}checked{% endif %}>
-                                            <label class="form-check-label" for="term-{{ term.id }}">{{ term.name }}</label>
+                            <div class="row g-2" data-term-group="{{ typeKey }}">
+                                {% if typeTerms is not empty %}
+                                    {% for term in typeTerms %}
+                                        <div class="col-md-4 term-item">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="terms[{{ typeKey }}][]" value="{{ term.id }}" id="term-{{ term.id }}" {% if term.id in selected_terms %}checked{% endif %}>
+                                                <label class="form-check-label" for="term-{{ term.id }}">{{ term.name }}</label>
+                                            </div>
                                         </div>
-                                    </div>
-                                {% endfor %}
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="col-12 text-muted small empty-term-state">Zatím žádné termy.</div>
+                                {% endif %}
                             </div>
                         </div>
                     {% endfor %}
@@ -292,6 +306,80 @@
                 </div>
             `;
             mediaGrid.prepend(col);
+        }
+
+        const newTermForm = document.getElementById('newTermForm');
+        const newTermError = document.getElementById('newTermError');
+
+        function showTermError(message) {
+            if (!newTermError) return;
+            newTermError.textContent = message;
+            newTermError.style.display = '';
+        }
+
+        function clearTermError() {
+            if (!newTermError) return;
+            newTermError.textContent = '';
+            newTermError.style.display = 'none';
+        }
+
+        function appendTermCheckbox(typeKey, id, name, checked = false) {
+            const group = document.querySelector(`[data-term-group="${typeKey}"]`);
+            if (!group) {
+                return;
+            }
+
+            const emptyState = group.querySelector('.empty-term-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'col-md-4 term-item';
+            wrapper.innerHTML = `
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="terms[${typeKey}][]" value="${id}" id="term-${id}">
+                    <label class="form-check-label" for="term-${id}">${name}</label>
+                </div>
+            `;
+
+            group.prepend(wrapper);
+
+            const checkbox = wrapper.querySelector('input[type="checkbox"]');
+            if (checked && checkbox) {
+                checkbox.checked = true;
+            }
+        }
+
+        if (newTermForm) {
+            newTermForm.addEventListener('submit', async function (event) {
+                event.preventDefault();
+                clearTermError();
+
+                const formData = new FormData(newTermForm);
+
+                try {
+                    const response = await fetch(newTermForm.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                        },
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok || result.error) {
+                        showTermError(result.error || 'Vytvoření termu se nezdařilo.');
+                        return;
+                    }
+
+                    appendTermCheckbox(result.type, result.id, result.name, true);
+                    newTermForm.reset();
+                } catch (error) {
+                    showTermError('Vytvoření termu se nezdařilo.');
+                }
+            });
         }
     </script>
 {% endblock %}

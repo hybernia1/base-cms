@@ -1,13 +1,18 @@
 {% extends 'admin/layout.twig' %}
 
-{% set current_menu = 'terms' %}
+{% set current_menu = current_menu|default('terms') %}
 
 {% block title %}Termy | Administrace{% endblock %}
 
 {% block body %}
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3 mb-0">Termy</h1>
-        <a href="/admin/terms/create" class="btn btn-primary">Nový term</a>
+        <div>
+            <h1 class="h3 mb-0">Termy{% if current_term_type %} – {{ current_term_type.label|default(current_term_type.key) }}{% endif %}</h1>
+            {% if current_term_type %}
+                <div class="text-muted small">Filtrované podle typu {{ current_term_type.label|default(current_term_type.key) }}.</div>
+            {% endif %}
+        </div>
+        <a href="/admin/terms/create{% if current_term_type %}?type={{ current_term_type.key }}{% endif %}" class="btn btn-primary">Nový term</a>
     </div>
 
     {% if items is empty %}

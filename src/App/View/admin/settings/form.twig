@@ -2,30 +2,13 @@
 
 {% set active_section = active_section|default('main') %}
 {% set current_menu = 'settings:' ~ active_section %}
-{% set sections = settings_sections|default({
-    'main': {'label': 'Základní', 'icon': 'bi-gear'},
-    'uploads': {'label': 'Uploady', 'icon': 'bi-upload'},
-    'email': {'label': 'E-maily', 'icon': 'bi-envelope'},
-    'content-types': {'label': 'Typy obsahu', 'icon': 'bi-journal-text'},
-    'term-types': {'label': 'Typy termů', 'icon': 'bi-tags'}
-}) %}
-
 {% block title %}Nastavení | Administrace{% endblock %}
 
 {% block body %}
     <h1 class="h4 mb-3">Nastavení</h1>
 
     <div class="row">
-        <div class="col-lg-3 border-end mb-3 mb-lg-0">
-            <div class="nav flex-lg-column nav-pills gap-2" aria-orientation="vertical">
-                {% for key, section in sections %}
-                    <a class="nav-link text-start d-flex align-items-center {% if key == active_section %}active{% endif %}" href="/admin/settings/{{ key }}">
-                        <i class="bi {{ section.icon|default('bi-gear') }} me-2"></i> {{ section.label|default(key) }}
-                    </a>
-                {% endfor %}
-            </div>
-        </div>
-        <div class="col-lg-9">
+        <div class="col-12">
             <form method="post" action="/admin/settings/{{ active_section }}" class="card shadow-sm" id="settingsForm">
                 <div class="card-body p-4">
                     {% if active_section == 'main' %}

@@ -409,13 +409,36 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     const adminDialog = (() => {
-        const modalEl = document.getElementById('adminDialog');
-        const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
-        const titleEl = modalEl?.querySelector('[data-role="dialog-title"]');
-        const messageEl = modalEl?.querySelector('[data-role="dialog-message"]');
-        const confirmBtn = modalEl?.querySelector('[data-role="dialog-confirm"]');
-        const cancelBtn = modalEl?.querySelector('[data-role="dialog-cancel"]');
+        let modalEl = null;
+        let modal = null;
+        let titleEl = null;
+        let messageEl = null;
+        let confirmBtn = null;
+        let cancelBtn = null;
         let resolver = null;
+
+        const ensureModal = () => {
+            if (modalEl) return true;
+            modalEl = document.getElementById('adminDialog');
+            if (!modalEl) return false;
+
+            modal = new bootstrap.Modal(modalEl);
+            titleEl = modalEl.querySelector('[data-role="dialog-title"]');
+            messageEl = modalEl.querySelector('[data-role="dialog-message"]');
+            confirmBtn = modalEl.querySelector('[data-role="dialog-confirm"]');
+            cancelBtn = modalEl.querySelector('[data-role="dialog-cancel"]');
+
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', () => closeAndResolve(true));
+            }
+
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => closeAndResolve(false));
+            }
+
+            modalEl.addEventListener('hidden.bs.modal', () => closeAndResolve(false));
+            return true;
+        };
 
         const closeAndResolve = (value) => {
             if (modal) {
@@ -434,7 +457,7 @@
             cancelText = '',
             variant = 'primary',
         }) => {
-            if (!modalEl || !modal) {
+            if (!ensureModal()) {
                 return Promise.resolve(false);
             }
 
@@ -460,18 +483,6 @@
                 modal.show();
             });
         };
-
-        if (confirmBtn) {
-            confirmBtn.addEventListener('click', () => closeAndResolve(true));
-        }
-
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', () => closeAndResolve(false));
-        }
-
-        if (modalEl) {
-            modalEl.addEventListener('hidden.bs.modal', () => closeAndResolve(false));
-        }
 
         return {
             confirm(message, options = {}) {

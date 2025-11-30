@@ -17,6 +17,9 @@ class Setting
         'smtp_encryption' => 'tls',
         'smtp_from_email' => '',
         'smtp_from_name' => '',
+        'timezone' => 'Europe/Prague',
+        'date_format' => 'd.m.Y',
+        'time_format' => 'H:i',
         'content_types' => '',
         'term_types' => '',
     ];

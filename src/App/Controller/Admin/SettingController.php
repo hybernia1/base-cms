@@ -7,6 +7,7 @@ use App\Service\Setting;
 use App\Service\ContentType;
 use App\Service\TermType;
 use App\Service\Slugger;
+use DateTimeZone;
 
 class SettingController extends BaseAdminController
 {
@@ -14,12 +15,18 @@ class SettingController extends BaseAdminController
     {
         Auth::requireRole(['admin']);
         $values = Setting::all();
+        $timezones = DateTimeZone::listIdentifiers();
+        $dateFormats = ['d.m.Y', 'j. n. Y', 'Y-m-d', 'm/d/Y'];
+        $timeFormats = ['H:i', 'H:i:s', 'g:i A'];
 
         $this->render('admin/settings/form.twig', [
             'values' => $values,
             'content_types' => ContentType::definitions(),
             'term_types' => TermType::definitions(),
             'current_menu' => 'settings',
+            'timezones' => $timezones,
+            'date_formats' => $dateFormats,
+            'time_formats' => $timeFormats,
         ]);
     }
 
@@ -38,8 +45,16 @@ class SettingController extends BaseAdminController
         $smtpEncryption = trim($_POST['smtp_encryption'] ?? Setting::DEFAULTS['smtp_encryption']);
         $smtpFromEmail = trim($_POST['smtp_from_email'] ?? '');
         $smtpFromName = trim($_POST['smtp_from_name'] ?? '');
+        $timezone = trim($_POST['timezone'] ?? Setting::DEFAULTS['timezone']);
+        $dateFormat = trim($_POST['date_format'] ?? Setting::DEFAULTS['date_format']);
+        $timeFormat = trim($_POST['time_format'] ?? Setting::DEFAULTS['time_format']);
         $contentTypes = $this->parseContentTypes($_POST['content_types'] ?? []);
         $termTypes = $this->parseTermTypes($_POST['term_types'] ?? []);
+
+        $validTimezones = DateTimeZone::listIdentifiers();
+        if (!in_array($timezone, $validTimezones, true)) {
+            $timezone = Setting::DEFAULTS['timezone'];
+        }
 
         if ($siteName === '') {
             Flash::addError('Název webu je povinný.');
@@ -58,6 +73,9 @@ class SettingController extends BaseAdminController
         Setting::set('smtp_encryption', $smtpEncryption ?: Setting::DEFAULTS['smtp_encryption']);
         Setting::set('smtp_from_email', $smtpFromEmail);
         Setting::set('smtp_from_name', $smtpFromName);
+        Setting::set('timezone', $timezone ?: Setting::DEFAULTS['timezone']);
+        Setting::set('date_format', $dateFormat ?: Setting::DEFAULTS['date_format']);
+        Setting::set('time_format', $timeFormat ?: Setting::DEFAULTS['time_format']);
         Setting::set('content_types', json_encode($contentTypes ?: ContentType::defaults()));
         Setting::set('term_types', json_encode($termTypes ?: TermType::defaults()));
 

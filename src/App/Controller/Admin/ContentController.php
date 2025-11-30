@@ -512,10 +512,7 @@ class ContentController extends BaseAdminController
                 continue;
             }
 
-            $link = R::dispense('content_term');
-            $link->content_id = $contentId;
-            $link->term_id = $termId;
-            R::store($link);
+            R::exec('INSERT INTO content_term (content_id, term_id) VALUES (?, ?)', [$contentId, $termId]);
         }
     }
 

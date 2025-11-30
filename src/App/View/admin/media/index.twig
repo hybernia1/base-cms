@@ -28,9 +28,134 @@
             </form>
         </div>
     </div>
-    <div class="ajax-block" data-ajax-container data-endpoint="/admin/media" data-current-url="{{ pagination.current_url }}">
-        {% include 'admin/media/_list.twig' with { items: items, pagination: pagination } only %}
+    {% set imageItems = [] %}
+    {% set fileItems = [] %}
+    {% for item in items %}
+        {% if item.is_image %}
+            {% set imageItems = imageItems|merge([item]) %}
+        {% else %}
+            {% set fileItems = fileItems|merge([item]) %}
+        {% endif %}
+    {% endfor %}
+
+    <ul class="nav nav-tabs mb-3" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#images" type="button" role="tab">Obrázky</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#files" type="button" role="tab">Soubory</button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="images" role="tabpanel">
+            <div class="row row-cols-1 row-cols-md-3 g-3">
+                {% if imageItems is empty %}
+                    <div class="col">
+                        <div class="alert alert-info">Zatím žádné obrázky.</div>
+                    </div>
+                {% endif %}
+                {% for item in imageItems %}
+                    <div class="col">
+                        <div class="card h-100 media-card position-relative" role="button" tabindex="0"
+                             data-media-id="{{ item.id }}"
+                             data-name="{{ item.original_name ?: item.filename }}"
+                             data-alt="{{ item.alt }}"
+                             data-mime="{{ item.mime_type }}"
+                             data-size="{{ item.size }}"
+                             data-created="{{ item.created_at|date('j. n. Y H:i') }}"
+                             data-path="/{{ item.path }}"
+                             data-filename="{{ item.filename }}"
+                             data-webp-filename="{{ item.webp_filename }}"
+                             data-preview-url="/{{ item.path }}/{{ item.webp_filename ?: item.filename }}">
+                            {% if item.webp_filename %}
+                                <span class="badge bg-success position-absolute top-0 end-0 m-2 badge-webp">WebP</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2 badge-webp">Bez WebP</span>
+                            {% endif %}
+                            <img src="/{{ item.path }}/{{ item.webp_filename ?: item.filename }}" class="card-img-top" alt="{{ item.alt }}">
+                            <div class="card-body">
+                                <h6 class="card-title small mb-1">{{ item.original_name ?: item.filename }}</h6>
+                                <div class="text-muted small">{{ item.mime_type }} · {{ item.size }} B</div>
+                                <div class="text-muted small">Aktualizováno: {{ item.updated_at|date('j. n. Y H:i') }}</div>
+                            </div>
+                            <div class="card-footer bg-light text-end">
+                                {{ ui.actions([
+                                    {
+                                        type: 'link',
+                                        href: '#',
+                                        label: 'Upravit',
+                                        variant: 'primary',
+                                        icon: 'bi-pencil',
+                                        title: 'Otevřít detail pro úpravy'
+                                    },
+                                    {
+                                        type: 'form',
+                                        action: '/admin/media/' ~ item.id ~ '/delete',
+                                        label: 'Smazat',
+                                        variant: 'danger',
+                                        confirm: 'Opravdu smazat tento soubor?',
+                                        icon: 'bi-trash'
+                                    }
+                                ]) }}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="files" role="tabpanel">
+            {% if fileItems is empty %}
+                <div class="alert alert-info">Zatím žádné nahrané soubory.</div>
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Název</th>
+                                <th>MIME</th>
+                                <th>Velikost</th>
+                                <th>Vytvořeno</th>
+                                <th class="text-end">Akce</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in fileItems %}
+                                <tr>
+                                    <td class="fw-semibold">{{ item.original_name ?: item.filename }}</td>
+                                    <td>{{ item.mime_type }}</td>
+                                    <td>{{ item.size }} B</td>
+                                    <td>{{ item.created_at|date('j. n. Y H:i') }}</td>
+                                    <td class="text-end">
+                                        {{ ui.actions([
+                                            {
+                                                type: 'link',
+                                                href: '/' ~ item.path ~ '/' ~ item.filename,
+                                                label: 'Otevřít',
+                                                variant: 'secondary',
+                                                icon: 'bi-box-arrow-up-right'
+                                            },
+                                            {
+                                                type: 'form',
+                                                action: '/admin/media/' ~ item.id ~ '/delete',
+                                                label: 'Smazat',
+                                                variant: 'danger',
+                                                confirm: 'Opravdu smazat tento soubor?',
+                                                icon: 'bi-trash'
+                                            }
+                                        ]) }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
     </div>
+
+    {{ ui.pagination(pagination) }}
 
     <div class="modal fade" id="mediaDetailModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">

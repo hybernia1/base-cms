@@ -38,21 +38,6 @@ class ContentController extends BaseAdminController
             array_merge($params, [$pagination['per_page'], $pagination['offset']])
         );
 
-        if ($this->wantsJson()) {
-            $html = $this->twig->render('admin/content/_list.twig', [
-                'items' => $items,
-                'types' => ContentType::all(),
-                'current_type' => $definition,
-                'current_status' => $status ?? 'all',
-                'pagination' => $pagination,
-            ]);
-
-            $this->jsonResponse([
-                'html' => $html,
-                'state_url' => $pagination['current_url'],
-            ]);
-        }
-
         $this->render('admin/content/index.twig', [
             'items' => $items,
             'types' => ContentType::all(),
@@ -242,10 +227,6 @@ class ContentController extends BaseAdminController
 
         $content = $this->findContent($id);
         if (!$content) {
-            if ($this->wantsJson()) {
-                $this->jsonError('Obsah nebyl nalezen.', 404);
-            }
-
             Flash::addError('Obsah nebyl nalezen.');
             header('Location: /admin/content');
             exit;
@@ -253,14 +234,6 @@ class ContentController extends BaseAdminController
 
         R::exec('DELETE FROM content_term WHERE content_id = ?', [(int) $content->id]);
         R::trash($content);
-
-        if ($this->wantsJson()) {
-            $this->jsonResponse([
-                'success' => true,
-                'message' => 'Obsah byl smazán.',
-            ]);
-        }
-
         Flash::addSuccess('Obsah byl smazán.');
         header('Location: /admin/content/' . ContentType::slug($content->type));
         exit;

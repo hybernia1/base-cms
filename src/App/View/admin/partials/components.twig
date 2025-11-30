@@ -34,7 +34,6 @@
                 <form method="{{ action.method|default('post') }}"
                       action="{{ action.action }}"
                       class="d-inline"
-                      {% if action.ajax %}data-ajax-delete="1"{% endif %}
                       {% if action.confirm %}data-confirm="{{ action.confirm }}"{% endif %}>
                     <button type="submit" class="btn btn-outline-{{ action.variant|default('secondary') }}">
                         {% if action.icon %}<i class="bi {{ action.icon }} me-1"></i>{% endif %}

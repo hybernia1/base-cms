@@ -22,18 +22,6 @@ class MediaController extends BaseAdminController
             [$pagination['per_page'], $pagination['offset']]
         );
 
-        if ($this->wantsJson()) {
-            $html = $this->twig->render('admin/media/_list.twig', [
-                'items' => $items,
-                'pagination' => $pagination,
-            ]);
-
-            $this->jsonResponse([
-                'html' => $html,
-                'state_url' => $pagination['current_url'],
-            ]);
-        }
-
         $this->render('admin/media/index.twig', [
             'items' => $items,
             'current_menu' => 'media',
@@ -154,13 +142,6 @@ class MediaController extends BaseAdminController
         R::exec('UPDATE content SET thumbnail_id = NULL WHERE thumbnail_id = ?', [$media->id]);
         R::trash($media);
 
-        if ($this->wantsJson()) {
-            $this->jsonResponse([
-                'success' => true,
-                'message' => 'Soubor byl smazán.',
-            ]);
-        }
-
         Flash::addSuccess('Soubor byl smazán.');
         header('Location: /admin/media');
         exit;
@@ -242,4 +223,23 @@ class MediaController extends BaseAdminController
         exit;
     }
 
+    private function jsonResponse(array $data, int $status = 200)
+    {
+        header('Content-Type: application/json', true, $status);
+        echo json_encode($data);
+        exit;
+    }
+
+    private function jsonError(string $message, int $status = 400)
+    {
+        return $this->jsonResponse(['error' => $message], $status);
+    }
+
+    private function wantsJson(): bool
+    {
+        return (
+            (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
+            (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+        );
+    }
 }

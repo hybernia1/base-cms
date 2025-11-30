@@ -48,3 +48,7 @@ $router->post('/admin/terms/create', 'App\\Controller\\Admin\\TermController@cre
 $router->get('/admin/terms/(\\d+)/edit', 'App\\Controller\\Admin\\TermController@editForm');
 $router->post('/admin/terms/(\\d+)/edit', 'App\\Controller\\Admin\\TermController@update');
 $router->post('/admin/terms/(\\d+)/delete', 'App\\Controller\\Admin\\TermController@delete');
+$router->get('/admin/media', 'App\\Controller\\Admin\\MediaController@index');
+$router->post('/admin/media/upload', 'App\\Controller\\Admin\\MediaController@upload');
+$router->get('/admin/settings', 'App\\Controller\\Admin\\SettingController@index');
+$router->post('/admin/settings', 'App\\Controller\\Admin\\SettingController@update');

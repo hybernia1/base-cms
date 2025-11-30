@@ -5,6 +5,7 @@ use App\Service\Auth;
 use App\Service\ContentType;
 use App\Service\Flash;
 use RedBeanPHP\R as R;
+use App\Service\Upload;
 
 class ContentController extends BaseAdminController
 {
@@ -32,11 +33,14 @@ class ContentController extends BaseAdminController
                 'slug'  => '',
                 'type'  => 'post',
                 'body'  => '',
+                'thumbnail_id' => '',
+                'thumbnail_alt' => '',
             ],
             'errors' => [],
             'heading' => 'Nový obsah',
             'form_action' => '/admin/pages/create',
             'current_menu' => 'pages',
+            'media' => $this->mediaList(),
         ]);
     }
 
@@ -45,7 +49,11 @@ class ContentController extends BaseAdminController
         Auth::requireRole(['admin', 'editor']);
 
         $data = $this->sanitizeInput();
+        [$data, $uploadError] = $this->handleThumbnailUpload($data);
         $errors = $this->validate($data);
+        if ($uploadError) {
+            $errors['thumbnail'] = $uploadError;
+        }
 
         if ($errors) {
             $this->render('admin/content/form.twig', [
@@ -64,6 +72,8 @@ class ContentController extends BaseAdminController
         $bean->slug = $data['slug'];
         $bean->type = $data['type'];
         $bean->body = $data['body'];
+        $bean->thumbnail_id = $data['thumbnail_id'] ?: null;
+        $bean->thumbnail_alt = $data['thumbnail_alt'];
         $bean->created_at = date('Y-m-d H:i:s');
         $bean->updated_at = date('Y-m-d H:i:s');
         R::store($bean);
@@ -91,12 +101,15 @@ class ContentController extends BaseAdminController
                 'slug'  => $content->slug,
                 'type'  => $content->type,
                 'body'  => $content->body,
+                'thumbnail_id' => $content->thumbnail_id,
+                'thumbnail_alt' => $content->thumbnail_alt,
             ],
             'errors' => [],
             'heading' => 'Upravit obsah',
             'form_action' => "/admin/pages/{$content->id}/edit",
             'current_menu' => 'pages',
             'content_id' => $content->id,
+            'media' => $this->mediaList(),
         ]);
     }
 
@@ -112,7 +125,11 @@ class ContentController extends BaseAdminController
         }
 
         $data = $this->sanitizeInput();
+        [$data, $uploadError] = $this->handleThumbnailUpload($data);
         $errors = $this->validate($data, (int) $content->id);
+        if ($uploadError) {
+            $errors['thumbnail'] = $uploadError;
+        }
 
         if ($errors) {
             $this->render('admin/content/form.twig', [
@@ -131,6 +148,8 @@ class ContentController extends BaseAdminController
         $content->slug = $data['slug'];
         $content->type = $data['type'];
         $content->body = $data['body'];
+        $content->thumbnail_id = $data['thumbnail_id'] ?: null;
+        $content->thumbnail_alt = $data['thumbnail_alt'];
         $content->updated_at = date('Y-m-d H:i:s');
         R::store($content);
 
@@ -163,6 +182,8 @@ class ContentController extends BaseAdminController
             'slug'  => trim($_POST['slug'] ?? ''),
             'type'  => trim($_POST['type'] ?? ''),
             'body'  => trim($_POST['body'] ?? ''),
+            'thumbnail_id' => (int) ($_POST['thumbnail_id'] ?? 0),
+            'thumbnail_alt' => trim($_POST['thumbnail_alt'] ?? ''),
         ];
     }
 
@@ -216,5 +237,29 @@ class ContentController extends BaseAdminController
     {
         $item = R::load('content', (int) $id);
         return $item && $item->id ? $item : null;
+    }
+
+    private function mediaList(): array
+    {
+        return R::findAll('media', ' ORDER BY created_at DESC LIMIT 100 ');
+    }
+
+    private function handleThumbnailUpload(array $data): array
+    {
+        if (!isset($_FILES['thumbnail_upload']) || !$_FILES['thumbnail_upload']['tmp_name']) {
+            return [$data, null];
+        }
+
+        [$media, $error] = Upload::handle($_FILES['thumbnail_upload']);
+        if ($error) {
+            Flash::addError($error);
+            return [$data, $error];
+        }
+
+        $data['thumbnail_id'] = $media->id;
+        $media->alt = $data['thumbnail_alt'];
+        R::store($media);
+
+        return [$data, null];
     }
 }

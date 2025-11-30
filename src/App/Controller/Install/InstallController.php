@@ -135,6 +135,8 @@ class InstallController
                 `slug` VARCHAR(191) NOT NULL,
                 `type` VARCHAR(50) NOT NULL,
                 `body` TEXT,
+                `thumbnail_id` INT UNSIGNED DEFAULT NULL,
+                `thumbnail_alt` VARCHAR(255) DEFAULT '',
                 `created_at` DATETIME NOT NULL,
                 `updated_at` DATETIME NOT NULL,
                 UNIQUE KEY `slug_type` (`slug`, `type`)
@@ -153,5 +155,38 @@ class InstallController
                 UNIQUE KEY `slug_type` (`slug`, `type`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
+
+        R::exec(
+            "CREATE TABLE IF NOT EXISTS `media` (
+                `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `path` VARCHAR(255) NOT NULL,
+                `filename` VARCHAR(255) NOT NULL,
+                `webp_filename` VARCHAR(255) DEFAULT NULL,
+                `mime_type` VARCHAR(191) NOT NULL,
+                `size` INT UNSIGNED DEFAULT 0,
+                `is_image` TINYINT(1) NOT NULL DEFAULT 0,
+                `original_name` VARCHAR(255) DEFAULT '',
+                `alt` VARCHAR(255) DEFAULT '',
+                `created_at` DATETIME NOT NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
+        R::exec(
+            "CREATE TABLE IF NOT EXISTS `setting` (
+                `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `key` VARCHAR(191) NOT NULL UNIQUE,
+                `value` TEXT,
+                `updated_at` DATETIME NOT NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
+        $contentColumns = R::inspect('content');
+        if (!isset($contentColumns['thumbnail_id'])) {
+            R::exec("ALTER TABLE `content` ADD COLUMN `thumbnail_id` INT UNSIGNED DEFAULT NULL AFTER `body`");
+        }
+
+        if (!isset($contentColumns['thumbnail_alt'])) {
+            R::exec("ALTER TABLE `content` ADD COLUMN `thumbnail_alt` VARCHAR(255) DEFAULT '' AFTER `thumbnail_id`");
+        }
     }
 }

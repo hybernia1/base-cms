@@ -18,44 +18,12 @@ class UserController extends BaseAdminController
     {
         Auth::requireRole('admin');
 
-        $page = max(1, (int) ($_GET['page'] ?? 1));
-        $perPage = max(1, min(50, (int) ($_GET['per_page'] ?? 10)));
-        $offset = ($page - 1) * $perPage;
-        $searchQuery = trim($_GET['q'] ?? '');
-
-        $query = ' 1 ';
-        $params = [];
-
-        if ($searchQuery !== '') {
-            $query .= ' AND (email LIKE ? OR role LIKE ?) ';
-            $params[] = '%' . $searchQuery . '%';
-            $params[] = '%' . $searchQuery . '%';
-        }
-
-        $total = R::count('user', $query, $params);
-        $users = R::findAll(
-            'user',
-            $query . ' ORDER BY email ASC LIMIT ? OFFSET ? ',
-            array_merge($params, [$perPage, $offset])
-        );
-
-        $pages = (int) ceil($total / $perPage);
+        $users = R::findAll('user', ' ORDER BY email ASC ');
 
         $this->render('admin/users/index.twig', [
             'users' => $users,
             'roles' => self::ROLES,
             'current_menu' => 'users',
-            'search_query' => $searchQuery,
-            'pagination' => [
-                'page' => $page,
-                'per_page' => $perPage,
-                'pages' => $pages,
-                'total' => $total,
-            ],
-            'filters' => [
-                'q' => $searchQuery,
-                'per_page' => $perPage !== 10 ? $perPage : null,
-            ],
         ]);
     }
 
@@ -249,9 +217,6 @@ class UserController extends BaseAdminController
         $user = $this->findUser($id);
         if (!$user) {
             Flash::addError('Uživatel nenalezen.');
-            if ($this->wantsJson()) {
-                $this->json(['success' => false, 'message' => 'Uživatel nenalezen.'], 404);
-            }
             header('Location: /admin/users');
             exit;
         }
@@ -259,18 +224,12 @@ class UserController extends BaseAdminController
         $currentUser = Auth::user();
         if ($currentUser && (int) $currentUser->id === (int) $user->id) {
             Flash::addError('Nemůžeš smazat sám sebe.');
-            if ($this->wantsJson()) {
-                $this->json(['success' => false, 'message' => 'Nemůžeš smazat sám sebe.'], 400);
-            }
             header('Location: /admin/users');
             exit;
         }
 
         R::trash($user);
         Flash::addSuccess('Uživatel byl smazán.');
-        if ($this->wantsJson()) {
-            $this->json(['success' => true, 'message' => 'Uživatel byl smazán.']);
-        }
         header('Location: /admin/users');
         exit;
     }

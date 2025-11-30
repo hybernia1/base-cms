@@ -10,27 +10,6 @@
         <a href="/admin/users/create" class="btn btn-primary ms-auto">Přidat uživatele</a>
     </div>
 
-    <form method="get" class="row gy-2 gx-3 align-items-center mb-3">
-        <div class="col-md-6">
-            <label class="form-label" for="userQuery">Hledat podle e-mailu nebo role</label>
-            <div class="input-group">
-                <input type="text" class="form-control" id="userQuery" name="q" value="{{ search_query }}" placeholder="např. admin@example.com">
-                <button class="btn btn-outline-secondary" type="submit">Filtrovat</button>
-                {% if search_query %}
-                    <a class="btn btn-outline-danger" href="/admin/users">Vymazat</a>
-                {% endif %}
-            </div>
-        </div>
-        <div class="col-md-3">
-            <label class="form-label" for="usersPerPage">Na stránku</label>
-            <select class="form-select" id="usersPerPage" name="per_page" onchange="this.form.submit()">
-                {% for option in [10, 20, 50] %}
-                    <option value="{{ option }}" {% if pagination.per_page == option %}selected{% endif %}>{{ option }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </form>
-
     <div class="card shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -69,7 +48,7 @@
                                             <button type="submit" class="btn btn-sm btn-outline-warning">Zablokovat</button>
                                         </form>
                                     {% endif %}
-                                    <form method="post" action="/admin/users/{{ user.id }}/delete" class="d-inline" data-confirm="Opravdu smazat tohoto uživatele?" data-ajax data-ajax-remove="tr">
+                                    <form method="post" action="/admin/users/{{ user.id }}/delete" class="d-inline" data-confirm="Opravdu smazat tohoto uživatele?">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>
                                     </form>
                                 </td>
@@ -85,5 +64,4 @@
             </div>
         </div>
     </div>
-    {% include 'admin/partials/pagination.twig' with { pagination: pagination, filters: filters, base_path: '/admin/users' } %}
 {% endblock %}

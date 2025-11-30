@@ -21,11 +21,6 @@ class ContentController extends BaseAdminController
         $allowedStatuses = ['published', 'draft'];
         $status = in_array($statusFilter, $allowedStatuses, true) ? $statusFilter : null;
 
-        $searchQuery = trim($_GET['q'] ?? '');
-        $page = max(1, (int) ($_GET['page'] ?? 1));
-        $perPage = max(1, min(50, (int) ($_GET['per_page'] ?? 10)));
-        $offset = ($page - 1) * $perPage;
-
         $query = ' type = ? ';
         $params = [$typeKey];
 
@@ -34,21 +29,7 @@ class ContentController extends BaseAdminController
             $params[] = $status;
         }
 
-        if ($searchQuery !== '') {
-            $query .= ' AND (title LIKE ? OR slug LIKE ?) ';
-            $params[] = '%' . $searchQuery . '%';
-            $params[] = '%' . $searchQuery . '%';
-        }
-
-        $total = R::count('content', $query, $params);
-
-        $items = R::findAll(
-            'content',
-            $query . ' ORDER BY updated_at DESC LIMIT ? OFFSET ? ',
-            array_merge($params, [$perPage, $offset])
-        );
-
-        $pages = (int) ceil($total / $perPage);
+        $items = R::findAll('content', $query . ' ORDER BY updated_at DESC ', $params);
 
         $this->render('admin/content/index.twig', [
             'items' => $items,
@@ -57,18 +38,6 @@ class ContentController extends BaseAdminController
             'current_type' => $definition,
             'all_type_definitions' => ContentType::definitions(),
             'current_status' => $status ?? 'all',
-            'search_query' => $searchQuery,
-            'pagination' => [
-                'page' => $page,
-                'per_page' => $perPage,
-                'pages' => $pages,
-                'total' => $total,
-            ],
-            'filters' => [
-                'status' => $status,
-                'q' => $searchQuery,
-                'per_page' => $perPage !== 10 ? $perPage : null,
-            ],
         ]);
     }
 
@@ -105,7 +74,6 @@ class ContentController extends BaseAdminController
         Auth::requireRole(['admin', 'editor']);
 
         [$typeKey, $definition] = $this->resolveType($slug);
-        $expectsJson = $this->wantsJson();
         $data = $this->sanitizeInput($typeKey);
 
         [$data, $uploadError] = $this->handleThumbnailUpload($data);
@@ -115,13 +83,6 @@ class ContentController extends BaseAdminController
         }
 
         if ($errors) {
-            if ($expectsJson) {
-                $this->json([
-                    'success' => false,
-                    'errors' => $errors,
-                ], 422);
-            }
-
             $this->render('admin/content/form.twig', [
                 'values' => $data,
                 'errors' => $errors,
@@ -153,18 +114,6 @@ class ContentController extends BaseAdminController
         $this->syncTerms((int) $bean->id, $data['terms']);
 
         Flash::addSuccess('Obsah byl vytvořen.');
-        if ($expectsJson) {
-            $this->json([
-                'success' => true,
-                'message' => 'Obsah byl vytvořen.',
-                'item' => [
-                    'id' => (int) $bean->id,
-                    'title' => $bean->title,
-                    'status' => $bean->status,
-                    'slug' => $bean->slug,
-                ],
-            ]);
-        }
         header('Location: /admin/content/' . ContentType::slug($bean->type));
         exit;
     }
@@ -222,7 +171,6 @@ class ContentController extends BaseAdminController
         $definition = $definitions[$content->type] ?? ['slug' => $slug, 'name' => ContentType::label($content->type)];
         $menuSlug = $definition['slug'] ?? $slug;
 
-        $expectsJson = $this->wantsJson();
         $data = $this->sanitizeInput($content->type);
         [$data, $uploadError] = $this->handleThumbnailUpload($data);
         $errors = $this->validate($data, (int) $content->id);
@@ -231,13 +179,6 @@ class ContentController extends BaseAdminController
         }
 
         if ($errors) {
-            if ($expectsJson) {
-                $this->json([
-                    'success' => false,
-                    'errors' => $errors,
-                ], 422);
-            }
-
             $this->render('admin/content/form.twig', [
                 'values' => $data,
                 'errors' => $errors,
@@ -268,18 +209,6 @@ class ContentController extends BaseAdminController
         $this->syncTerms((int) $content->id, $data['terms']);
 
         Flash::addSuccess('Obsah byl upraven.');
-        if ($expectsJson) {
-            $this->json([
-                'success' => true,
-                'message' => 'Obsah byl upraven.',
-                'item' => [
-                    'id' => (int) $content->id,
-                    'title' => $content->title,
-                    'status' => $content->status,
-                    'slug' => $content->slug,
-                ],
-            ]);
-        }
         header('Location: /admin/content/' . ContentType::slug($content->type));
         exit;
     }
@@ -291,9 +220,6 @@ class ContentController extends BaseAdminController
         $content = $this->findContent($id);
         if (!$content) {
             Flash::addError('Obsah nebyl nalezen.');
-            if ($this->wantsJson()) {
-                $this->json(['success' => false, 'message' => 'Obsah nebyl nalezen.'], 404);
-            }
             header('Location: /admin/content');
             exit;
         }
@@ -301,9 +227,6 @@ class ContentController extends BaseAdminController
         R::exec('DELETE FROM content_term WHERE content_id = ?', [(int) $content->id]);
         R::trash($content);
         Flash::addSuccess('Obsah byl smazán.');
-        if ($this->wantsJson()) {
-            $this->json(['success' => true, 'message' => 'Obsah byl smazán.']);
-        }
         header('Location: /admin/content/' . ContentType::slug($content->type));
         exit;
     }

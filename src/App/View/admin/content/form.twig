@@ -1,0 +1,58 @@
+{% extends 'admin/layout.twig' %}
+
+{% set current_menu = 'pages' %}
+
+{% block title %}{{ heading }} | Administrace{% endblock %}
+
+{% block body %}
+    <h1 class="h3 mb-4">{{ heading }}</h1>
+
+    <form method="post" action="{{ form_action }}" class="card shadow-sm mb-3">
+        <div class="card-body p-4">
+            <div class="mb-3">
+                <label for="title" class="form-label">Název</label>
+                <input type="text" name="title" id="title" class="form-control {% if errors.title %}is-invalid{% endif %}" value="{{ values.title }}">
+                {% if errors.title %}
+                    <div class="invalid-feedback">{{ errors.title }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="slug" class="form-label">Slug</label>
+                <input type="text" name="slug" id="slug" class="form-control {% if errors.slug %}is-invalid{% endif %}" value="{{ values.slug }}" placeholder="např. muj-prispevek">
+                {% if errors.slug %}
+                    <div class="invalid-feedback">{{ errors.slug }}</div>
+                {% else %}
+                    <div class="form-text">Pokud necháš prázdné, vytvoří se automaticky z názvu.</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="type" class="form-label">Typ obsahu</label>
+                <select name="type" id="type" class="form-select {% if errors.type %}is-invalid{% endif %}">
+                    {% for key, label in types %}
+                        <option value="{{ key }}" {% if values.type == key %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+                {% if errors.type %}
+                    <div class="invalid-feedback">{{ errors.type }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="body" class="form-label">Text</label>
+                <textarea name="body" id="body" rows="8" class="form-control">{{ values.body }}</textarea>
+            </div>
+        </div>
+        <div class="card-footer bg-light d-flex justify-content-between align-items-center">
+            <a href="/admin/pages" class="btn btn-outline-secondary">Zpět</a>
+            <button class="btn btn-primary" type="submit">Uložit</button>
+        </div>
+    </form>
+
+    {% if content_id is defined %}
+        <form action="/admin/pages/{{ content_id }}/delete" method="post" onsubmit="return confirm('Opravdu smazat?');">
+            <button class="btn btn-outline-danger" type="submit">Smazat</button>
+        </form>
+    {% endif %}
+{% endblock %}

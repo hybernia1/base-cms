@@ -36,3 +36,9 @@ $router->post('/admin/users/create', 'App\Controller\Admin\UserController@create
 $router->get('/admin/users/(\d+)/edit', 'App\Controller\Admin\UserController@editForm');
 $router->post('/admin/users/(\d+)/edit', 'App\Controller\Admin\UserController@update');
 $router->post('/admin/users/(\d+)/delete', 'App\Controller\Admin\UserController@delete');
+$router->get('/admin/pages', 'App\Controller\Admin\ContentController@index');
+$router->get('/admin/pages/create', 'App\Controller\Admin\ContentController@createForm');
+$router->post('/admin/pages/create', 'App\Controller\Admin\ContentController@create');
+$router->get('/admin/pages/(\d+)/edit', 'App\Controller\Admin\ContentController@editForm');
+$router->post('/admin/pages/(\d+)/edit', 'App\Controller\Admin\ContentController@update');
+$router->post('/admin/pages/(\d+)/delete', 'App\Controller\Admin\ContentController@delete');

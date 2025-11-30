@@ -91,18 +91,25 @@
                     <div class="card-header fw-semibold">Termy a štítky</div>
                     <div class="card-body">
                         {% if allowed_term_types is not empty %}
-                            <label class="form-label" for="termPicker">Štítky / kategorie</label>
-                            <input id="termPicker" class="form-control" placeholder="Začni psát a vyber term" autocomplete="off">
-                            <div class="form-text d-flex flex-wrap gap-2 align-items-center mt-2">
-                                <span>Nové termy se uloží jako</span>
-                                <select id="termTypeSelect" class="form-select form-select-sm w-auto">
-                                    {% for typeKey, typeDef in allowed_term_types %}
-                                        <option value="{{ typeKey }}">{{ typeDef.label|default(typeKey) }}</option>
-                                    {% endfor %}
-                                </select>
+                            {% if errors.terms %}
+                                <div class="alert alert-danger py-2">{{ errors.terms }}</div>
+                            {% endif %}
+                            <div class="row g-3">
+                                {% for typeKey, typeDef in allowed_term_types %}
+                                    <div class="col-12">
+                                        <div class="border rounded p-3 h-100">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <i class="bi bi-tags me-2 text-muted"></i>
+                                                <span class="fw-semibold">{{ typeDef.label|default(typeKey) }}</span>
+                                            </div>
+                                            <input id="termPicker_{{ typeKey }}" class="form-control term-picker" placeholder="Začni psát a vyber term" autocomplete="off" data-term-type="{{ typeKey }}">
+                                            <div class="form-text mt-2">Nové termy se uloží jako {{ typeDef.label|default(typeKey) }}.</div>
+                                            <div class="text-danger small mt-2 d-none" id="termPickerErrors_{{ typeKey }}"></div>
+                                            <div id="termHiddenContainer_{{ typeKey }}"></div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
                             </div>
-                            <div class="text-danger small mt-2 {% if not errors.terms %}d-none{% endif %}" id="termPickerErrors">{{ errors.terms }}</div>
-                            <div id="termHiddenContainer"></div>
                         {% else %}
                             <div class="text-muted">Pro tento typ obsahu nejsou povolené žádné termy.</div>
                         {% endif %}
@@ -314,142 +321,156 @@
             mediaGrid.prepend(col);
         }
 
-        const termPicker = document.getElementById('termPicker');
-        const termTypeSelect = document.getElementById('termTypeSelect');
-        const termHiddenContainer = document.getElementById('termHiddenContainer');
-        const defaultTermType = termTypeSelect?.value || (termOptions[0]?.type ?? '');
+        const termTypeLabels = {
+            {% for typeKey, typeDef in allowed_term_types %}
+            "{{ typeKey }}": "{{ typeDef.label|default(typeKey)|e('js') }}",
+            {% endfor %}
+        };
 
-        const syncHiddenTerms = (tags) => {
-            if (!termHiddenContainer) return;
-            termHiddenContainer.innerHTML = '';
+        const termOptionsByType = {};
+        termOptions.forEach((option) => {
+            const type = option.type;
+            if (!termOptionsByType[type]) {
+                termOptionsByType[type] = [];
+            }
+            termOptionsByType[type].push(option);
+        });
 
+        const selectedByType = {};
+        selectedTermIds.forEach((id) => {
+            const match = termOptions.find((option) => Number(option.value) === Number(id));
+            if (match) {
+                if (!selectedByType[match.type]) {
+                    selectedByType[match.type] = [];
+                }
+                selectedByType[match.type].push(match);
+            }
+        });
+
+        const enhanceTagData = (tag, typeKey) => {
+            const normalizedType = typeKey || tag.type || '';
+            return {
+                value: tag.value,
+                name: tag.name || tag.value,
+                type: normalizedType,
+                type_label: tag.type_label || termTypeLabels[normalizedType] || normalizedType,
+            };
+        };
+
+        const syncHiddenTerms = (typeKey, tags) => {
+            const container = document.getElementById(`termHiddenContainer_${typeKey}`);
+            if (!container) return;
+
+            container.innerHTML = '';
             tags.forEach((tag) => {
-                const type = tag.type || defaultTermType;
                 const value = Number(tag.value);
-                if (!type || Number.isNaN(value)) return;
+                if (Number.isNaN(value)) return;
 
                 const input = document.createElement('input');
                 input.type = 'hidden';
-                input.name = `terms[${type}][]`;
+                input.name = `terms[${typeKey}][]`;
                 input.value = String(value);
-                termHiddenContainer.appendChild(input);
+                container.appendChild(input);
             });
         };
 
-        const enhanceTagData = (tag) => ({
-            value: tag.value,
-            name: tag.name || tag.value,
-            type: tag.type || defaultTermType,
-            type_label: tag.type_label || tag.type || defaultTermType,
-        });
+        const showTermError = (typeKey, message = '') => {
+            const errorBox = document.getElementById(`termPickerErrors_${typeKey}`);
+            if (!errorBox) return;
 
-        if (termPicker && typeof Tagify !== 'undefined' && termOptions.length) {
-            const tagify = new Tagify(termPicker, {
-                whitelist: termOptions,
+            errorBox.textContent = message;
+            errorBox.classList.toggle('d-none', message === '');
+        };
+
+        const createTerm = async (tagData, typeKey) => {
+            const name = (tagData.name || tagData.value || '').trim();
+            const type = typeKey || tagData.type || '';
+
+            if (!name || !type) {
+                return Promise.reject('Vyplň název termu.');
+            }
+
+            const formData = new FormData();
+            formData.append('name', name);
+            formData.append('type', type);
+
+            const response = await fetch('/admin/content/{{ current_type.slug }}/terms', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+            });
+
+            const result = await response.json();
+            if (!response.ok || result.error) {
+                throw new Error(result.error || 'Vytvoření termu se nezdařilo.');
+            }
+
+            return {
+                value: String(result.id),
+                name: result.name,
+                type: result.type,
+                type_label: result.type_label || termTypeLabels[result.type] || result.type,
+            };
+        };
+
+        const initTermPicker = (typeKey) => {
+            const input = document.getElementById(`termPicker_${typeKey}`);
+            if (!input || typeof Tagify === 'undefined') return;
+
+            const whitelist = termOptionsByType[typeKey] || [];
+            const tagify = new Tagify(input, {
+                whitelist,
                 enforceWhitelist: false,
                 dropdown: {
                     enabled: 0,
                     maxItems: 12,
-                    searchKeys: ['name', 'type_label'],
+                    searchKeys: ['name'],
                 },
                 editTags: false,
                 duplicates: false,
-                templates: {
-                    tag: (tagData) => {
-                        const typeLabel = tagData.type_label || tagData.type || '';
-                        return `<tag title="${tagData.name}" contenteditable="false" spellcheck="false" class="tagify__tag" ${tagData["aria-label"] ? `aria-label="${tagData["aria-label"]}"` : ''}>`
-                            + `<x title="Odstranit" class="tagify__tag__removeBtn"></x>`
-                            + `<div>`
-                            + `<span class="tagify__tag-text">${Tagify.escapeHTML(tagData.name)}</span>`
-                            + `<span class="badge bg-secondary ms-2">${Tagify.escapeHTML(typeLabel)}</span>`
-                            + `</div>`
-                            + `</tag>`;
-                    },
-                    dropdownItem: (item) => {
-                        const typeLabel = item.type_label || item.type || '';
-                        return `<div class="tagify__dropdown__item">`
-                            + `<span>${Tagify.escapeHTML(item.name)}</span>`
-                            + `<span class="badge bg-light text-muted border ms-2">${Tagify.escapeHTML(typeLabel)}</span>`
-                            + `</div>`;
-                    },
-                },
-                originalInputValueFormat: (values) => JSON.stringify(values.map(enhanceTagData)),
+                originalInputValueFormat: (values) => JSON.stringify(values.map((tag) => enhanceTagData(tag, typeKey))),
             });
 
-            const initialTags = termOptions.filter((option) => selectedTermIds.includes(Number(option.value)));
+            const initialTags = selectedByType[typeKey] || [];
             if (initialTags.length) {
                 tagify.addTags(initialTags);
-                syncHiddenTerms(tagify.value);
+                syncHiddenTerms(typeKey, tagify.value);
             }
 
-            const createTerm = async (tagData) => {
-                const name = (tagData.name || tagData.value || '').trim();
-                const type = tagData.type || termTypeSelect?.value || defaultTermType;
-
-                if (!name || !type) {
-                    return Promise.reject('Vyplň název termu.');
-                }
-
-                const formData = new FormData();
-                formData.append('name', name);
-                formData.append('type', type);
-
-                const response = await fetch('/admin/content/{{ current_type.slug }}/terms', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json',
-                    },
-                });
-
-                const result = await response.json();
-                if (!response.ok || result.error) {
-                    throw new Error(result.error || 'Vytvoření termu se nezdařilo.');
-                }
-
-                return {
-                    value: String(result.id),
-                    name: result.name,
-                    type: result.type,
-                    type_label: result.type_label || result.type,
-                };
-            };
-
-            const updateTag = (tagElm, data) => {
-                tagify.replaceTag(tagElm, enhanceTagData(data));
-                syncHiddenTerms(tagify.value);
-            };
-
             tagify.on('add', async (event) => {
-                const tagData = enhanceTagData(event.detail.data || {});
+                showTermError(typeKey);
+                const tagData = enhanceTagData(event.detail.data || {}, typeKey);
 
                 if (tagData.value && !Number.isNaN(Number(tagData.value))) {
-                    syncHiddenTerms(tagify.value);
+                    syncHiddenTerms(typeKey, tagify.value);
                     return;
                 }
 
                 try {
-                    const created = await createTerm(tagData);
-                    termOptions.push(created);
-                    updateTag(event.detail.tag, created);
+                    const created = await createTerm(tagData, typeKey);
+                    termOptionsByType[typeKey] = termOptionsByType[typeKey] || [];
+                    termOptionsByType[typeKey].push(created);
+                    tagify.replaceTag(event.detail.tag, created);
+                    syncHiddenTerms(typeKey, tagify.value);
                 } catch (error) {
                     tagify.removeTags(event.detail.tag);
+                    showTermError(typeKey, error.message || 'Vytvoření termu se nezdařilo.');
                     adminDialog.alert(error.message || 'Vytvoření termu se nezdařilo.', {variant: 'danger'});
                 }
             });
 
             tagify.on('remove', () => {
-                syncHiddenTerms(tagify.value);
+                syncHiddenTerms(typeKey, tagify.value);
             });
 
             tagify.on('invalid', (event) => {
-                const errorBox = document.getElementById('termPickerErrors');
-                if (errorBox) {
-                    errorBox.textContent = event.detail.message || 'Term nelze přidat.';
-                    errorBox.classList.remove('d-none');
-                }
+                showTermError(typeKey, event.detail.message || 'Term nelze přidat.');
             });
-        }
+        };
+
+        Object.keys(termTypeLabels).forEach((typeKey) => initTermPicker(typeKey));
     </script>
 {% endblock %}

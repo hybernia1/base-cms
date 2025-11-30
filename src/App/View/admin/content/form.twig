@@ -433,6 +433,18 @@
                 editTags: false,
                 duplicates: false,
                 originalInputValueFormat: (values) => JSON.stringify(values.map((tag) => enhanceTagData(tag, typeKey))),
+                templates: {
+                    dropdownItem: function dropdownItem(tagData) {
+                        const data = enhanceTagData(tagData, typeKey);
+                        const label = Tagify.escapeTags(data.name || data.value || '');
+                        const typeLabel = Tagify.escapeTags(data.type_label || data.type || '');
+                        const suffix = typeLabel ? `<small class="text-muted ms-2">${typeLabel}</small>` : '';
+
+                        return `<div ${this.getAttributes(tagData)} class="tagify__dropdown__item">` +
+                            `<span class="tagify__dropdown-text">${label}</span>${suffix}` +
+                            `</div>`;
+                    },
+                },
             });
 
             const initialTags = selectedByType[typeKey] || [];

@@ -577,8 +577,7 @@ class ContentController extends BaseAdminController
         return [$typeKey, $definitions[$typeKey]];
     }
 
-    private function jsonError(string $message, int $status = 400)
-    {
+protected function jsonError(string $message, int $status = 400): void    {
         header('Content-Type: application/json', true, $status);
         echo json_encode(['error' => $message]);
         exit;

@@ -506,6 +506,7 @@ class ContentController extends BaseAdminController
             'SELECT term_id FROM content_term WHERE content_id = ? AND term_id IN (' . $placeholders . ')',
             array_merge([$contentId], $termIds)
         );
+        $existing = array_map('intval', $existing);
 
         foreach ($termIds as $termId) {
             if (in_array($termId, $existing, true)) {

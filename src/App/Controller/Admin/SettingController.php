@@ -11,9 +11,19 @@ use DateTimeZone;
 
 class SettingController extends BaseAdminController
 {
-    public function index()
+    private const SECTION_DEFINITIONS = [
+        'main' => ['label' => 'Základní', 'icon' => 'bi-gear'],
+        'uploads' => ['label' => 'Uploady', 'icon' => 'bi-upload'],
+        'email' => ['label' => 'E-maily', 'icon' => 'bi-envelope'],
+        'content-types' => ['label' => 'Typy obsahu', 'icon' => 'bi-journal-text'],
+        'term-types' => ['label' => 'Typy termů', 'icon' => 'bi-tags'],
+    ];
+
+    public function index($section = 'main')
     {
         Auth::requireRole(['admin']);
+
+        $section = $this->normalizeSection($section);
         $values = Setting::all();
         $timezones = DateTimeZone::listIdentifiers();
         $dateFormats = ['d.m.Y', 'j. n. Y', 'Y-m-d', 'm/d/Y'];
@@ -23,33 +33,53 @@ class SettingController extends BaseAdminController
             'values' => $values,
             'content_types' => ContentType::definitions(),
             'term_types' => TermType::definitions(),
-            'current_menu' => 'settings',
+            'current_menu' => 'settings:' . $section,
             'timezones' => $timezones,
             'date_formats' => $dateFormats,
             'time_formats' => $timeFormats,
+            'active_section' => $section,
+            'settings_sections' => self::SECTION_DEFINITIONS,
         ]);
     }
 
-    public function update()
+    public function update($section = 'main')
     {
         Auth::requireRole(['admin']);
 
+        $section = $this->normalizeSection($section);
+
+        switch ($section) {
+            case 'main':
+                $this->updateMainSettings();
+                break;
+            case 'uploads':
+                $this->updateUploadSettings();
+                break;
+            case 'email':
+                $this->updateEmailSettings();
+                break;
+            case 'content-types':
+                $this->updateContentTypes();
+                break;
+            case 'term-types':
+                $this->updateTermTypes();
+                break;
+            default:
+                Flash::addError('Neplatná sekce nastavení.');
+                break;
+        }
+
+        header('Location: /admin/settings/' . $section);
+        exit;
+    }
+
+    private function updateMainSettings(): void
+    {
         $siteName = trim($_POST['site_name'] ?? '');
-        $allowWebp = isset($_POST['allow_webp']) ? '1' : '0';
-        $allowedTypes = trim($_POST['allowed_upload_types'] ?? '');
         $allowRegistration = isset($_POST['allow_registration']) ? '1' : '0';
-        $smtpHost = trim($_POST['smtp_host'] ?? '');
-        $smtpPort = (int) ($_POST['smtp_port'] ?? Setting::DEFAULTS['smtp_port']);
-        $smtpUsername = trim($_POST['smtp_username'] ?? '');
-        $smtpPassword = trim($_POST['smtp_password'] ?? '');
-        $smtpEncryption = trim($_POST['smtp_encryption'] ?? Setting::DEFAULTS['smtp_encryption']);
-        $smtpFromEmail = trim($_POST['smtp_from_email'] ?? '');
-        $smtpFromName = trim($_POST['smtp_from_name'] ?? '');
         $timezone = trim($_POST['timezone'] ?? Setting::DEFAULTS['timezone']);
         $dateFormat = trim($_POST['date_format'] ?? Setting::DEFAULTS['date_format']);
         $timeFormat = trim($_POST['time_format'] ?? Setting::DEFAULTS['time_format']);
-        $contentTypes = $this->parseContentTypes($_POST['content_types'] ?? []);
-        $termTypes = $this->parseTermTypes($_POST['term_types'] ?? []);
 
         $validTimezones = DateTimeZone::listIdentifiers();
         if (!in_array($timezone, $validTimezones, true)) {
@@ -58,14 +88,39 @@ class SettingController extends BaseAdminController
 
         if ($siteName === '') {
             Flash::addError('Název webu je povinný.');
-            header('Location: /admin/settings');
-            exit;
+            return;
         }
 
         Setting::set('site_name', $siteName);
+        Setting::set('allow_registration', $allowRegistration);
+        Setting::set('timezone', $timezone ?: Setting::DEFAULTS['timezone']);
+        Setting::set('date_format', $dateFormat ?: Setting::DEFAULTS['date_format']);
+        Setting::set('time_format', $timeFormat ?: Setting::DEFAULTS['time_format']);
+
+        Flash::addSuccess('Základní nastavení bylo uloženo.');
+    }
+
+    private function updateUploadSettings(): void
+    {
+        $allowWebp = isset($_POST['allow_webp']) ? '1' : '0';
+        $allowedTypes = trim($_POST['allowed_upload_types'] ?? '');
+
         Setting::set('allow_webp', $allowWebp);
         Setting::set('allowed_upload_types', $allowedTypes ?: Setting::DEFAULTS['allowed_upload_types']);
-        Setting::set('allow_registration', $allowRegistration);
+
+        Flash::addSuccess('Nastavení uploadů bylo uloženo.');
+    }
+
+    private function updateEmailSettings(): void
+    {
+        $smtpHost = trim($_POST['smtp_host'] ?? '');
+        $smtpPort = (int) ($_POST['smtp_port'] ?? Setting::DEFAULTS['smtp_port']);
+        $smtpUsername = trim($_POST['smtp_username'] ?? '');
+        $smtpPassword = trim($_POST['smtp_password'] ?? '');
+        $smtpEncryption = trim($_POST['smtp_encryption'] ?? Setting::DEFAULTS['smtp_encryption']);
+        $smtpFromEmail = trim($_POST['smtp_from_email'] ?? '');
+        $smtpFromName = trim($_POST['smtp_from_name'] ?? '');
+
         Setting::set('smtp_host', $smtpHost);
         Setting::set('smtp_port', $smtpPort > 0 ? (string) $smtpPort : Setting::DEFAULTS['smtp_port']);
         Setting::set('smtp_username', $smtpUsername);
@@ -73,15 +128,31 @@ class SettingController extends BaseAdminController
         Setting::set('smtp_encryption', $smtpEncryption ?: Setting::DEFAULTS['smtp_encryption']);
         Setting::set('smtp_from_email', $smtpFromEmail);
         Setting::set('smtp_from_name', $smtpFromName);
-        Setting::set('timezone', $timezone ?: Setting::DEFAULTS['timezone']);
-        Setting::set('date_format', $dateFormat ?: Setting::DEFAULTS['date_format']);
-        Setting::set('time_format', $timeFormat ?: Setting::DEFAULTS['time_format']);
+
+        Flash::addSuccess('E-mailové nastavení bylo uloženo.');
+    }
+
+    private function updateContentTypes(): void
+    {
+        $contentTypes = $this->parseContentTypes($_POST['content_types'] ?? []);
         Setting::set('content_types', json_encode($contentTypes ?: ContentType::defaults()));
+
+        Flash::addSuccess('Typy obsahu byly uloženy.');
+    }
+
+    private function updateTermTypes(): void
+    {
+        $termTypes = $this->parseTermTypes($_POST['term_types'] ?? []);
         Setting::set('term_types', json_encode($termTypes ?: TermType::defaults()));
 
-        Flash::addSuccess('Nastavení bylo uloženo.');
-        header('Location: /admin/settings');
-        exit;
+        Flash::addSuccess('Typy termů byly uloženy.');
+    }
+
+    private function normalizeSection(?string $section): string
+    {
+        $section = $section ?: 'main';
+
+        return array_key_exists($section, self::SECTION_DEFINITIONS) ? $section : 'main';
     }
 
     private function parseContentTypes(array $input): array

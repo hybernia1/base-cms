@@ -424,15 +424,31 @@
             const tagify = new Tagify(input, {
                 whitelist,
                 enforceWhitelist: false,
+                tagTextProp: 'name', 
                 dropdown: {
                     enabled: 0,
                     maxItems: 12,
                     searchKeys: ['name'],
                 },
-                editTags: false,
-                duplicates: false,
-                originalInputValueFormat: (values) => JSON.stringify(values.map((tag) => enhanceTagData(tag, typeKey))),
-            });
+
+                templates: {
+            dropdownItem(tagData) {
+                // zobraz jen jméno termu (případně si sem můžeš přidat i ID)
+                return `
+                    <div ${this.getAttributes(tagData)}
+                         class="tagify__dropdown__item">
+                        <span>${tagData.name || tagData.value}</span>
+                    </div>
+                `;
+            },
+        },
+        editTags: false,
+        duplicates: false,
+        originalInputValueFormat: (values) =>
+            JSON.stringify(values.map((tag) => enhanceTagData(tag, typeKey))),
+    });
+
+
 
             const initialTags = selectedByType[typeKey] || [];
             if (initialTags.length) {

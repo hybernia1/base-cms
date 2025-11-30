@@ -523,20 +523,54 @@
             updateIcon();
         });
 
-        document.querySelectorAll('form[data-confirm]').forEach((form) => {
-            form.addEventListener('submit', async (event) => {
-                if (form.dataset.confirmHandled === '1') {
-                    return;
-                }
+        const buildConfirmOptions = (element) => ({
+            title: element.dataset.confirmTitle || 'Potvrzení',
+            confirmText: element.dataset.confirmConfirm || 'Ano',
+            cancelText: element.dataset.confirmCancel || 'Ne',
+            variant: element.dataset.confirmVariant || 'danger',
+        });
 
-                event.preventDefault();
-                const message = form.getAttribute('data-confirm') || 'Opravdu pokračovat?';
-                const confirmed = await adminDialog.confirm(message, {variant: 'danger'});
-                if (confirmed) {
-                    form.dataset.confirmHandled = '1';
-                    form.submit();
-                }
-            });
+        document.querySelectorAll('[data-confirm]').forEach((element) => {
+            if (element.dataset.confirmAttached === '1') {
+                return;
+            }
+
+            const message = element.getAttribute('data-confirm') || 'Opravdu pokračovat?';
+            const options = buildConfirmOptions(element);
+
+            if (element.tagName === 'FORM') {
+                element.addEventListener('submit', async (event) => {
+                    if (element.dataset.confirmHandled === '1') {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    const confirmed = await adminDialog.confirm(message, options);
+                    if (confirmed) {
+                        element.dataset.confirmHandled = '1';
+                        element.submit();
+                    }
+                });
+            } else {
+                element.addEventListener('click', async (event) => {
+                    if (element.dataset.confirmHandled === '1') {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    const confirmed = await adminDialog.confirm(message, options);
+                    if (confirmed) {
+                        element.dataset.confirmHandled = '1';
+                        if (element.tagName === 'A' && element.getAttribute('href')) {
+                            window.location.href = element.getAttribute('href');
+                        } else if (element.tagName === 'BUTTON' && element.type === 'submit' && element.form) {
+                            element.form.submit();
+                        }
+                    }
+                });
+            }
+
+            element.dataset.confirmAttached = '1';
         });
     });
 </script>

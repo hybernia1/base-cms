@@ -1,0 +1,31 @@
+{% extends 'admin/layout.twig' %}
+
+{% set current_menu = 'dashboard' %}
+
+{% block title %}Dashboard | Administrace{% endblock %}
+
+{% block body %}
+    <h1 class="h3 mb-4">Dashboard</h1>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 card-title">Stránky</h2>
+                    <p class="card-text">Správa obsahu webu.</p>
+                    <a href="/admin/pages" class="btn btn-sm btn-primary">Otevřít</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 card-title">Uživatelé</h2>
+                    <p class="card-text">Správa administrátorů a rolí.</p>
+                    <a href="/admin/users" class="btn btn-sm btn-primary">Otevřít</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

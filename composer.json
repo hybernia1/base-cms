@@ -1,0 +1,21 @@
+{
+    "name": "app/web",
+    "description": "Univerzální web appka pro CMS",
+    "type": "project",
+    "require": {
+        "gabordemooij/redbean": "^5.7",
+        "twig/twig": "^3.11",
+        "bramus/router": "^1.6",
+        "phpmailer/phpmailer": "^7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/App"
+        }
+    },
+    "authors": [
+        {
+            "name": "Nikola"
+        }
+    ]
+}

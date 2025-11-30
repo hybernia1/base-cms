@@ -2,6 +2,7 @@
 
 use Bramus\Router\Router;
 use App\Service\Auth;
+use App\Service\ContentType;
 
 /** @var Router $router */
 $router = $router ?? new Router();
@@ -40,12 +41,51 @@ $router->post('/admin/users/(\\d+)/edit', 'App\\Controller\\Admin\\UserControlle
 $router->post('/admin/users/(\\d+)/ban', 'App\\Controller\\Admin\\UserController@ban');
 $router->post('/admin/users/(\\d+)/unban', 'App\\Controller\\Admin\\UserController@unban');
 $router->post('/admin/users/(\\d+)/delete', 'App\\Controller\\Admin\\UserController@delete');
-$router->get('/admin/pages', 'App\\Controller\\Admin\\ContentController@index');
-$router->get('/admin/pages/create', 'App\\Controller\\Admin\\ContentController@createForm');
-$router->post('/admin/pages/create', 'App\\Controller\\Admin\\ContentController@create');
-$router->get('/admin/pages/(\\d+)/edit', 'App\\Controller\\Admin\\ContentController@editForm');
-$router->post('/admin/pages/(\\d+)/edit', 'App\\Controller\\Admin\\ContentController@update');
-$router->post('/admin/pages/(\\d+)/delete', 'App\\Controller\\Admin\\ContentController@delete');
+$router->get('/admin/content', function () {
+    $types = ContentType::definitions();
+    $first = reset($types);
+    $target = $first['slug'] ?? 'content';
+    header('Location: /admin/content/' . $target);
+    exit;
+});
+
+$router->get('/admin/pages', function () {
+    $slug = ContentType::defaultSlug('page');
+    header('Location: /admin/content/' . $slug);
+    exit;
+});
+$router->get('/admin/pages/create', function () {
+    $slug = ContentType::defaultSlug('page');
+    header('Location: /admin/content/' . $slug . '/create');
+    exit;
+});
+$router->post('/admin/pages/create', function () {
+    $slug = ContentType::defaultSlug('page');
+    header('Location: /admin/content/' . $slug . '/create');
+    exit;
+});
+$router->get('/admin/pages/(\\d+)/edit', function ($id) {
+    $slug = ContentType::defaultSlug('page');
+    header('Location: /admin/content/' . $slug . '/' . $id . '/edit');
+    exit;
+});
+$router->post('/admin/pages/(\\d+)/edit', function ($id) {
+    $slug = ContentType::defaultSlug('page');
+    header('Location: /admin/content/' . $slug . '/' . $id . '/edit');
+    exit;
+});
+$router->post('/admin/pages/(\\d+)/delete', function ($id) {
+    $slug = ContentType::defaultSlug('page');
+    header('Location: /admin/content/' . $slug . '/' . $id . '/delete');
+    exit;
+});
+
+$router->get('/admin/content/([\\w-]+)', 'App\\Controller\\Admin\\ContentController@index');
+$router->get('/admin/content/([\\w-]+)/create', 'App\\Controller\\Admin\\ContentController@createForm');
+$router->post('/admin/content/([\\w-]+)/create', 'App\\Controller\\Admin\\ContentController@create');
+$router->get('/admin/content/([\\w-]+)/(\\d+)/edit', 'App\\Controller\\Admin\\ContentController@editForm');
+$router->post('/admin/content/([\\w-]+)/(\\d+)/edit', 'App\\Controller\\Admin\\ContentController@update');
+$router->post('/admin/content/([\\w-]+)/(\\d+)/delete', 'App\\Controller\\Admin\\ContentController@delete');
 $router->get('/admin/terms', 'App\\Controller\\Admin\\TermController@index');
 $router->get('/admin/terms/create', 'App\\Controller\\Admin\\TermController@createForm');
 $router->post('/admin/terms/create', 'App\\Controller\\Admin\\TermController@create');

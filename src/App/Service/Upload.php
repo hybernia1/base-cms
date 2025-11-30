@@ -6,6 +6,20 @@ use Verot\Upload\Upload as UploadHandler;
 
 class Upload
 {
+    private const MIME_MAP = [
+        'jpg' => ['image/jpeg'],
+        'jpeg' => ['image/jpeg'],
+        'png' => ['image/png'],
+        'gif' => ['image/gif'],
+        'webp' => ['image/webp'],
+        'pdf' => ['application/pdf'],
+        'zip' => ['application/zip', 'application/x-zip-compressed'],
+        'txt' => ['text/plain'],
+        'svg' => ['image/svg+xml'],
+        'mp4' => ['video/mp4'],
+        'mp3' => ['audio/mpeg'],
+    ];
+
     public static function handle(array $file, string $targetType = 'images')
     {
         if (!isset($file['tmp_name']) || $file['error'] !== UPLOAD_ERR_OK) {
@@ -28,9 +42,7 @@ class Upload
         }
 
         if (!empty($normalizedAllowed)) {
-            $handler->allowed = array_map(function ($ext) {
-                return '.' . strtolower($ext);
-            }, $normalizedAllowed);
+            $handler->allowed = self::mimeTypesFor($normalizedAllowed);
         }
 
         $year = date('Y');
@@ -75,6 +87,23 @@ class Upload
         R::store($media);
 
         return [$media, null];
+    }
+
+    private static function mimeTypesFor(array $extensions): array
+    {
+        $allowed = [];
+
+        foreach ($extensions as $extension) {
+            $extension = strtolower($extension);
+            if (isset(self::MIME_MAP[$extension])) {
+                $allowed = array_merge($allowed, self::MIME_MAP[$extension]);
+                continue;
+            }
+
+            $allowed[] = '*/*';
+        }
+
+        return $allowed ?: ['*/*'];
     }
 
     public static function baseUploadPath(): string

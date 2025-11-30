@@ -63,6 +63,31 @@ abstract class BaseAdminController
             'next_url' => $page < $pages ? $buildUrl($page + 1) : null,
             'page_numbers' => range(1, $pages),
             'page_urls' => $pageUrls,
+            'current_url' => $buildUrl($page),
         ];
+    }
+
+    protected function wantsJson(): bool
+    {
+        if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
+            return true;
+        }
+
+        return (
+            (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') ||
+            (isset($_SERVER['HTTP_ACCEPT']) && strpos((string) $_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+        );
+    }
+
+    protected function jsonResponse(array $data, int $status = 200): void
+    {
+        header('Content-Type: application/json', true, $status);
+        echo json_encode($data);
+        exit;
+    }
+
+    protected function jsonError(string $message, int $status = 400): void
+    {
+        $this->jsonResponse(['error' => $message], $status);
     }
 }

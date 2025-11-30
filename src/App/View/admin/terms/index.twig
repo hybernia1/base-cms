@@ -16,61 +16,13 @@
         <a href="/admin/terms/create{% if current_term_type %}?type={{ current_term_type.key }}{% endif %}" class="btn btn-primary">Nový term</a>
     </div>
 
-    {% if items is empty %}
-        <div class="alert alert-info">Zatím zde nejsou žádné termy.</div>
-    {% else %}
-        <div class="table-responsive">
-            <table class="table align-middle">
-                <thead>
-                    <tr>
-                        <th>Název</th>
-                        <th>Typ</th>
-                        <th>Slug</th>
-                        <th>Typy obsahu</th>
-                        <th>Upraveno</th>
-                        <th class="text-end">Akce</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in items %}
-                        <tr>
-                            <td class="fw-semibold">{{ item.name }}</td>
-                            <td>{{ types[item.type]|default(item.type) }}</td>
-                            <td><code>{{ item.slug }}</code></td>
-                            <td>
-                                {% if item.allowed_for is iterable and item.allowed_for|length > 0 %}
-                                    {% for typeKey in item.allowed_for %}
-                                        <span class="badge text-bg-light text-body border">{{ content_types[typeKey].name|default(typeKey) }}</span>
-                                    {% endfor %}
-                                {% else %}
-                                    <span class="text-muted small">Vše</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ item.updated_at|date('j. n. Y H:i') }}</td>
-                            <td class="text-end">
-                                {{ ui.actions([
-                                    {
-                                        type: 'link',
-                                        href: '/admin/terms/' ~ item.id ~ '/edit',
-                                        label: 'Upravit',
-                                        variant: 'primary',
-                                        icon: 'bi-pencil'
-                                    },
-                                    {
-                                        type: 'form',
-                                        action: '/admin/terms/' ~ item.id ~ '/delete',
-                                        label: 'Smazat',
-                                        variant: 'danger',
-                                        confirm: 'Opravdu smazat tento term?',
-                                        icon: 'bi-trash'
-                                    }
-                                ]) }}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {{ ui.pagination(pagination) }}
-    {% endif %}
+    <div class="ajax-block" data-ajax-container data-endpoint="{{ current_term_type ? '/admin/terms/type/' ~ current_term_type.key : '/admin/terms' }}" data-current-url="{{ pagination.current_url }}">
+        {% include 'admin/terms/_list.twig' with {
+            items: items,
+            types: types,
+            content_types: content_types,
+            current_term_type: current_term_type,
+            pagination: pagination
+        } only %}
+    </div>
 {% endblock %}

@@ -15,15 +15,22 @@ class Upload
         $allowed = array_filter(array_map('trim', explode(',', Setting::get('allowed_upload_types'))));
         $allowWebp = Setting::get('allow_webp') === '1';
 
+        $normalizedAllowed = array_map('strtolower', $allowed);
+        $extension = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
+
+        if (!empty($normalizedAllowed) && !in_array($extension, $normalizedAllowed, true)) {
+            return [null, 'Nepovolený typ souboru.'];
+        }
+
         $handler = new UploadHandler($file);
         if (!$handler->uploaded) {
             return [null, 'Upload není platný.'];
         }
 
-        if (!empty($allowed)) {
+        if (!empty($normalizedAllowed)) {
             $handler->allowed = array_map(function ($ext) {
                 return '.' . strtolower($ext);
-            }, $allowed);
+            }, $normalizedAllowed);
         }
 
         $year = date('Y');

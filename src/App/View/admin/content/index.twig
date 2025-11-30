@@ -12,15 +12,39 @@
 
     <ul class="nav nav-pills mb-3">
         <li class="nav-item">
-            <a class="nav-link {% if current_status == 'published' %}active{% endif %}" href="/admin/content/{{ current_type.slug }}?status=published">Publikované</a>
+            <a class="nav-link {% if current_status == 'published' %}active{% endif %}" href="/admin/content/{{ current_type.slug }}?status=published{% if search_query %}&q={{ search_query|url_encode }}{% endif %}{% if pagination.per_page != 10 %}&per_page={{ pagination.per_page }}{% endif %}">Publikované</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if current_status == 'draft' %}active{% endif %}" href="/admin/content/{{ current_type.slug }}?status=draft">Koncepty</a>
+            <a class="nav-link {% if current_status == 'draft' %}active{% endif %}" href="/admin/content/{{ current_type.slug }}?status=draft{% if search_query %}&q={{ search_query|url_encode }}{% endif %}{% if pagination.per_page != 10 %}&per_page={{ pagination.per_page }}{% endif %}">Koncepty</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link {% if current_status not in ['published','draft'] %}active{% endif %}" href="/admin/content/{{ current_type.slug }}">Vše</a>
+            <a class="nav-link {% if current_status not in ['published','draft'] %}active{% endif %}" href="/admin/content/{{ current_type.slug }}{% if search_query %}?q={{ search_query|url_encode }}{% if pagination.per_page != 10 %}&per_page={{ pagination.per_page }}{% endif %}{% elseif pagination.per_page != 10 %}?per_page={{ pagination.per_page }}{% endif %}">Vše</a>
         </li>
     </ul>
+
+    <form method="get" class="row gy-2 gx-3 align-items-center mb-3">
+        {% if current_status != 'all' %}
+            <input type="hidden" name="status" value="{{ current_status }}">
+        {% endif %}
+        <div class="col-md-6">
+            <label class="form-label" for="q">Hledat podle názvu nebo slugu</label>
+            <div class="input-group">
+                <input type="text" class="form-control" id="q" name="q" value="{{ search_query }}" placeholder="Např. článek">
+                <button class="btn btn-outline-secondary" type="submit">Filtrovat</button>
+                {% if search_query %}
+                    <a class="btn btn-outline-danger" href="/admin/content/{{ current_type.slug }}{% if current_status != 'all' %}?status={{ current_status }}{% endif %}">Vymazat</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label" for="per_page">Na stránku</label>
+            <select class="form-select" id="per_page" name="per_page" onchange="this.form.submit()">
+                {% for option in [10, 20, 50] %}
+                    <option value="{{ option }}" {% if pagination.per_page == option %}selected{% endif %}>{{ option }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
 
     {% if items is empty %}
         <div class="alert alert-info">
@@ -61,7 +85,7 @@
                             <td>{{ item.updated_at|date('j. n. Y H:i') }}</td>
                             <td class="text-end">
                                 <a href="/admin/content/{{ current_type.slug }}/{{ item.id }}/edit" class="btn btn-sm btn-outline-primary">Upravit</a>
-                                <form action="/admin/content/{{ current_type.slug }}/{{ item.id }}/delete" method="post" class="d-inline" data-confirm="Opravdu smazat tento obsah?">
+                                <form action="/admin/content/{{ current_type.slug }}/{{ item.id }}/delete" method="post" class="d-inline" data-confirm="Opravdu smazat tento obsah?" data-ajax data-ajax-remove="tr">
                                     <button class="btn btn-sm btn-outline-danger" type="submit">Smazat</button>
                                 </form>
                             </td>
@@ -70,5 +94,6 @@
                 </tbody>
             </table>
         </div>
+        {% include 'admin/partials/pagination.twig' with { pagination: pagination, filters: filters, base_path: '/admin/content/' ~ current_type.slug } %}
     {% endif %}
 {% endblock %}

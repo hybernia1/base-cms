@@ -170,12 +170,18 @@ class TermController extends BaseAdminController
         $term = $this->findTerm($id);
         if (!$term) {
             Flash::addError('Term nebyl nalezen.');
+            if ($this->wantsJson()) {
+                $this->json(['success' => false, 'message' => 'Term nebyl nalezen.'], 404);
+            }
             header('Location: /admin/terms');
             exit;
         }
 
         R::trash($term);
         Flash::addSuccess('Term byl smazán.');
+        if ($this->wantsJson()) {
+            $this->json(['success' => true, 'message' => 'Term byl smazán.']);
+        }
         header('Location: /admin/terms');
         exit;
     }
@@ -186,15 +192,34 @@ class TermController extends BaseAdminController
 
         $termTypeDefinitions = TermType::definitions();
         $contentTypeDefinitions = ContentType::definitions();
-        $query = ' ORDER BY updated_at DESC ';
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $perPage = max(1, min(50, (int) ($_GET['per_page'] ?? 10)));
+        $offset = ($page - 1) * $perPage;
+        $searchQuery = trim($_GET['q'] ?? '');
+
+        $query = ' 1 ';
         $params = [];
 
         if ($typeFilter !== null) {
-            $query = ' type = ? ORDER BY updated_at DESC ';
+            $query .= ' AND type = ? ';
             $params[] = $typeFilter;
         }
 
-        $items = R::findAll('term', $query, $params);
+        if ($searchQuery !== '') {
+            $query .= ' AND (name LIKE ? OR slug LIKE ?) ';
+            $params[] = '%' . $searchQuery . '%';
+            $params[] = '%' . $searchQuery . '%';
+        }
+
+        $total = R::count('term', $query, $params);
+
+        $items = R::findAll(
+            'term',
+            $query . ' ORDER BY updated_at DESC LIMIT ? OFFSET ? ',
+            array_merge($params, [$perPage, $offset])
+        );
+
+        $pages = (int) ceil($total / $perPage);
         foreach ($items as $item) {
             $item->allowed_for = $termTypeDefinitions[$item->type]['content_types'] ?? [];
         }
@@ -205,6 +230,18 @@ class TermController extends BaseAdminController
             'content_types' => $contentTypeDefinitions,
             'current_menu' => $typeFilter ? 'terms:' . $typeFilter : 'terms',
             'current_term_type' => $typeFilter ? ($termTypeDefinitions[$typeFilter] ?? null) : null,
+            'current_term_type_key' => $typeFilter,
+            'search_query' => $searchQuery,
+            'pagination' => [
+                'page' => $page,
+                'per_page' => $perPage,
+                'pages' => $pages,
+                'total' => $total,
+            ],
+            'filters' => [
+                'q' => $searchQuery,
+                'per_page' => $perPage !== 10 ? $perPage : null,
+            ],
         ]);
     }
 

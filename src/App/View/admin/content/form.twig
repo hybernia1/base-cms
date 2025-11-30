@@ -7,7 +7,8 @@
 {% block body %}
     <h1 class="h3 mb-4">{{ heading }}</h1>
 
-    <form method="post" action="{{ form_action }}" class="mb-4" enctype="multipart/form-data" id="contentForm">
+    <form method="post" action="{{ form_action }}" class="mb-4" enctype="multipart/form-data" id="contentForm" data-ajax data-ajax-reset="{{ content_id is not defined }}">
+        <div class="alert alert-danger d-none" data-ajax-errors role="alert"></div>
         <div class="row g-4">
             <div class="col-lg-8">
                 <div class="card shadow-sm h-100">

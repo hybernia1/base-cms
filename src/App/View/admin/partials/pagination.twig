@@ -1,0 +1,34 @@
+{% set current = pagination.page|default(1) %}
+{% set total_pages = pagination.pages|default(1) %}
+{% set filters = filters|default({}) %}
+{% set base_path = base_path|default('') %}
+
+{% set query_parts = [] %}
+{% for key, value in filters %}
+    {% if value is not null and value is not same as(false) and value != '' %}
+        {% set query_parts = query_parts|merge([ key ~ '=' ~ value|url_encode ]) %}
+    {% endif %}
+{% endfor %}
+{% set page_prefix = query_parts ? '?' ~ query_parts|join('&') ~ '&page=' : '?page=' %}
+
+{% if total_pages > 1 %}
+<nav aria-label="Stránkování" class="mt-3">
+    <ul class="pagination justify-content-center">
+        <li class="page-item {% if current <= 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ base_path }}{{ page_prefix ~ (current - 1) }}" aria-label="Předchozí">&laquo;</a>
+        </li>
+        {% for pageNumber in 1..total_pages %}
+            {% if pageNumber == current or pageNumber in [1, 2, total_pages-1, total_pages] or (pageNumber >= current-2 and pageNumber <= current+2) %}
+                <li class="page-item {% if pageNumber == current %}active{% endif %}">
+                    <a class="page-link" href="{{ base_path }}{{ page_prefix ~ pageNumber }}">{{ pageNumber }}</a>
+                </li>
+            {% elseif pageNumber == current-3 or pageNumber == current+3 %}
+                <li class="page-item disabled"><span class="page-link">…</span></li>
+            {% endif %}
+        {% endfor %}
+        <li class="page-item {% if current >= total_pages %}disabled{% endif %}">
+            <a class="page-link" href="{{ base_path }}{{ page_prefix ~ (current + 1) }}" aria-label="Další">&raquo;</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}

@@ -56,7 +56,7 @@
     </form>
 
     {% if term_id is defined %}
-        <form action="/admin/terms/{{ term_id }}/delete" method="post" onsubmit="return confirm('Opravdu smazat?');">
+        <form action="/admin/terms/{{ term_id }}/delete" method="post" data-confirm="Opravdu smazat tento term?">
             <button class="btn btn-outline-danger" type="submit">Smazat</button>
         </form>
     {% endif %}

@@ -3,6 +3,7 @@ namespace App\Controller\Admin;
 
 use App\Service\Auth;
 use App\Service\Flash;
+use App\Service\Setting;
 use App\Service\Upload;
 use RedBeanPHP\R as R;
 
@@ -51,6 +52,55 @@ class MediaController extends BaseAdminController
         exit;
     }
 
+    public function update($id)
+    {
+        Auth::requireRole(['admin', 'editor']);
+
+        $media = R::load('media', (int) $id);
+        if (!$media || !$media->id) {
+            return $this->jsonError('Soubor nebyl nalezen.', 404);
+        }
+
+        $alt = trim($_POST['alt'] ?? '');
+        $convertToWebp = isset($_POST['convert_webp']) && $_POST['convert_webp'] === '1';
+
+        $messages = [];
+
+        if ($media->alt !== $alt) {
+            $media->alt = $alt;
+            $messages[] = 'Alt text byl aktualizován.';
+        }
+
+        if ($convertToWebp) {
+            if ($media->webp_filename) {
+                $messages[] = 'WebP varianta už existuje.';
+            } else {
+                [$webpFilename, $error] = $this->createWebpVariant($media);
+                if ($error) {
+                    return $this->jsonError($error);
+                }
+
+                if ($webpFilename) {
+                    $media->webp_filename = $webpFilename;
+                    $messages[] = 'WebP varianta byla vytvořena.';
+                }
+            }
+        }
+
+        $media->updated_at = date('Y-m-d H:i:s');
+        R::store($media);
+
+        return $this->jsonResponse([
+            'id' => (int) $media->id,
+            'alt' => $media->alt,
+            'webp_filename' => $media->webp_filename,
+            'filename' => $media->filename,
+            'path' => '/' . ltrim($media->path, '/'),
+            'preview_url' => '/' . ltrim($media->path, '/') . '/' . ($media->webp_filename ?: $media->filename),
+            'message' => $messages ? implode(' ', $messages) : 'Změny byly uloženy.',
+        ]);
+    }
+
     public function delete($id)
     {
         Auth::requireRole(['admin', 'editor']);
@@ -88,6 +138,69 @@ class MediaController extends BaseAdminController
         exit;
     }
 
+    private function createWebpVariant($media): array
+    {
+        if (!$media->is_image) {
+            return [null, 'Soubor není obrázek.'];
+        }
+
+        if (Setting::get('allow_webp') !== '1') {
+            return [null, 'WebP konverze je v nastavení vypnutá.'];
+        }
+
+        $directory = $this->mediaDirectory($media);
+        $sourcePath = rtrim($directory, '/') . '/' . $media->filename;
+
+        if (!is_file($sourcePath)) {
+            return [null, 'Zdrojový soubor nebyl nalezen.'];
+        }
+
+        $mime = strtolower((string) $media->mime_type);
+        $image = match (true) {
+            str_contains($mime, 'jpeg') => imagecreatefromjpeg($sourcePath),
+            str_contains($mime, 'png') => imagecreatefrompng($sourcePath),
+            str_contains($mime, 'gif') => imagecreatefromgif($sourcePath),
+            str_contains($mime, 'webp') => imagecreatefromwebp($sourcePath),
+            default => @imagecreatefromstring(file_get_contents($sourcePath)),
+        };
+
+        if (!$image) {
+            return [null, 'Konverze do WebP se nezdařila.'];
+        }
+
+        imagepalettetotruecolor($image);
+        imagealphablending($image, true);
+        imagesavealpha($image, true);
+
+        $baseName = pathinfo($media->filename, PATHINFO_FILENAME);
+        $targetName = $baseName . '.webp';
+        $targetPath = rtrim($directory, '/') . '/' . $targetName;
+        $counter = 1;
+
+        while (is_file($targetPath)) {
+            $targetName = $baseName . '-' . $counter . '.webp';
+            $targetPath = rtrim($directory, '/') . '/' . $targetName;
+            $counter++;
+        }
+
+        $saved = imagewebp($image, $targetPath, 85);
+        imagedestroy($image);
+
+        if (!$saved) {
+            return [null, 'Konverze do WebP se nezdařila.'];
+        }
+
+        return [$targetName, null];
+    }
+
+    private function mediaDirectory($media): string
+    {
+        $absoluteBase = rtrim(Upload::baseUploadPath(), '/');
+        $relative = $media->path ? substr($media->path, strlen('uploads')) : '';
+
+        return rtrim($absoluteBase . $relative, '/');
+    }
+
     private function handleUploadError(string $message)
     {
         if ($this->wantsJson()) {
@@ -99,6 +212,18 @@ class MediaController extends BaseAdminController
         Flash::addError($message);
         header('Location: /admin/media');
         exit;
+    }
+
+    private function jsonResponse(array $data, int $status = 200)
+    {
+        header('Content-Type: application/json', true, $status);
+        echo json_encode($data);
+        exit;
+    }
+
+    private function jsonError(string $message, int $status = 400)
+    {
+        return $this->jsonResponse(['error' => $message], $status);
     }
 
     private function wantsJson(): bool

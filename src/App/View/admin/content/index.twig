@@ -61,8 +61,7 @@
                             <td>{{ item.updated_at|date('j. n. Y H:i') }}</td>
                             <td class="text-end">
                                 <a href="/admin/content/{{ current_type.slug }}/{{ item.id }}/edit" class="btn btn-sm btn-outline-primary">Upravit</a>
-                                <form action="/admin/content/{{ current_type.slug }}/{{ item.id }}/delete" method="post" class="d-inline"
-                                      onsubmit="return confirm('Opravdu smazat?');">
+                                <form action="/admin/content/{{ current_type.slug }}/{{ item.id }}/delete" method="post" class="d-inline" data-confirm="Opravdu smazat tento obsah?">
                                     <button class="btn btn-sm btn-outline-danger" type="submit">Smazat</button>
                                 </form>
                             </td>

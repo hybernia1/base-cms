@@ -56,17 +56,31 @@
                 {% endif %}
                 {% for item in imageItems %}
                     <div class="col">
-                        <div class="card h-100">
+                        <div class="card h-100 media-card position-relative" role="button" tabindex="0"
+                             data-media-id="{{ item.id }}"
+                             data-name="{{ item.original_name ?: item.filename }}"
+                             data-alt="{{ item.alt }}"
+                             data-mime="{{ item.mime_type }}"
+                             data-size="{{ item.size }}"
+                             data-created="{{ item.created_at|date('j. n. Y H:i') }}"
+                             data-path="/{{ item.path }}"
+                             data-filename="{{ item.filename }}"
+                             data-webp-filename="{{ item.webp_filename }}"
+                             data-preview-url="/{{ item.path }}/{{ item.webp_filename ?: item.filename }}">
+                            {% if item.webp_filename %}
+                                <span class="badge bg-success position-absolute top-0 end-0 m-2 badge-webp">WebP</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2 badge-webp">Bez WebP</span>
+                            {% endif %}
                             <img src="/{{ item.path }}/{{ item.webp_filename ?: item.filename }}" class="card-img-top" alt="{{ item.alt }}">
                             <div class="card-body">
                                 <h6 class="card-title small mb-1">{{ item.original_name ?: item.filename }}</h6>
                                 <div class="text-muted small">{{ item.mime_type }} · {{ item.size }} B</div>
-                                {% if item.webp_filename %}
-                                    <div class="text-success small">WebP varianta: {{ item.webp_filename }}</div>
-                                {% endif %}
+                                <div class="text-muted small">Aktualizováno: {{ item.updated_at|date('j. n. Y H:i') }}</div>
                             </div>
                             <div class="card-footer bg-light text-end">
-                                <form action="/admin/media/{{ item.id }}/delete" method="post" class="d-inline" onsubmit="return confirm('Opravdu smazat tento soubor?');">
+                                <button class="btn btn-outline-secondary btn-sm" type="button">Upravit</button>
+                                <form action="/admin/media/{{ item.id }}/delete" method="post" class="d-inline" data-confirm="Opravdu smazat tento soubor?">
                                     <button class="btn btn-outline-danger btn-sm" type="submit">Smazat</button>
                                 </form>
                             </div>
@@ -100,7 +114,7 @@
                                     <td>{{ item.created_at|date('j. n. Y H:i') }}</td>
                                     <td class="text-end">
                                         <a href="/{{ item.path }}/{{ item.filename }}" class="btn btn-sm btn-outline-secondary" target="_blank">Otevřít</a>
-                                        <form action="/admin/media/{{ item.id }}/delete" method="post" class="d-inline" onsubmit="return confirm('Opravdu smazat tento soubor?');">
+                                        <form action="/admin/media/{{ item.id }}/delete" method="post" class="d-inline" data-confirm="Opravdu smazat tento soubor?">
                                             <button class="btn btn-sm btn-outline-danger" type="submit">Smazat</button>
                                         </form>
                                     </td>
@@ -112,4 +126,192 @@
             {% endif %}
         </div>
     </div>
+
+    <div class="modal fade" id="mediaDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" data-role="media-title">Detail média</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3" id="mediaDetailForm" data-media-id="">
+                        <div class="col-md-6 text-center">
+                            <div class="ratio ratio-4x3 border rounded bg-light d-flex align-items-center justify-content-center">
+                                <img src="" alt="" class="img-fluid" data-role="media-preview" style="max-height: 320px;">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="mediaAltInput" class="form-label">Alt text / popis</label>
+                                <input type="text" class="form-control" id="mediaAltInput" placeholder="Popisek obrázku">
+                            </div>
+                            <dl class="row small mb-3">
+                                <dt class="col-4 text-muted">Název</dt>
+                                <dd class="col-8" data-role="media-name">&nbsp;</dd>
+                                <dt class="col-4 text-muted">MIME</dt>
+                                <dd class="col-8" data-role="media-mime">&nbsp;</dd>
+                                <dt class="col-4 text-muted">Velikost</dt>
+                                <dd class="col-8" data-role="media-size">&nbsp;</dd>
+                                <dt class="col-4 text-muted">Vytvořeno</dt>
+                                <dd class="col-8" data-role="media-created">&nbsp;</dd>
+                            </dl>
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <span class="badge bg-secondary" data-role="media-webp">Bez WebP</span>
+                                <a href="#" target="_blank" rel="noopener" class="small" data-role="media-open">Otevřít náhled</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-role="media-convert">Vytvořit WebP</button>
+                    <button type="button" class="btn btn-primary" data-role="media-save">Uložit změny</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const mediaModalEl = document.getElementById('mediaDetailModal');
+    const mediaModal = mediaModalEl ? new bootstrap.Modal(mediaModalEl) : null;
+    const mediaForm = document.getElementById('mediaDetailForm');
+    const mediaPreview = mediaModalEl?.querySelector('[data-role="media-preview"]');
+    const mediaName = mediaModalEl?.querySelector('[data-role="media-name"]');
+    const mediaMime = mediaModalEl?.querySelector('[data-role="media-mime"]');
+    const mediaSize = mediaModalEl?.querySelector('[data-role="media-size"]');
+    const mediaCreated = mediaModalEl?.querySelector('[data-role="media-created"]');
+    const mediaAltInput = document.getElementById('mediaAltInput');
+    const mediaWebpBadge = mediaModalEl?.querySelector('[data-role="media-webp"]');
+    const mediaOpenLink = mediaModalEl?.querySelector('[data-role="media-open"]');
+    const convertBtn = mediaModalEl?.querySelector('[data-role="media-convert"]');
+    const saveBtn = mediaModalEl?.querySelector('[data-role="media-save"]');
+
+    const humanSize = (bytes) => {
+        if (Number.isNaN(bytes)) return '';
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} kB`;
+        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    };
+
+    const updateCardBadge = (card, hasWebp, previewUrl) => {
+        const badge = card.querySelector('.badge-webp');
+        if (badge) {
+            badge.textContent = hasWebp ? 'WebP' : 'Bez WebP';
+            badge.className = hasWebp
+                ? 'badge bg-success position-absolute top-0 end-0 m-2 badge-webp'
+                : 'badge bg-warning text-dark position-absolute top-0 end-0 m-2 badge-webp';
+        }
+
+        const img = card.querySelector('img');
+        if (img && previewUrl) {
+            img.src = previewUrl;
+        }
+        card.dataset.webpFilename = hasWebp ? (card.dataset.webpFilename || '1') : '';
+        if (previewUrl) {
+            card.dataset.previewUrl = previewUrl;
+        }
+    };
+
+    const fillMediaModal = (card) => {
+        if (!mediaForm || !mediaModal) return;
+        const previewUrl = card.dataset.previewUrl || '';
+        mediaForm.dataset.mediaId = card.dataset.mediaId || '';
+        if (mediaPreview) {
+            mediaPreview.src = previewUrl;
+            mediaPreview.alt = card.dataset.alt || '';
+        }
+        if (mediaAltInput) mediaAltInput.value = card.dataset.alt || '';
+        if (mediaName) mediaName.textContent = card.dataset.name || '';
+        if (mediaMime) mediaMime.textContent = card.dataset.mime || '';
+        if (mediaSize) mediaSize.textContent = humanSize(Number(card.dataset.size));
+        if (mediaCreated) mediaCreated.textContent = card.dataset.created || '';
+        if (mediaWebpBadge) {
+            const hasWebp = Boolean(card.dataset.webpFilename);
+            mediaWebpBadge.textContent = hasWebp ? 'WebP varianta dostupná' : 'Bez WebP';
+            mediaWebpBadge.className = hasWebp ? 'badge bg-success' : 'badge bg-secondary';
+        }
+        if (mediaOpenLink) {
+            mediaOpenLink.href = previewUrl || '#';
+            mediaOpenLink.style.display = previewUrl ? '' : 'none';
+        }
+
+        if (convertBtn) {
+            convertBtn.disabled = Boolean(card.dataset.webpFilename);
+        }
+
+        mediaModal.show();
+    };
+
+    const saveMediaDetails = async (forceWebp = false) => {
+        if (!mediaForm) return;
+        const id = mediaForm.dataset.mediaId;
+        if (!id) return;
+
+        const formData = new FormData();
+        formData.append('alt', mediaAltInput?.value || '');
+        if (forceWebp) {
+            formData.append('convert_webp', '1');
+        }
+
+        try {
+            const response = await fetch(`/admin/media/${id}/update`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                },
+            });
+
+            const result = await response.json();
+            if (!response.ok || result.error) {
+                throw new Error(result.error || 'Uložení se nezdařilo.');
+            }
+
+            const card = document.querySelector(`.media-card[data-media-id="${id}"]`);
+            const previewUrl = result.preview_url || '';
+            if (card) {
+                card.dataset.alt = result.alt || '';
+                card.dataset.webpFilename = result.webp_filename || '';
+                card.dataset.previewUrl = previewUrl;
+                if (card.querySelector('img')) {
+                    card.querySelector('img').alt = result.alt || '';
+                }
+                updateCardBadge(card, Boolean(result.webp_filename), previewUrl);
+            }
+
+            if (mediaPreview) mediaPreview.src = previewUrl;
+            if (mediaWebpBadge) {
+                const hasWebp = Boolean(result.webp_filename);
+                mediaWebpBadge.textContent = hasWebp ? 'WebP varianta dostupná' : 'Bez WebP';
+                mediaWebpBadge.className = hasWebp ? 'badge bg-success' : 'badge bg-secondary';
+                if (convertBtn) convertBtn.disabled = hasWebp;
+            }
+
+            adminDialog.alert(result.message || 'Změny byly uloženy.', {variant: 'success'});
+        } catch (error) {
+            adminDialog.alert(error.message || 'Uložení se nezdařilo.', {variant: 'danger'});
+        }
+    };
+
+    document.querySelectorAll('.media-card').forEach((card) => {
+        card.addEventListener('click', () => fillMediaModal(card));
+        card.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                fillMediaModal(card);
+            }
+        });
+    });
+
+    if (convertBtn) {
+        convertBtn.addEventListener('click', () => saveMediaDetails(true));
+    }
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => saveMediaDetails(false));
+    }
+</script>
 {% endblock %}

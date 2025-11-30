@@ -27,6 +27,19 @@ class UserController extends BaseAdminController
             [$pagination['per_page'], $pagination['offset']]
         );
 
+        if ($this->wantsJson()) {
+            $html = $this->twig->render('admin/users/_list.twig', [
+                'users' => $users,
+                'roles' => self::ROLES,
+                'pagination' => $pagination,
+            ]);
+
+            $this->jsonResponse([
+                'html' => $html,
+                'state_url' => $pagination['current_url'],
+            ]);
+        }
+
         $this->render('admin/users/index.twig', [
             'users' => $users,
             'roles' => self::ROLES,
@@ -224,6 +237,10 @@ class UserController extends BaseAdminController
 
         $user = $this->findUser($id);
         if (!$user) {
+            if ($this->wantsJson()) {
+                $this->jsonError('Uživatel nenalezen.', 404);
+            }
+
             Flash::addError('Uživatel nenalezen.');
             header('Location: /admin/users');
             exit;
@@ -231,12 +248,24 @@ class UserController extends BaseAdminController
 
         $currentUser = Auth::user();
         if ($currentUser && (int) $currentUser->id === (int) $user->id) {
+            if ($this->wantsJson()) {
+                $this->jsonError('Nemůžeš smazat sám sebe.', 400);
+            }
+
             Flash::addError('Nemůžeš smazat sám sebe.');
             header('Location: /admin/users');
             exit;
         }
 
         R::trash($user);
+
+        if ($this->wantsJson()) {
+            $this->jsonResponse([
+                'success' => true,
+                'message' => 'Uživatel byl smazán.',
+            ]);
+        }
+
         Flash::addSuccess('Uživatel byl smazán.');
         header('Location: /admin/users');
         exit;

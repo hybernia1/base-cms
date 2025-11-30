@@ -579,48 +579,198 @@
             variant: element.dataset.confirmVariant || 'danger',
         });
 
-        document.querySelectorAll('[data-confirm]').forEach((element) => {
-            if (element.dataset.confirmAttached === '1') {
-                return;
-            }
+        const attachConfirmHandlers = (scope = document) => {
+            scope.querySelectorAll('[data-confirm]').forEach((element) => {
+                if (element.dataset.confirmAttached === '1') {
+                    return;
+                }
 
-            const message = element.getAttribute('data-confirm') || 'Opravdu pokračovat?';
-            const options = buildConfirmOptions(element);
+                const message = element.getAttribute('data-confirm') || 'Opravdu pokračovat?';
+                const options = buildConfirmOptions(element);
 
-            if (element.tagName === 'FORM') {
-                element.addEventListener('submit', async (event) => {
-                    if (element.dataset.confirmHandled === '1') {
-                        return;
-                    }
-
-                    event.preventDefault();
-                    const confirmed = await adminNotify.confirm(message, options);
-                    if (confirmed) {
-                        element.dataset.confirmHandled = '1';
-                        element.submit();
-                    }
-                });
-            } else {
-                element.addEventListener('click', async (event) => {
-                    if (element.dataset.confirmHandled === '1') {
-                        return;
-                    }
-
-                    event.preventDefault();
-                    const confirmed = await adminNotify.confirm(message, options);
-                    if (confirmed) {
-                        element.dataset.confirmHandled = '1';
-                        if (element.tagName === 'A' && element.getAttribute('href')) {
-                            window.location.href = element.getAttribute('href');
-                        } else if (element.tagName === 'BUTTON' && element.type === 'submit' && element.form) {
-                            element.form.submit();
+                if (element.tagName === 'FORM') {
+                    element.addEventListener('submit', async (event) => {
+                        if (element.dataset.confirmHandled === '1') {
+                            return;
                         }
+
+                        event.preventDefault();
+                        const confirmed = await adminNotify.confirm(message, options);
+                        if (confirmed) {
+                            element.dataset.confirmHandled = '1';
+                            element.submit();
+                        }
+                    });
+                } else {
+                    element.addEventListener('click', async (event) => {
+                        if (element.dataset.confirmHandled === '1') {
+                            return;
+                        }
+
+                        event.preventDefault();
+                        const confirmed = await adminNotify.confirm(message, options);
+                        if (confirmed) {
+                            element.dataset.confirmHandled = '1';
+                            if (element.tagName === 'A' && element.getAttribute('href')) {
+                                window.location.href = element.getAttribute('href');
+                            } else if (element.tagName === 'BUTTON' && element.type === 'submit' && element.form) {
+                                element.form.submit();
+                            }
+                        }
+                    });
+                }
+
+                element.dataset.confirmAttached = '1';
+            });
+        };
+
+        const appendAjaxParam = (url) => {
+            const parsed = new URL(url, window.location.origin);
+            parsed.searchParams.set('ajax', '1');
+            return parsed.toString();
+        };
+
+        const normalizeUrl = (url) => {
+            const parsed = new URL(url, window.location.origin);
+            parsed.searchParams.delete('ajax');
+            return parsed.pathname + (parsed.search || '');
+        };
+
+        const loadAjaxContainer = async (container, targetUrl, options = {}) => {
+            if (!targetUrl || !container) return;
+
+            const requestUrl = appendAjaxParam(targetUrl);
+            container.classList.add('opacity-50');
+
+            try {
+                const response = await fetch(requestUrl, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                });
+
+                const data = await response.json();
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || 'Načtení selhalo.');
+                }
+
+                container.innerHTML = data.html || '';
+                const stateUrl = data.state_url ? normalizeUrl(data.state_url) : normalizeUrl(targetUrl);
+                if (stateUrl) {
+                    container.dataset.currentUrl = stateUrl;
+                    if (!options.silent) {
+                        window.history.replaceState({}, '', stateUrl);
+                    }
+                }
+
+                attachConfirmHandlers(container);
+                attachAjaxDeleteHandlers(container);
+            } catch (error) {
+                adminNotify.show({
+                    title: 'Chyba',
+                    message: error.message || 'Načtení selhalo.',
+                    variant: 'danger',
+                    autohide: false,
+                });
+            } finally {
+                container.classList.remove('opacity-50');
+            }
+        };
+
+        const attachAjaxDeleteHandlers = (scope = document) => {
+            scope.querySelectorAll('form[data-ajax-delete]').forEach((form) => {
+                if (form.dataset.ajaxDeleteAttached === '1') {
+                    return;
+                }
+
+                form.addEventListener('submit', async (event) => {
+                    if (event.defaultPrevented) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    const targetUrl = form.getAttribute('action') || window.location.href;
+                    const method = (form.getAttribute('method') || 'post').toUpperCase();
+                    const container = form.closest('[data-ajax-container]');
+                    const row = form.closest('tr') || form.closest('.media-card');
+
+                    try {
+                        const response = await fetch(appendAjaxParam(targetUrl), {
+                            method,
+                            body: new FormData(form),
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                            },
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok || data.error) {
+                            throw new Error(data.error || 'Akce selhala.');
+                        }
+
+                        if (row) {
+                            row.remove();
+                        }
+
+                        if (container) {
+                            const reloadUrl = container.dataset.currentUrl || targetUrl;
+                            loadAjaxContainer(container, reloadUrl, {silent: true});
+                        }
+
+                        adminNotify.show({
+                            title: 'Hotovo',
+                            message: data.message || 'Záznam byl odstraněn.',
+                            variant: 'success',
+                        });
+                    } catch (error) {
+                        adminNotify.show({
+                            title: 'Chyba',
+                            message: error.message || 'Akce se nezdařila.',
+                            variant: 'danger',
+                            autohide: false,
+                        });
                     }
                 });
-            }
 
-            element.dataset.confirmAttached = '1';
-        });
+                form.dataset.ajaxDeleteAttached = '1';
+            });
+        };
+
+        const initAjaxContainers = () => {
+            document.querySelectorAll('[data-ajax-container]').forEach((container) => {
+                if (!container.dataset.currentUrl) {
+                    container.dataset.currentUrl = window.location.pathname + window.location.search;
+                }
+
+                container.addEventListener('click', (event) => {
+                    const link = event.target.closest('.pagination a.page-link, [data-ajax-link]');
+                    if (!link || !container.contains(link)) {
+                        return;
+                    }
+
+                    const listItem = link.closest('.page-item');
+                    if (listItem && listItem.classList.contains('disabled')) {
+                        event.preventDefault();
+                        return;
+                    }
+
+                    const href = link.getAttribute('href');
+                    if (!href) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    loadAjaxContainer(container, href);
+                });
+            });
+        };
+
+        attachConfirmHandlers();
+        attachAjaxDeleteHandlers();
+        initAjaxContainers();
     });
 </script>
 {% block scripts %}{% endblock %}

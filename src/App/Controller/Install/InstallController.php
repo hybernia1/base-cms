@@ -1,6 +1,7 @@
 <?php
 namespace App\Controller\Install;
 
+use App\Service\Mail;
 use RedBeanPHP\R as R;
 
 class InstallController
@@ -65,6 +66,8 @@ class InstallController
             return;
         }
 
+        $this->createSchema();
+
         // vytvořit config.php
         $config = [
             'db' => [
@@ -88,17 +91,67 @@ class InstallController
         $configPhp = "<?php\nreturn " . var_export($config, true) . ";\n";
         file_put_contents($this->configDir . '/config.php', $configPhp);
 
+        $GLOBALS['app']['config'] = $config;
+
         // admin user
         $user = R::dispense('user');
         $user->email = $values['admin_email'];
         $user->password = password_hash($values['admin_pass'], PASSWORD_DEFAULT);
         $user->role = 'admin';
+        $user->created_at = date('Y-m-d H:i:s');
+        $user->updated_at = date('Y-m-d H:i:s');
         R::store($user);
+
+        Mail::send(
+            $values['admin_email'],
+            'Instalace byla dokončena',
+            '<p>CMS bylo úspěšně nainstalováno.</p>'
+        );
 
         // auto login
         $_SESSION['user_id'] = $user->id;
 
         header('Location: /admin');
         exit;
+    }
+
+    private function createSchema(): void
+    {
+        R::exec(
+            "CREATE TABLE IF NOT EXISTS `user` (
+                `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `email` VARCHAR(191) NOT NULL UNIQUE,
+                `password` VARCHAR(255) NOT NULL,
+                `role` VARCHAR(50) NOT NULL DEFAULT 'editor',
+                `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
+        R::exec(
+            "CREATE TABLE IF NOT EXISTS `content` (
+                `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `title` VARCHAR(255) NOT NULL,
+                `slug` VARCHAR(191) NOT NULL,
+                `type` VARCHAR(50) NOT NULL,
+                `body` TEXT,
+                `created_at` DATETIME NOT NULL,
+                `updated_at` DATETIME NOT NULL,
+                UNIQUE KEY `slug_type` (`slug`, `type`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
+        R::exec(
+            "CREATE TABLE IF NOT EXISTS `term` (
+                `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `name` VARCHAR(255) NOT NULL,
+                `slug` VARCHAR(191) NOT NULL,
+                `type` VARCHAR(50) NOT NULL,
+                `description` TEXT,
+                `created_at` DATETIME NOT NULL,
+                `updated_at` DATETIME NOT NULL,
+                UNIQUE KEY `slug_type` (`slug`, `type`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
     }
 }

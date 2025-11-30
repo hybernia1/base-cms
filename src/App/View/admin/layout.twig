@@ -91,6 +91,12 @@
                         Stránky
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if current_menu is defined and current_menu == 'terms' %}active{% endif %}"
+                       href="/admin/terms">
+                        Termy
+                    </a>
+                </li>
                 {% if app_user is defined and app_user and app_user.role == 'admin' %}
                     <li class="nav-item">
                         <a class="nav-link {% if current_menu is defined and current_menu == 'users' %}active{% endif %}"
@@ -123,6 +129,12 @@
                     <a class="nav-link {% if current_menu is defined and current_menu == 'pages' %}active{% endif %}"
                        href="/admin/pages">
                         Stránky
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if current_menu is defined and current_menu == 'terms' %}active{% endif %}"
+                       href="/admin/terms">
+                        Termy
                     </a>
                 </li>
                 {% if app_user is defined and app_user and app_user.role == 'admin' %}

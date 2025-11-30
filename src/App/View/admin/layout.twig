@@ -410,7 +410,8 @@
 <script>
     const adminDialog = (() => {
         const modalEl = document.getElementById('adminDialog');
-        const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+        const modalSupported = typeof bootstrap !== 'undefined' && !!bootstrap?.Modal;
+        const modal = modalSupported && modalEl ? new bootstrap.Modal(modalEl) : null;
         const titleEl = modalEl?.querySelector('[data-role="dialog-title"]');
         const messageEl = modalEl?.querySelector('[data-role="dialog-message"]');
         const confirmBtn = modalEl?.querySelector('[data-role="dialog-confirm"]');
@@ -434,8 +435,8 @@
             cancelText = '',
             variant = 'primary',
         }) => {
-            if (!modalEl || !modal) {
-                return Promise.resolve(false);
+            if (!modalSupported || !modalEl || !modal) {
+                return Promise.resolve(window.confirm(message || ''));
             }
 
             if (titleEl) titleEl.textContent = title;
@@ -461,15 +462,15 @@
             });
         };
 
-        if (confirmBtn) {
+        if (modalSupported && confirmBtn) {
             confirmBtn.addEventListener('click', () => closeAndResolve(true));
         }
 
-        if (cancelBtn) {
+        if (modalSupported && cancelBtn) {
             cancelBtn.addEventListener('click', () => closeAndResolve(false));
         }
 
-        if (modalEl) {
+        if (modalSupported && modalEl) {
             modalEl.addEventListener('hidden.bs.modal', () => closeAndResolve(false));
         }
 

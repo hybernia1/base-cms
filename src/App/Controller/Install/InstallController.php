@@ -183,7 +183,8 @@ class InstallController
                 `is_image` TINYINT(1) NOT NULL DEFAULT 0,
                 `original_name` VARCHAR(255) DEFAULT '',
                 `alt` VARCHAR(255) DEFAULT '',
-                `created_at` DATETIME NOT NULL
+                `created_at` DATETIME NOT NULL,
+                `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
 

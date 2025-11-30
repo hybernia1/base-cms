@@ -53,28 +53,4 @@
             </form>
         </div>
     </div>
-
-    {% if user_id is defined %}
-        <div class="card shadow-sm mt-4">
-            <div class="card-body">
-                <h2 class="h5">Stav účtu</h2>
-                {% if values.is_banned %}
-                    <p class="text-danger mb-2">Uživatel je aktuálně zablokován.</p>
-                    {% if values.ban_reason %}<p class="mb-3"><strong>Důvod:</strong> {{ values.ban_reason }}</p>{% endif %}
-                    <form method="post" action="/admin/users/{{ user_id }}/unban">
-                        <button type="submit" class="btn btn-outline-success">Zrušit blokaci</button>
-                    </form>
-                {% else %}
-                    <p class="text-success">Účet je aktivní.</p>
-                    <form method="post" action="/admin/users/{{ user_id }}/ban" class="mt-2">
-                        <div class="mb-2">
-                            <label class="form-label">Důvod blokace</label>
-                            <input type="text" name="reason" class="form-control" placeholder="Nepovinné">
-                        </div>
-                        <button type="submit" class="btn btn-outline-warning">Zablokovat účet</button>
-                    </form>
-                {% endif %}
-            </div>
-        </div>
-    {% endif %}
 {% endblock %}

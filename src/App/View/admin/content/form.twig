@@ -112,10 +112,7 @@
                                         <label class="form-label" for="new-term-name-{{ typeKey }}">Přidat nový term</label>
                                         <input type="text" id="new-term-name-{{ typeKey }}" class="form-control" placeholder="Např. Kategorie A" data-role="name" autocomplete="off">
                                     </div>
-                                    <div class="mb-2">
-                                        <label class="form-label" for="new-term-slug-{{ typeKey }}">Slug (volitelně)</label>
-                                        <input type="text" id="new-term-slug-{{ typeKey }}" class="form-control" placeholder="napr-kategorie-a" data-role="slug" autocomplete="off">
-                                    </div>
+                                    <div class="text-muted small mb-2">Slug se doplní automaticky podle názvu.</div>
                                     <div class="text-danger small new-term-error d-none"></div>
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div class="text-muted small">Nový term se rovnou zaškrtne.</div>
@@ -327,6 +324,12 @@
                 return;
             }
 
+            const existingCheckbox = group.querySelector(`input[type="checkbox"][value="${id}"]`);
+            if (existingCheckbox) {
+                existingCheckbox.checked = true;
+                return;
+            }
+
             const emptyState = group.querySelector('.empty-term-state');
             if (emptyState) {
                 emptyState.remove();
@@ -351,7 +354,6 @@
 
         termForms.forEach((form) => {
             const nameInput = form.querySelector('[data-role="name"]');
-            const slugInput = form.querySelector('[data-role="slug"]');
             const errorEl = form.querySelector('.new-term-error');
             const submitBtn = form.querySelector('.new-term-submit');
             const action = form.dataset.action;
@@ -373,7 +375,6 @@
                 clearError();
 
                 const name = nameInput?.value.trim();
-                const slug = slugInput?.value.trim();
 
                 if (!name) {
                     showError('Vyplň název termu.');
@@ -382,7 +383,6 @@
 
                 const formData = new FormData();
                 formData.append('name', name || '');
-                formData.append('slug', slug || '');
                 formData.append('type', typeKey || '');
 
                 try {
@@ -403,7 +403,9 @@
 
                     appendTermCheckbox(result.type, result.id, result.name, true);
                     if (nameInput) nameInput.value = '';
-                    if (slugInput) slugInput.value = '';
+                    if (result.existing) {
+                        clearError();
+                    }
                 } catch (error) {
                     showError('Vytvoření termu se nezdařilo.');
                 }

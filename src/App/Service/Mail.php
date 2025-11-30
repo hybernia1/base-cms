@@ -34,6 +34,8 @@ class Mail
             $mail->Password   = $config['password'];
             $mail->SMTPSecure = $config['encryption'] ?: PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port       = $config['port'] ?: 587;
+            $mail->CharSet    = 'UTF-8';
+            $mail->Encoding   = 'base64';
 
             $mail->setFrom($config['from_email'], $config['from_name']);
             $mail->addAddress($to);

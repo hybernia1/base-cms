@@ -35,12 +35,16 @@ class TermController extends BaseAdminController
 
         $preferredType = trim($_GET['type'] ?? '');
         $definitions = TermType::definitions();
+        $typeLocked = $preferredType !== '' && isset($definitions[$preferredType]);
+
         if ($preferredType === '' || !isset($definitions[$preferredType])) {
             $preferredType = array_key_first($definitions) ?: 'tag';
         }
 
         $this->render('admin/terms/form.twig', [
             'types' => TermType::all(),
+            'type_locked' => $typeLocked,
+            'type_label' => $definitions[$preferredType]['label'] ?? $preferredType,
             'values' => [
                 'name' => '',
                 'slug' => '',
@@ -99,8 +103,12 @@ class TermController extends BaseAdminController
             exit;
         }
 
+        $definitions = TermType::definitions();
+
         $this->render('admin/terms/form.twig', [
             'types' => TermType::all(),
+            'type_locked' => true,
+            'type_label' => $definitions[$term->type]['label'] ?? $term->type,
             'values' => [
                 'name' => $term->name,
                 'slug' => $term->slug,
@@ -126,7 +134,7 @@ class TermController extends BaseAdminController
             exit;
         }
 
-        $data = $this->sanitizeInput();
+        $data = $this->sanitizeInput($term->type);
         $errors = $this->validate($data, (int) $term->id);
 
         if ($errors) {
@@ -200,12 +208,12 @@ class TermController extends BaseAdminController
         ]);
     }
 
-    private function sanitizeInput(): array
+    private function sanitizeInput(?string $forcedType = null): array
     {
         return [
             'name' => trim($_POST['name'] ?? ''),
             'slug' => trim($_POST['slug'] ?? ''),
-            'type' => trim($_POST['type'] ?? ''),
+            'type' => $forcedType !== null ? $forcedType : trim($_POST['type'] ?? ''),
             'description' => trim($_POST['description'] ?? ''),
         ];
     }
@@ -220,6 +228,18 @@ class TermController extends BaseAdminController
 
         if ($data['type'] === '' || !TermType::exists($data['type'])) {
             $errors['type'] = 'Vyber platný typ.';
+        }
+
+        if ($data['name'] !== '' && empty($errors['type'])) {
+            $existingName = R::findOne(
+                'term',
+                ' name = ? AND type = ? AND id <> ? ',
+                [$data['name'], $data['type'], $ignoreId]
+            );
+
+            if ($existingName) {
+                $errors['name'] = 'Term se stejným názvem už v tomto typu existuje. Použij ho místo vytváření duplicit.';
+            }
         }
 
         $slugSource = $data['slug'] !== '' ? $data['slug'] : $data['name'];

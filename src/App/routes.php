@@ -21,6 +21,17 @@ $router->get('/', 'App\\Controller\\Front\\HomeController@index');
 $router->get('/register', 'App\\Controller\\Front\\AuthController@registerForm');
 $router->post('/register', 'App\\Controller\\Front\\AuthController@register');
 
+foreach (ContentType::definitions() as $definition) {
+    $slug = $definition['slug'];
+    $router->get('/' . $slug, function () use ($slug) {
+        (new \App\Controller\Front\HomeController())->listByType($slug);
+    });
+
+    $router->get('/' . $slug . '/([^/]+)', function ($contentSlug) use ($slug) {
+        (new \App\Controller\Front\ContentController())->show($slug, $contentSlug);
+    });
+}
+
 // ADMIN login – veřejné
 $router->get('/admin/login', 'App\\Controller\\Admin\\AuthController@loginForm');
 $router->post('/admin/login', 'App\\Controller\\Admin\\AuthController@login');

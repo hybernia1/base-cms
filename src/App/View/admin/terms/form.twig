@@ -29,11 +29,16 @@
 
             <div class="mb-3">
                 <label for="type" class="form-label">Typ termu</label>
-                <select name="type" id="type" class="form-select {% if errors.type %}is-invalid{% endif %}">
-                    {% for key, label in types %}
-                        <option value="{{ key }}" {% if values.type == key %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
+                {% if type_locked %}
+                    <div class="form-control-plaintext fw-semibold">{{ type_label|default(types[values.type]) }}</div>
+                    <input type="hidden" name="type" value="{{ values.type }}">
+                {% else %}
+                    <select name="type" id="type" class="form-select {% if errors.type %}is-invalid{% endif %}">
+                        {% for key, label in types %}
+                            <option value="{{ key }}" {% if values.type == key %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
                 {% if errors.type %}
                     <div class="invalid-feedback">{{ errors.type }}</div>
                 {% endif %}

@@ -17,7 +17,19 @@ class ContentController extends BaseAdminController
 
         [$typeKey, $definition] = $this->resolveType($slug);
 
-        $items = R::findAll('content', ' type = ? ORDER BY updated_at DESC ', [$typeKey]);
+        $statusFilter = trim($_GET['status'] ?? '');
+        $allowedStatuses = ['published', 'draft'];
+        $status = in_array($statusFilter, $allowedStatuses, true) ? $statusFilter : null;
+
+        $query = ' type = ? ';
+        $params = [$typeKey];
+
+        if ($status !== null) {
+            $query .= ' AND status = ? ';
+            $params[] = $status;
+        }
+
+        $items = R::findAll('content', $query . ' ORDER BY updated_at DESC ', $params);
 
         $this->render('admin/content/index.twig', [
             'items' => $items,
@@ -25,6 +37,7 @@ class ContentController extends BaseAdminController
             'current_menu' => $definition['slug'],
             'current_type' => $definition,
             'all_type_definitions' => ContentType::definitions(),
+            'current_status' => $status ?? 'all',
         ]);
     }
 
@@ -231,7 +244,6 @@ class ContentController extends BaseAdminController
 
         $name = trim($_POST['name'] ?? '');
         $termType = trim($_POST['type'] ?? '');
-        $slugValue = trim($_POST['slug'] ?? '');
 
         if ($name === '') {
             return $this->jsonError('Název je povinný.');
@@ -241,10 +253,28 @@ class ContentController extends BaseAdminController
             return $this->jsonError('Vyber platný typ termu.');
         }
 
-        $slugValue = $slugValue === '' ? Slugger::slugify($name) : Slugger::slugify($slugValue);
+        $slugValue = Slugger::slugify($name);
 
         if ($slugValue === '') {
-            return $this->jsonError('Slug je neplatný nebo již existuje.');
+            return $this->jsonError('Název je neplatný.');
+        }
+
+        $existing = R::findOne(
+            'term',
+            ' (slug = ? OR name = ?) AND type = ? ',
+            [$slugValue, $name, $termType]
+        );
+
+        if ($existing) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'id' => $existing->id,
+                'name' => $existing->name,
+                'type' => $existing->type,
+                'type_label' => $allowedTypes[$existing->type]['label'] ?? $existing->type,
+                'existing' => true,
+            ]);
+            exit;
         }
 
         $slugValue = Slugger::uniqueForTerm($slugValue, $termType);

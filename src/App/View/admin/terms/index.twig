@@ -15,27 +15,6 @@
         <a href="/admin/terms/create{% if current_term_type %}?type={{ current_term_type.key }}{% endif %}" class="btn btn-primary">Nový term</a>
     </div>
 
-    <form method="get" class="row gy-2 gx-3 align-items-center mb-3">
-        <div class="col-md-6">
-            <label class="form-label" for="termFilter">Hledat podle názvu nebo slugu</label>
-            <div class="input-group">
-                <input type="text" class="form-control" id="termFilter" name="q" value="{{ search_query }}" placeholder="Např. značka">
-                <button class="btn btn-outline-secondary" type="submit">Filtrovat</button>
-                {% if search_query %}
-                    <a class="btn btn-outline-danger" href="{% if current_term_type_key %}/admin/terms/type/{{ current_term_type_key }}{% else %}/admin/terms{% endif %}">Vymazat</a>
-                {% endif %}
-            </div>
-        </div>
-        <div class="col-md-3">
-            <label class="form-label" for="termsPerPage">Na stránku</label>
-            <select class="form-select" id="termsPerPage" name="per_page" onchange="this.form.submit()">
-                {% for option in [10, 20, 50] %}
-                    <option value="{{ option }}" {% if pagination.per_page == option %}selected{% endif %}>{{ option }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </form>
-
     {% if items is empty %}
         <div class="alert alert-info">Zatím zde nejsou žádné termy.</div>
     {% else %}
@@ -69,7 +48,7 @@
                             <td>{{ item.updated_at|date('j. n. Y H:i') }}</td>
                             <td class="text-end">
                                 <a href="/admin/terms/{{ item.id }}/edit" class="btn btn-sm btn-outline-primary">Upravit</a>
-                                <form action="/admin/terms/{{ item.id }}/delete" method="post" class="d-inline" data-confirm="Opravdu smazat tento term?" data-ajax data-ajax-remove="tr">
+                                <form action="/admin/terms/{{ item.id }}/delete" method="post" class="d-inline" data-confirm="Opravdu smazat tento term?">
                                     <button class="btn btn-sm btn-outline-danger" type="submit">Smazat</button>
                                 </form>
                             </td>
@@ -78,7 +57,5 @@
                 </tbody>
             </table>
         </div>
-        {% set termBasePath = current_term_type_key ? '/admin/terms/type/' ~ current_term_type_key : '/admin/terms' %}
-        {% include 'admin/partials/pagination.twig' with { pagination: pagination, filters: filters, base_path: termBasePath } %}
     {% endif %}
 {% endblock %}

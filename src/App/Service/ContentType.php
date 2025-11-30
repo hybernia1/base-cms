@@ -2,6 +2,7 @@
 namespace App\Service;
 
 use App\Service\Setting;
+use App\Service\Slugger;
 
 class ContentType
 {
@@ -88,11 +89,18 @@ class ContentType
                     continue;
                 }
 
+                $slug = Slugger::slugify(trim((string) ($item['slug'] ?? $key)) ?: $key);
+                if ($slug === '') {
+                    $slug = $key;
+                }
+
+                $slug = Slugger::uniqueInCollection($slug, array_column($valid, 'slug'));
+
                 $valid[$key] = [
                     'key' => $key,
                     'name' => trim((string) ($item['name'] ?? $key)) ?: $key,
                     'plural_name' => trim((string) ($item['plural_name'] ?? ($item['menu_label'] ?? $key))) ?: $key,
-                    'slug' => trim((string) ($item['slug'] ?? $key)) ?: $key,
+                    'slug' => $slug,
                     'menu_label' => trim((string) ($item['menu_label'] ?? ($item['plural_name'] ?? $key))) ?: $key,
                 ];
             }

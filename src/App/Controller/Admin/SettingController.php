@@ -6,6 +6,7 @@ use App\Service\Flash;
 use App\Service\Setting;
 use App\Service\ContentType;
 use App\Service\TermType;
+use App\Service\Slugger;
 
 class SettingController extends BaseAdminController
 {
@@ -81,11 +82,18 @@ class SettingController extends BaseAdminController
                 continue;
             }
 
+            $rawSlug = trim((string) ($slugs[$index] ?? $key)) ?: $key;
+            $slug = Slugger::slugify($rawSlug);
+            if ($slug === '') {
+                $slug = Slugger::slugify($key) ?: $key;
+            }
+            $slug = Slugger::uniqueInCollection($slug, array_column($result, 'slug'));
+
             $result[] = [
                 'key' => $key,
                 'name' => trim((string) ($names[$index] ?? $key)) ?: $key,
                 'plural_name' => trim((string) ($pluralNames[$index] ?? $key)) ?: $key,
-                'slug' => trim((string) ($slugs[$index] ?? $key)) ?: $key,
+                'slug' => $slug,
                 'menu_label' => trim((string) ($menuLabels[$index] ?? ($pluralNames[$index] ?? $key))) ?: $key,
             ];
         }

@@ -1,0 +1,47 @@
+{% extends 'admin/layout.twig' %}
+
+{% set current_menu = 'terms' %}
+
+{% block title %}Termy | Administrace{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h3 mb-0">Termy</h1>
+        <a href="/admin/terms/create" class="btn btn-primary">Nový term</a>
+    </div>
+
+    {% if items is empty %}
+        <div class="alert alert-info">Zatím zde nejsou žádné termy.</div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Název</th>
+                        <th>Typ</th>
+                        <th>Slug</th>
+                        <th>Upraveno</th>
+                        <th class="text-end">Akce</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                        <tr>
+                            <td class="fw-semibold">{{ item.name }}</td>
+                            <td>{{ types[item.type]|default(item.type) }}</td>
+                            <td><code>{{ item.slug }}</code></td>
+                            <td>{{ item.updated_at|date('j. n. Y H:i') }}</td>
+                            <td class="text-end">
+                                <a href="/admin/terms/{{ item.id }}/edit" class="btn btn-sm btn-outline-primary">Upravit</a>
+                                <form action="/admin/terms/{{ item.id }}/delete" method="post" class="d-inline"
+                                      onsubmit="return confirm('Opravdu smazat?');">
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">Smazat</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}

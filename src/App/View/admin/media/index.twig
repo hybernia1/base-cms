@@ -244,19 +244,6 @@
         mediaModal.show();
     };
 
-    const parseJsonResponse = async (response) => {
-        const clone = response.clone();
-        try {
-            return await response.json();
-        } catch (error) {
-            const text = await clone.text();
-            if (text) {
-                throw new Error(text);
-            }
-            throw error;
-        }
-    };
-
     const saveMediaDetails = async (forceWebp = false) => {
         if (!mediaForm) return;
         const id = mediaForm.dataset.mediaId;
@@ -278,7 +265,7 @@
                 },
             });
 
-            const result = await parseJsonResponse(response);
+            const result = await response.json();
             if (!response.ok || result.error) {
                 throw new Error(result.error || 'Uložení se nezdařilo.');
             }

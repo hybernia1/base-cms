@@ -56,54 +56,49 @@ class MediaController extends BaseAdminController
     {
         Auth::requireRole(['admin', 'editor']);
 
-        try {
-            $media = R::load('media', (int) $id);
-            if (!$media || !$media->id) {
-                return $this->jsonError('Soubor nebyl nalezen.', 404);
-            }
+        $media = R::load('media', (int) $id);
+        if (!$media || !$media->id) {
+            return $this->jsonError('Soubor nebyl nalezen.', 404);
+        }
 
-            $alt = trim($_POST['alt'] ?? '');
-            $convertToWebp = isset($_POST['convert_webp']) && $_POST['convert_webp'] === '1';
+        $alt = trim($_POST['alt'] ?? '');
+        $convertToWebp = isset($_POST['convert_webp']) && $_POST['convert_webp'] === '1';
 
-            $messages = [];
+        $messages = [];
 
-            if ($media->alt !== $alt) {
-                $media->alt = $alt;
-                $messages[] = 'Alt text byl aktualizován.';
-            }
+        if ($media->alt !== $alt) {
+            $media->alt = $alt;
+            $messages[] = 'Alt text byl aktualizován.';
+        }
 
-            if ($convertToWebp) {
-                if ($media->webp_filename) {
-                    $messages[] = 'WebP varianta už existuje.';
-                } else {
-                    [$webpFilename, $error] = $this->createWebpVariant($media);
-                    if ($error) {
-                        return $this->jsonError($error);
-                    }
+        if ($convertToWebp) {
+            if ($media->webp_filename) {
+                $messages[] = 'WebP varianta už existuje.';
+            } else {
+                [$webpFilename, $error] = $this->createWebpVariant($media);
+                if ($error) {
+                    return $this->jsonError($error);
+                }
 
-                    if ($webpFilename) {
-                        $media->webp_filename = $webpFilename;
-                        $messages[] = 'WebP varianta byla vytvořena.';
-                    }
+                if ($webpFilename) {
+                    $media->webp_filename = $webpFilename;
+                    $messages[] = 'WebP varianta byla vytvořena.';
                 }
             }
-
-            $media->updated_at = date('Y-m-d H:i:s');
-            R::store($media);
-
-            return $this->jsonResponse([
-                'id' => (int) $media->id,
-                'alt' => $media->alt,
-                'webp_filename' => $media->webp_filename,
-                'filename' => $media->filename,
-                'path' => '/' . ltrim($media->path, '/'),
-                'preview_url' => '/' . ltrim($media->path, '/') . '/' . ($media->webp_filename ?: $media->filename),
-                'message' => $messages ? implode(' ', $messages) : 'Změny byly uloženy.',
-            ]);
-        } catch (\Throwable $exception) {
-            error_log('Media update failed: ' . $exception->getMessage());
-            return $this->jsonError('Nastala chyba při ukládání média. Zkuste to prosím znovu.');
         }
+
+        $media->updated_at = date('Y-m-d H:i:s');
+        R::store($media);
+
+        return $this->jsonResponse([
+            'id' => (int) $media->id,
+            'alt' => $media->alt,
+            'webp_filename' => $media->webp_filename,
+            'filename' => $media->filename,
+            'path' => '/' . ltrim($media->path, '/'),
+            'preview_url' => '/' . ltrim($media->path, '/') . '/' . ($media->webp_filename ?: $media->filename),
+            'message' => $messages ? implode(' ', $messages) : 'Změny byly uloženy.',
+        ]);
     }
 
     public function delete($id)

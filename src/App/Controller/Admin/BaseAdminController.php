@@ -29,43 +29,45 @@ abstract class BaseAdminController
         ], $context));
     }
 
-    protected function buildPagination(int $totalItems, int $perPage = 15): array
-    {
-        $perPage = max(1, $perPage);
-        $pages = max(1, (int) ceil($totalItems / $perPage));
-        $page = max(1, (int) ($_GET['page'] ?? 1));
-        $page = min($page, $pages);
-        $offset = ($page - 1) * $perPage;
+   protected function buildPagination(int $totalItems, int $perPage = 15): array
+{
+    $perPage = max(1, $perPage);
+    $pages = max(1, (int) ceil($totalItems / $perPage));
+    $page = max(1, (int) ($_GET['page'] ?? 1));
+    $page = min($page, $pages);
+    $offset = ($page - 1) * $perPage;
 
-        $queryParams = $_GET;
-        unset($queryParams['page']);
-        $basePath = strtok($_SERVER['REQUEST_URI'] ?? '', '?') ?: '';
+    $queryParams = $_GET;
+    unset($queryParams['page'], $queryParams['ajax']); // <<< přidej ajax
 
-        $buildUrl = function (int $targetPage) use ($basePath, $queryParams): string {
-            $query = http_build_query(array_merge($queryParams, ['page' => $targetPage]));
-            return $query ? $basePath . '?' . $query : $basePath;
-        };
+    $basePath = strtok($_SERVER['REQUEST_URI'] ?? '', '?') ?: '';
 
-        $pageUrls = [];
-        for ($i = 1; $i <= $pages; $i++) {
-            $pageUrls[$i] = $buildUrl($i);
-        }
+    $buildUrl = function (int $targetPage) use ($basePath, $queryParams): string {
+        $query = http_build_query(array_merge($queryParams, ['page' => $targetPage]));
+        return $query ? $basePath . '?' . $query : $basePath;
+    };
 
-        return [
-            'page' => $page,
-            'pages' => $pages,
-            'per_page' => $perPage,
-            'total' => $totalItems,
-            'offset' => $offset,
-            'has_prev' => $page > 1,
-            'has_next' => $page < $pages,
-            'prev_url' => $page > 1 ? $buildUrl($page - 1) : null,
-            'next_url' => $page < $pages ? $buildUrl($page + 1) : null,
-            'page_numbers' => range(1, $pages),
-            'page_urls' => $pageUrls,
-            'current_url' => $buildUrl($page),
-        ];
+    $pageUrls = [];
+    for ($i = 1; $i <= $pages; $i++) {
+        $pageUrls[$i] = $buildUrl($i);
     }
+
+    return [
+        'page'         => $page,
+        'pages'        => $pages,
+        'per_page'     => $perPage,
+        'total'        => $totalItems,
+        'offset'       => $offset,
+        'has_prev'     => $page > 1,
+        'has_next'     => $page < $pages,
+        'prev_url'     => $page > 1 ? $buildUrl($page - 1) : null,
+        'next_url'     => $page < $pages ? $buildUrl($page + 1) : null,
+        'page_numbers' => range(1, $pages),
+        'page_urls'    => $pageUrls,
+        'current_url'  => $buildUrl($page),
+    ];
+}
+
 
     protected function wantsJson(): bool
     {

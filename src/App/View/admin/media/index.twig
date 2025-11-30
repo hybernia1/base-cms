@@ -1,0 +1,57 @@
+{% extends 'admin/layout.twig' %}
+
+{% set current_menu = 'media' %}
+
+{% block title %}Média | Administrace{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h4 mb-0">Média</h1>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">Nahrát soubor</div>
+        <div class="card-body">
+            <form method="post" action="/admin/media/upload" enctype="multipart/form-data" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label" for="file">Soubor</label>
+                    <input type="file" name="file" id="file" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="alt">Alt text / popisek</label>
+                    <input type="text" name="alt" id="alt" class="form-control" placeholder="Volitelný popis">
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary" type="submit">Nahrát</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-md-3 g-3">
+        {% for item in items %}
+            <div class="col">
+                <div class="card h-100">
+                    {% if item.is_image %}
+                        <img src="/{{ item.path }}/{{ item.webp_filename ?: item.filename }}" class="card-img-top" alt="{{ item.alt }}">
+                    {% else %}
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 160px;">
+                            <span class="text-muted">{{ item.filename }}</span>
+                        </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h6 class="card-title small mb-1">{{ item.original_name ?: item.filename }}</h6>
+                        <div class="text-muted small">{{ item.mime_type }} · {{ item.size }} B</div>
+                        {% if item.webp_filename %}
+                            <div class="text-success small">WebP varianta: {{ item.webp_filename }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col">
+                <div class="alert alert-info">Zatím žádné soubory.</div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

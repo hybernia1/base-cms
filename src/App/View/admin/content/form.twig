@@ -423,6 +423,7 @@
             const whitelist = termOptionsByType[typeKey] || [];
             const tagify = new Tagify(input, {
                 whitelist,
+                tagTextProp: 'name',
                 enforceWhitelist: false,
                 dropdown: {
                     enabled: 0,

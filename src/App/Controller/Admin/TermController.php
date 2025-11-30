@@ -4,6 +4,7 @@ namespace App\Controller\Admin;
 use App\Service\Auth;
 use App\Service\Flash;
 use App\Service\TermType;
+use App\Service\ContentType;
 use RedBeanPHP\R as R;
 
 class TermController extends BaseAdminController
@@ -13,10 +14,15 @@ class TermController extends BaseAdminController
         Auth::requireRole(['admin', 'editor']);
 
         $items = R::findAll('term', ' ORDER BY updated_at DESC ');
+        $termTypeDefinitions = TermType::definitions();
+        foreach ($items as $item) {
+            $item->allowed_for = $termTypeDefinitions[$item->type]['content_types'] ?? [];
+        }
 
         $this->render('admin/terms/index.twig', [
             'items' => $items,
             'types' => TermType::all(),
+            'content_types' => ContentType::definitions(),
             'current_menu' => 'terms',
         ]);
     }
@@ -64,6 +70,7 @@ class TermController extends BaseAdminController
         $term->slug = $data['slug'];
         $term->type = $data['type'];
         $term->description = $data['description'];
+        $term->content_types = null;
         $term->created_at = date('Y-m-d H:i:s');
         $term->updated_at = date('Y-m-d H:i:s');
         R::store($term);
@@ -131,6 +138,7 @@ class TermController extends BaseAdminController
         $term->slug = $data['slug'];
         $term->type = $data['type'];
         $term->description = $data['description'];
+        $term->content_types = null;
         $term->updated_at = date('Y-m-d H:i:s');
         R::store($term);
 

@@ -1,0 +1,46 @@
+{% macro pagination(pagination) %}
+    {% if pagination.pages > 1 %}
+        <nav aria-label="Stránkování" class="mt-3">
+            <ul class="pagination justify-content-center">
+                <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+                    <a class="page-link" href="{{ pagination.prev_url ?: '#' }}" aria-label="Předchozí">&laquo;</a>
+                </li>
+
+                {% for page in pagination.page_numbers %}
+                    <li class="page-item {% if page == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="{{ pagination.page_urls[page] ?? '#' }}">{{ page }}</a>
+                    </li>
+                {% endfor %}
+
+                <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+                    <a class="page-link" href="{{ pagination.next_url ?: '#' }}" aria-label="Další">&raquo;</a>
+                </li>
+            </ul>
+        </nav>
+    {% endif %}
+{% endmacro %}
+
+{% macro actions(actions, size = 'sm') %}
+    <div class="btn-group btn-group-{{ size }}" role="group">
+        {% for action in actions %}
+            {% if action.type == 'link' %}
+                <a href="{{ action.href }}"
+                   class="btn btn-outline-{{ action.variant|default('secondary') }}"
+                   {% if action.title %}title="{{ action.title }}"{% endif %}>
+                    {% if action.icon %}<i class="bi {{ action.icon }} me-1"></i>{% endif %}
+                    {{ action.label }}
+                </a>
+            {% elseif action.type == 'form' %}
+                <form method="{{ action.method|default('post') }}"
+                      action="{{ action.action }}"
+                      class="d-inline"
+                      {% if action.confirm %}data-confirm="{{ action.confirm }}"{% endif %}>
+                    <button type="submit" class="btn btn-outline-{{ action.variant|default('secondary') }}">
+                        {% if action.icon %}<i class="bi {{ action.icon }} me-1"></i>{% endif %}
+                        {{ action.label }}
+                    </button>
+                </form>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endmacro %}

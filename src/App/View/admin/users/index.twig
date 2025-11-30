@@ -1,6 +1,7 @@
 {% extends 'admin/layout.twig' %}
 
 {% set current_menu = 'users' %}
+{% import 'admin/partials/components.twig' as ui %}
 
 {% block title %}Uživatelé | Administrace{% endblock %}
 
@@ -37,20 +38,35 @@
                                     {% endif %}
                                 </td>
                                 <td class="text-end">
-                                    <a href="/admin/users/{{ user.id }}/edit" class="btn btn-sm btn-outline-secondary">Upravit</a>
-                                    {% if user.is_banned %}
-                                        <form method="post" action="/admin/users/{{ user.id }}/unban" class="d-inline">
-                                            <button type="submit" class="btn btn-sm btn-outline-success">Odblokovat</button>
-                                        </form>
-                                    {% else %}
-                                        <form method="post" action="/admin/users/{{ user.id }}/ban" class="d-inline">
-                                            <input type="text" name="reason" class="form-control form-control-sm d-inline w-auto" placeholder="Důvod" aria-label="Důvod blokace">
-                                            <button type="submit" class="btn btn-sm btn-outline-warning">Zablokovat</button>
-                                        </form>
-                                    {% endif %}
-                                    <form method="post" action="/admin/users/{{ user.id }}/delete" class="d-inline" data-confirm="Opravdu smazat tohoto uživatele?">
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>
-                                    </form>
+                                    <div class="d-flex flex-wrap justify-content-end gap-2 align-items-center">
+                                        {{ ui.actions([
+                                            {
+                                                type: 'link',
+                                                href: '/admin/users/' ~ user.id ~ '/edit',
+                                                label: 'Upravit',
+                                                variant: 'primary',
+                                                icon: 'bi-pencil'
+                                            },
+                                            {
+                                                type: 'form',
+                                                action: '/admin/users/' ~ user.id ~ '/delete',
+                                                label: 'Smazat',
+                                                variant: 'danger',
+                                                confirm: 'Opravdu smazat tohoto uživatele?',
+                                                icon: 'bi-trash'
+                                            }
+                                        ]) }}
+                                        {% if user.is_banned %}
+                                            <form method="post" action="/admin/users/{{ user.id }}/unban" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-outline-success">Odblokovat</button>
+                                            </form>
+                                        {% else %}
+                                            <form method="post" action="/admin/users/{{ user.id }}/ban" class="d-inline d-flex align-items-center gap-2">
+                                                <input type="text" name="reason" class="form-control form-control-sm w-auto" placeholder="Důvod" aria-label="Důvod blokace">
+                                                <button type="submit" class="btn btn-sm btn-outline-warning">Zablokovat</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -63,5 +79,6 @@
                 </table>
             </div>
         </div>
+    {{ ui.pagination(pagination) }}
     </div>
 {% endblock %}

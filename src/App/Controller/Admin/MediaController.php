@@ -12,11 +12,20 @@ class MediaController extends BaseAdminController
     public function index()
     {
         Auth::requireRole(['admin', 'editor']);
-        $items = R::findAll('media', ' ORDER BY created_at DESC LIMIT 200 ');
+
+        $total = R::count('media');
+        $pagination = $this->buildPagination((int) $total, 18);
+
+        $items = R::findAll(
+            'media',
+            ' ORDER BY created_at DESC LIMIT ? OFFSET ? ',
+            [$pagination['per_page'], $pagination['offset']]
+        );
 
         $this->render('admin/media/index.twig', [
             'items' => $items,
             'current_menu' => 'media',
+            'pagination' => $pagination,
         ]);
     }
 

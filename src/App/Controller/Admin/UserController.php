@@ -18,12 +18,20 @@ class UserController extends BaseAdminController
     {
         Auth::requireRole('admin');
 
-        $users = R::findAll('user', ' ORDER BY email ASC ');
+        $total = R::count('user');
+        $pagination = $this->buildPagination((int) $total, 15);
+
+        $users = R::findAll(
+            'user',
+            ' ORDER BY email ASC LIMIT ? OFFSET ? ',
+            [$pagination['per_page'], $pagination['offset']]
+        );
 
         $this->render('admin/users/index.twig', [
             'users' => $users,
             'roles' => self::ROLES,
             'current_menu' => 'users',
+            'pagination' => $pagination,
         ]);
     }
 

@@ -88,7 +88,7 @@ class TermController extends BaseAdminController
         R::store($term);
 
         Flash::addSuccess('Term byl vytvořen.');
-        header('Location: /admin/terms');
+        header('Location: ' . $this->redirectToList($term->type, $_POST['redirect'] ?? null));
         exit;
     }
 
@@ -159,7 +159,7 @@ class TermController extends BaseAdminController
         R::store($term);
 
         Flash::addSuccess('Term byl upraven.');
-        header('Location: /admin/terms');
+        header('Location: ' . $this->redirectToList($term->type, $_POST['redirect'] ?? null));
         exit;
     }
 
@@ -169,14 +169,26 @@ class TermController extends BaseAdminController
 
         $term = $this->findTerm($id);
         if (!$term) {
+            if ($this->wantsJson()) {
+                $this->jsonError('Term nebyl nalezen.', 404);
+            }
+
             Flash::addError('Term nebyl nalezen.');
             header('Location: /admin/terms');
             exit;
         }
 
         R::trash($term);
+
+        if ($this->wantsJson()) {
+            $this->jsonResponse([
+                'success' => true,
+                'message' => 'Term byl smazán.',
+            ]);
+        }
+
         Flash::addSuccess('Term byl smazán.');
-        header('Location: /admin/terms');
+        header('Location: ' . $this->redirectToList($term->type, $_POST['redirect'] ?? null));
         exit;
     }
 
@@ -204,6 +216,21 @@ class TermController extends BaseAdminController
         );
         foreach ($items as $item) {
             $item->allowed_for = $termTypeDefinitions[$item->type]['content_types'] ?? [];
+        }
+
+        if ($this->wantsJson()) {
+            $html = $this->twig->render('admin/terms/_list.twig', [
+                'items' => $items,
+                'types' => TermType::all(),
+                'content_types' => $contentTypeDefinitions,
+                'current_term_type' => $typeFilter ? ($termTypeDefinitions[$typeFilter] ?? null) : null,
+                'pagination' => $pagination,
+            ]);
+
+            $this->jsonResponse([
+                'html' => $html,
+                'state_url' => $pagination['current_url'],
+            ]);
         }
 
         $this->render('admin/terms/index.twig', [
@@ -260,6 +287,24 @@ class TermController extends BaseAdminController
         }
 
         return $errors;
+    }
+
+    private function redirectToList(string $type, ?string $redirect): string
+    {
+        $default = '/admin/terms/type/' . $type;
+
+        if (!$redirect) {
+            return $default;
+        }
+
+        $parsed = parse_url($redirect);
+        $path = $parsed['path'] ?? '';
+        if (strpos($path, '/admin/terms') !== 0) {
+            return $default;
+        }
+
+        $query = isset($parsed['query']) ? '?' . $parsed['query'] : '';
+        return $path . $query;
     }
 
     private function findTerm($id)

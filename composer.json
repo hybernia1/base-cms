@@ -7,8 +7,7 @@
         "twig/twig": "^3.11",
         "bramus/router": "^1.6",
         "phpmailer/phpmailer": "^7.0",
-                   "verot/class.upload.php": "*"
-
+        "verot/class.upload.php": "*"
     },
     "autoload": {
         "psr-4": {

@@ -7,7 +7,7 @@
 {% block body %}
     <h1 class="h3 mb-4">{{ heading }}</h1>
 
-    <form method="post" action="{{ form_action }}" class="card shadow-sm mb-3">
+    <form method="post" action="{{ form_action }}" class="card shadow-sm mb-3" enctype="multipart/form-data">
         <div class="card-body p-4">
             <div class="mb-3">
                 <label for="title" class="form-label">Název</label>
@@ -37,6 +37,30 @@
                 {% if errors.type %}
                     <div class="invalid-feedback">{{ errors.type }}</div>
                 {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Náhledový obrázek</label>
+                <input type="file" name="thumbnail_upload" class="form-control mb-2">
+                <select name="thumbnail_id" class="form-select">
+                    <option value="">Vyberte z médií</option>
+                    {% for mediaItem in media %}
+                        {% if mediaItem.is_image %}
+                            <option value="{{ mediaItem.id }}" {% if values.thumbnail_id == mediaItem.id %}selected{% endif %}>
+                                {{ mediaItem.original_name ?: mediaItem.filename }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
+                <div class="form-text">Můžete nahrát nový obrázek nebo vybrat existující.</div>
+                {% if errors.thumbnail %}
+                    <div class="text-danger small">{{ errors.thumbnail }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="thumbnail_alt" class="form-label">Alt text</label>
+                <input type="text" name="thumbnail_alt" id="thumbnail_alt" value="{{ values.thumbnail_alt }}" class="form-control">
             </div>
 
             <div class="mb-3">

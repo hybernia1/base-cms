@@ -1,0 +1,46 @@
+{% extends 'admin/layout.twig' %}
+
+{% set current_menu = 'email_templates' %}
+
+{% block title %}E-mailové šablony | Administrace{% endblock %}
+
+{% block body %}
+    <div class="d-flex align-items-center mb-3">
+        <h1 class="h4 mb-0">E-mailové šablony</h1>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Událost</th>
+                        <th>Předmět</th>
+                        <th class="text-end">Akce</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for template in templates %}
+                    <tr>
+                        <td>{{ template.event }}</td>
+                        <td>{{ template.subject }}</td>
+                        <td class="text-end">
+                            <a href="/admin/email-templates/{{ template.event }}" class="btn btn-sm btn-outline-secondary">Upravit</a>
+                        </td>
+                    </tr>
+                {% else %}
+                    {% for event, tpl in defaults %}
+                        <tr>
+                            <td>{{ event }}</td>
+                            <td>{{ tpl.subject }}</td>
+                            <td class="text-end">
+                                <a href="/admin/email-templates/{{ event }}" class="btn btn-sm btn-outline-secondary">Upravit</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

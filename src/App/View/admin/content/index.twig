@@ -11,13 +11,79 @@
         <a href="/admin/content/{{ current_type.slug }}/create" class="btn btn-primary">Nový {{ current_type.name|lower }}</a>
     </div>
 
-    <div class="ajax-block" data-ajax-container data-endpoint="/admin/content/{{ current_type.slug }}" data-current-url="{{ pagination.current_url }}">
-        {% include 'admin/content/_list.twig' with {
-            items: items,
-            types: types,
-            current_type: current_type,
-            current_status: current_status,
-            pagination: pagination
-        } only %}
-    </div>
+    <ul class="nav nav-pills mb-3">
+        <li class="nav-item">
+            <a class="nav-link {% if current_status == 'published' %}active{% endif %}" href="/admin/content/{{ current_type.slug }}?status=published">Publikované</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if current_status == 'draft' %}active{% endif %}" href="/admin/content/{{ current_type.slug }}?status=draft">Koncepty</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if current_status not in ['published','draft'] %}active{% endif %}" href="/admin/content/{{ current_type.slug }}">Vše</a>
+        </li>
+    </ul>
+
+    {% if items is empty %}
+        <div class="alert alert-info">
+            {% if current_status == 'published' %}
+                Zatím zde není žádný publikovaný obsah.
+            {% elseif current_status == 'draft' %}
+                Zatím zde nejsou žádné koncepty.
+            {% else %}
+                Zatím zde není žádný obsah.
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr>
+                        <th>Název</th>
+                        <th>Typ</th>
+                        <th>Stav</th>
+                        <th>Slug</th>
+                        <th>Upraveno</th>
+                        <th class="text-end">Akce</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                        <tr>
+                            <td class="fw-semibold">{{ item.title }}</td>
+                            <td>{{ types[item.type]|default(item.type) }}</td>
+                            <td>
+                                {% if item.status == 'published' %}
+                                    <span class="badge text-bg-success">Publikováno</span>
+                                {% else %}
+                                    <span class="badge text-bg-secondary">Draft</span>
+                                {% endif %}
+                            </td>
+                            <td><code>{{ item.slug }}</code></td>
+                            <td>{{ item.updated_at|date('j. n. Y H:i') }}</td>
+                            <td class="text-end">
+                                {{ ui.actions([
+                                    {
+                                        type: 'link',
+                                        href: '/admin/content/' ~ current_type.slug ~ '/' ~ item.id ~ '/edit',
+                                        label: 'Upravit',
+                                        variant: 'primary',
+                                        icon: 'bi-pencil'
+                                    },
+                                    {
+                                        type: 'form',
+                                        action: '/admin/content/' ~ current_type.slug ~ '/' ~ item.id ~ '/delete',
+                                        label: 'Smazat',
+                                        variant: 'danger',
+                                        confirm: 'Opravdu smazat tento obsah?',
+                                        icon: 'bi-trash'
+                                    }
+                                ]) }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {{ ui.pagination(pagination) }}
+    {% endif %}
 {% endblock %}

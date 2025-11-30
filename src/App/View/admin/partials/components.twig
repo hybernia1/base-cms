@@ -23,27 +23,32 @@
 {% macro actions(actions, size = 'sm') %}
     <div class="btn-group btn-group-{{ size }}" role="group">
         {% for action in actions %}
+            {% set tooltip = action.title ?: action.label %}
+
             {% if action.type == 'link' %}
                 <a href="{{ action.href }}"
                    class="btn btn-outline-{{ action.variant|default('secondary') }}"
-                   {% if action.title %}title="{{ action.title }}"{% endif %}>
-                    {% if action.icon %}<i class="bi {{ action.icon }} me-1"></i>{% endif %}
-                    {{ action.label }}
+                   title="{{ tooltip }}">
+                    {% if action.icon %}<i class="bi {{ action.icon }}"></i>{% endif %}
                 </a>
+
             {% elseif action.type == 'form' %}
                 <form method="{{ action.method|default('post') }}"
                       action="{{ action.action }}"
                       class="d-inline"
                       {% if action.ajax %}data-ajax-delete="1"{% endif %}
                       {% if action.confirm %}data-confirm="{{ action.confirm }}"{% endif %}>
+
                     {% if action.hidden is defined %}
                         {% for name, value in action.hidden %}
                             <input type="hidden" name="{{ name }}" value="{{ value }}">
                         {% endfor %}
                     {% endif %}
-                    <button type="submit" class="btn btn-outline-{{ action.variant|default('secondary') }}">
-                        {% if action.icon %}<i class="bi {{ action.icon }} me-1"></i>{% endif %}
-                        {{ action.label }}
+
+                    <button type="submit"
+                            class="btn btn-outline-{{ action.variant|default('secondary') }}"
+                            title="{{ tooltip }}">
+                        {% if action.icon %}<i class="bi {{ action.icon }}"></i>{% endif %}
                     </button>
                 </form>
             {% endif %}

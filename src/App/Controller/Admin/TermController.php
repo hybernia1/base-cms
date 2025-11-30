@@ -5,6 +5,7 @@ use App\Service\Auth;
 use App\Service\Flash;
 use App\Service\TermType;
 use App\Service\ContentType;
+use App\Service\Slugger;
 use RedBeanPHP\R as R;
 
 class TermController extends BaseAdminController
@@ -221,38 +222,16 @@ class TermController extends BaseAdminController
             $errors['type'] = 'Vyber platný typ.';
         }
 
-        if ($data['slug'] === '') {
-            $data['slug'] = $this->slugify($data['name']);
-        }
+        $slugSource = $data['slug'] !== '' ? $data['slug'] : $data['name'];
+        $data['slug'] = Slugger::slugify($slugSource);
 
         if ($data['slug'] === '') {
             $errors['slug'] = 'Slug musí být vyplněn.';
-        } elseif ($this->slugExists($data['slug'], $data['type'], $ignoreId)) {
-            $errors['slug'] = 'Slug je již použit pro tento typ.';
+        } elseif ($data['type'] !== '' && empty($errors['type'])) {
+            $data['slug'] = Slugger::uniqueForTerm($data['slug'], $data['type'], $ignoreId);
         }
 
         return $errors;
-    }
-
-    private function slugify(string $text): string
-    {
-        $text = strtolower(trim($text));
-        $text = preg_replace('~[^\pL\d]+~u', '-', $text);
-        $text = trim($text, '-');
-        return $text ?? '';
-    }
-
-    private function slugExists(string $slug, string $type, int $ignoreId): bool
-    {
-        $query = ' slug = ? AND type = ? ';
-        $params = [$slug, $type];
-
-        if ($ignoreId > 0) {
-            $query .= ' AND id != ? ';
-            $params[] = $ignoreId;
-        }
-
-        return (bool) R::findOne('term', $query, $params);
     }
 
     private function findTerm($id)

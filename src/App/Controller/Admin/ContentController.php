@@ -4,6 +4,7 @@ namespace App\Controller\Admin;
 use App\Service\Auth;
 use App\Service\ContentType;
 use App\Service\Flash;
+use App\Service\Slugger;
 use RedBeanPHP\R as R;
 use App\Service\Upload;
 use App\Service\TermType;
@@ -240,13 +241,13 @@ class ContentController extends BaseAdminController
             return $this->jsonError('Vyber platný typ termu.');
         }
 
-        if ($slugValue === '') {
-            $slugValue = $this->slugify($name);
-        }
+        $slugValue = $slugValue === '' ? Slugger::slugify($name) : Slugger::slugify($slugValue);
 
-        if ($slugValue === '' || $this->termSlugExists($slugValue, $termType)) {
+        if ($slugValue === '') {
             return $this->jsonError('Slug je neplatný nebo již existuje.');
         }
+
+        $slugValue = Slugger::uniqueForTerm($slugValue, $termType);
 
         $term = R::dispense('term');
         $term->name = $name;
@@ -293,14 +294,13 @@ class ContentController extends BaseAdminController
             $errors['type'] = 'Vyber platný typ obsahu.';
         }
 
-        if ($data['slug'] === '') {
-            $data['slug'] = $this->slugify($data['title']);
-        }
+        $slugSource = $data['slug'] !== '' ? $data['slug'] : $data['title'];
+        $data['slug'] = Slugger::slugify($slugSource);
 
         if ($data['slug'] === '') {
             $errors['slug'] = 'Slug musí být vyplněn.';
-        } elseif ($this->slugExists($data['slug'], $data['type'], $ignoreId)) {
-            $errors['slug'] = 'Slug je již použit pro tento typ obsahu.';
+        } elseif ($data['type'] !== '' && empty($errors['type'])) {
+            $data['slug'] = Slugger::uniqueForContent($data['slug'], $data['type'], $ignoreId);
         }
 
         $allowedStatuses = ['draft', 'published'];
@@ -320,27 +320,6 @@ class ContentController extends BaseAdminController
         }
 
         return $errors;
-    }
-
-    private function slugify(string $text): string
-    {
-        $text = strtolower(trim($text));
-        $text = preg_replace('~[^\pL\d]+~u', '-', $text);
-        $text = trim($text, '-');
-        return $text ?? '';
-    }
-
-    private function slugExists(string $slug, string $type, int $ignoreId): bool
-    {
-        $query = ' slug = ? AND type = ? ';
-        $params = [$slug, $type];
-
-        if ($ignoreId > 0) {
-            $query .= ' AND id != ? ';
-            $params[] = $ignoreId;
-        }
-
-        return (bool) R::findOne('content', $query, $params);
     }
 
     private function findContent($id)
@@ -532,11 +511,6 @@ class ContentController extends BaseAdminController
         }
 
         return [$typeKey, $definitions[$typeKey]];
-    }
-
-    private function termSlugExists(string $slug, string $type): bool
-    {
-        return (bool) R::findOne('term', ' slug = ? AND type = ? ', [$slug, $type]);
     }
 
     private function jsonError(string $message, int $status = 400)

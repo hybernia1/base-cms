@@ -48,7 +48,7 @@
                                             <button type="submit" class="btn btn-sm btn-outline-warning">Zablokovat</button>
                                         </form>
                                     {% endif %}
-                                    <form method="post" action="/admin/users/{{ user.id }}/delete" class="d-inline" onsubmit="return confirm('Opravdu smazat tohoto uživatele?');">
+                                    <form method="post" action="/admin/users/{{ user.id }}/delete" class="d-inline" data-confirm="Opravdu smazat tohoto uživatele?">
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>
                                     </form>
                                 </td>

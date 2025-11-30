@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <title>{% block title %}Administrace{% endblock %}</title>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 
     {# Bootstrap 5 #}
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -13,6 +13,10 @@
 
     <style>
         /* Layout adminu */
+        :root {
+            font-size: 15px;
+        }
+
         body {
             min-height: 100vh;
         }
@@ -23,19 +27,39 @@
         }
 
         .admin-sidebar {
-            width: 260px;
+            width: 240px;
             flex-shrink: 0;
         }
 
         .admin-content {
             flex: 1;
-            padding: 1.5rem;
+            padding: 1.25rem;
+        }
+
+        .card-body {
+            padding: 1.1rem;
+        }
+
+        .card-header {
+            padding: 0.85rem 1.1rem;
         }
 
         /* Malé displeje: sidebar je offcanvas */
         @media (max-width: 991.98px) {
             .admin-sidebar {
                 display: none;
+            }
+
+            .admin-content {
+                padding: 1rem;
+            }
+
+            .navbar .btn {
+                padding: 0.35rem 0.75rem;
+            }
+
+            .navbar-brand {
+                font-size: 1rem;
             }
         }
 
@@ -55,6 +79,10 @@
         .menu-chevron.rotate {
             transform: rotate(90deg);
         }
+
+        .badge-webp {
+            font-size: 0.75rem;
+        }
     </style>
 
     {% block styles %}{% endblock %}
@@ -72,13 +100,16 @@
 
         <a class="navbar-brand" href="/admin">Admin</a>
 
-        <div class="d-flex ms-auto">
+        <div class="d-flex ms-auto gap-2">
             {% if app_user is defined and app_user %}
                 <span class="navbar-text me-3 d-none d-sm-inline">
                     {{ app_user.email }} ({{ app_user.role|default('') }})
                 </span>
             {% endif %}
-            <a href="/admin/logout" class="btn btn-outline-light btn-sm">Odhlásit</a>
+            <a href="/" class="btn btn-outline-light btn-sm" target="_blank" rel="noopener">Otevřít web</a>
+            <form action="/admin/logout" method="get" class="mb-0">
+                <button class="btn btn-light btn-sm" type="submit">Odhlásit</button>
+            </form>
         </div>
     </div>
 </nav>
@@ -373,7 +404,96 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@yaireo/tagify/dist/tagify.css">
+<script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
 <script>
+    const adminDialog = (() => {
+        const modalEl = document.getElementById('adminDialog');
+        const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+        const titleEl = modalEl?.querySelector('[data-role="dialog-title"]');
+        const messageEl = modalEl?.querySelector('[data-role="dialog-message"]');
+        const confirmBtn = modalEl?.querySelector('[data-role="dialog-confirm"]');
+        const cancelBtn = modalEl?.querySelector('[data-role="dialog-cancel"]');
+        let resolver = null;
+
+        const closeAndResolve = (value) => {
+            if (modal) {
+                modal.hide();
+            }
+            if (resolver) {
+                resolver(value);
+                resolver = null;
+            }
+        };
+
+        const open = ({
+            title = 'Potvrzení',
+            message = '',
+            confirmText = 'OK',
+            cancelText = '',
+            variant = 'primary',
+        }) => {
+            if (!modalEl || !modal) {
+                return Promise.resolve(false);
+            }
+
+            if (titleEl) titleEl.textContent = title;
+            if (messageEl) messageEl.textContent = message;
+
+            if (confirmBtn) {
+                confirmBtn.textContent = confirmText;
+                confirmBtn.className = 'btn btn-' + variant;
+            }
+
+            if (cancelBtn) {
+                if (cancelText) {
+                    cancelBtn.textContent = cancelText;
+                    cancelBtn.classList.remove('d-none');
+                } else {
+                    cancelBtn.classList.add('d-none');
+                }
+            }
+
+            return new Promise((resolve) => {
+                resolver = resolve;
+                modal.show();
+            });
+        };
+
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', () => closeAndResolve(true));
+        }
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', () => closeAndResolve(false));
+        }
+
+        if (modalEl) {
+            modalEl.addEventListener('hidden.bs.modal', () => closeAndResolve(false));
+        }
+
+        return {
+            confirm(message, options = {}) {
+                return open({
+                    message,
+                    title: options.title || 'Potvrzení',
+                    confirmText: options.confirmText || 'Ano',
+                    cancelText: options.cancelText || 'Ne',
+                    variant: options.variant || 'primary',
+                });
+            },
+            alert(message, options = {}) {
+                return open({
+                    message,
+                    title: options.title || 'Upozornění',
+                    confirmText: options.confirmText || 'OK',
+                    cancelText: '',
+                    variant: options.variant || 'primary',
+                });
+            },
+        };
+    })();
+
     document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.menu-toggle').forEach((toggle) => {
             const targetSelector = toggle.getAttribute('data-bs-target');
@@ -400,8 +520,41 @@
 
             updateIcon();
         });
+
+        document.querySelectorAll('form[data-confirm]').forEach((form) => {
+            form.addEventListener('submit', async (event) => {
+                if (form.dataset.confirmHandled === '1') {
+                    return;
+                }
+
+                event.preventDefault();
+                const message = form.getAttribute('data-confirm') || 'Opravdu pokračovat?';
+                const confirmed = await adminDialog.confirm(message, {variant: 'danger'});
+                if (confirmed) {
+                    form.dataset.confirmHandled = '1';
+                    form.submit();
+                }
+            });
+        });
     });
 </script>
+<div class="modal fade" id="adminDialog" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-role="dialog-title">Potvrzení</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0" data-role="dialog-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-role="dialog-cancel" data-bs-dismiss="modal">Zrušit</button>
+                <button type="button" class="btn btn-primary" data-role="dialog-confirm">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% block scripts %}{% endblock %}
 </body>
 </html>

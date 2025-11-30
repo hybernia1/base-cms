@@ -43,24 +43,6 @@
                 <label for="description" class="form-label">Popis</label>
                 <textarea name="description" id="description" rows="5" class="form-control">{{ values.description }}</textarea>
             </div>
-
-            <div class="mb-3">
-                <label class="form-label">Dostupné pro typy obsahu</label>
-                <div class="row g-2">
-                    {% for key, contentType in content_types %}
-                        <div class="col-md-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="content_types[]" value="{{ key }}" id="ct-{{ key }}" {% if key in values.content_types %}checked{% endif %}>
-                                <label class="form-check-label" for="ct-{{ key }}">{{ contentType.name }}</label>
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-                <div class="form-text">Pokud nic nevyberete, term bude dostupný u všech typů obsahu.</div>
-                {% if errors.content_types %}
-                    <div class="text-danger small">{{ errors.content_types }}</div>
-                {% endif %}
-            </div>
         </div>
         <div class="card-footer bg-light d-flex justify-content-between align-items-center">
             <a href="/admin/terms" class="btn btn-outline-secondary">Zpět</a>

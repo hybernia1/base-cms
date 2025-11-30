@@ -6,7 +6,6 @@ use App\Service\ContentType;
 use App\Service\Flash;
 use RedBeanPHP\R as R;
 use App\Service\Upload;
-use App\Service\TermType;
 
 class ContentController extends BaseAdminController
 {
@@ -48,9 +47,6 @@ class ContentController extends BaseAdminController
             'form_action' => '/admin/content/' . $definition['slug'] . '/create',
             'current_menu' => $definition['slug'],
             'media' => $this->mediaList(),
-            'terms' => $this->termsByType($typeKey),
-            'selected_terms' => [],
-            'term_types' => TermType::definitions(),
             'current_type' => $definition,
         ]);
     }
@@ -79,10 +75,6 @@ class ContentController extends BaseAdminController
                 'heading' => 'Nový obsah',
                 'form_action' => '/admin/content/' . $definition['slug'] . '/create',
                 'current_menu' => $definition['slug'],
-                'media' => $this->mediaList(),
-                'terms' => $this->termsByType($data['type'] ?: $typeKey),
-                'selected_terms' => $data['terms'],
-                'term_types' => TermType::definitions(),
                 'current_type' => $definition,
             ]);
             return;
@@ -98,8 +90,6 @@ class ContentController extends BaseAdminController
         $bean->created_at = date('Y-m-d H:i:s');
         $bean->updated_at = date('Y-m-d H:i:s');
         R::store($bean);
-
-        $this->syncTerms((int) $bean->id, $data['terms']);
 
         Flash::addSuccess('Obsah byl vytvořen.');
         header('Location: /admin/content/' . ContentType::slug($bean->type));
@@ -137,9 +127,6 @@ class ContentController extends BaseAdminController
             'current_menu' => $menuSlug,
             'content_id' => $content->id,
             'media' => $this->mediaList(),
-            'terms' => $this->termsByType($content->type),
-            'selected_terms' => $this->loadTermIdsForContent((int) $content->id),
-            'term_types' => TermType::definitions(),
             'current_type' => $definition,
         ]);
     }
@@ -175,10 +162,6 @@ class ContentController extends BaseAdminController
                 'form_action' => "/admin/content/{$menuSlug}/{$content->id}/edit",
                 'current_menu' => $menuSlug,
                 'content_id' => $content->id,
-                'media' => $this->mediaList(),
-                'terms' => $this->termsByType($data['type'] ?: $content->type),
-                'selected_terms' => $data['terms'],
-                'term_types' => TermType::definitions(),
                 'current_type' => $definition,
             ]);
             return;
@@ -192,8 +175,6 @@ class ContentController extends BaseAdminController
         $content->thumbnail_alt = $data['thumbnail_alt'];
         $content->updated_at = date('Y-m-d H:i:s');
         R::store($content);
-
-        $this->syncTerms((int) $content->id, $data['terms']);
 
         Flash::addSuccess('Obsah byl upraven.');
         header('Location: /admin/content/' . ContentType::slug($content->type));
@@ -211,7 +192,6 @@ class ContentController extends BaseAdminController
             exit;
         }
 
-        R::exec('DELETE FROM content_term WHERE content_id = ?', [(int) $content->id]);
         R::trash($content);
         Flash::addSuccess('Obsah byl smazán.');
         header('Location: /admin/content/' . ContentType::slug($content->type));
@@ -227,7 +207,6 @@ class ContentController extends BaseAdminController
             'body'  => trim($_POST['body'] ?? ''),
             'thumbnail_id' => (int) ($_POST['thumbnail_id'] ?? 0),
             'thumbnail_alt' => trim($_POST['thumbnail_alt'] ?? ''),
-            'terms' => $this->extractTermIds($_POST['terms'] ?? []),
         ];
     }
 
@@ -251,13 +230,6 @@ class ContentController extends BaseAdminController
             $errors['slug'] = 'Slug musí být vyplněn.';
         } elseif ($this->slugExists($data['slug'], $data['type'], $ignoreId)) {
             $errors['slug'] = 'Slug je již použit pro tento typ obsahu.';
-        }
-
-        if (!empty($data['terms'])) {
-            $invalid = $this->validateTerms($data['terms'], $data['type']);
-            if ($invalid !== null) {
-                $errors['terms'] = $invalid;
-            }
         }
 
         return $errors;
@@ -312,130 +284,6 @@ class ContentController extends BaseAdminController
         R::store($media);
 
         return [$data, null];
-    }
-
-    private function termsByType(string $contentType): array
-    {
-        $terms = R::findAll('term', ' ORDER BY type, name ');
-        $grouped = [];
-        $definitions = TermType::definitions();
-
-        foreach ($terms as $term) {
-            if (!isset($definitions[$term->type])) {
-                continue;
-            }
-
-            if (!$this->termAllowedForContentType($term, $contentType)) {
-                continue;
-            }
-
-            $grouped[$term->type][] = $term;
-        }
-
-        return $grouped;
-    }
-
-    private function termAllowedForContentType($term, string $contentType): bool
-    {
-        $raw = $term->content_types ?? '';
-        $decoded = $raw ? json_decode($raw, true) : [];
-
-        if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
-            $decoded = [];
-        }
-
-        $decoded = array_filter(array_map('trim', $decoded));
-        if (empty($decoded)) {
-            return true;
-        }
-
-        return in_array($contentType, $decoded, true);
-    }
-
-    private function extractTermIds($input): array
-    {
-        $result = [];
-
-        if (!is_array($input)) {
-            return $result;
-        }
-
-        $iterator = new \RecursiveIteratorIterator(new \RecursiveArrayIterator($input));
-        foreach ($iterator as $value) {
-            $value = (int) $value;
-            if ($value > 0) {
-                $result[] = $value;
-            }
-        }
-
-        return array_values(array_unique($result));
-    }
-
-    private function validateTerms(array $ids, string $contentType): ?string
-    {
-        $terms = $this->fetchTermsByIds($ids);
-        if (count($terms) !== count($ids)) {
-            return 'Vyber platné termy.';
-        }
-
-        foreach ($terms as $term) {
-            if (!TermType::exists($term->type)) {
-                return 'Vyber platné termy.';
-            }
-
-            if (!$this->termAllowedForContentType($term, $contentType)) {
-                return 'Term není dostupný pro zvolený typ obsahu.';
-            }
-        }
-
-        return null;
-    }
-
-    private function fetchTermsByIds(array $ids): array
-    {
-        if (!$ids) {
-            return [];
-        }
-
-        $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        return R::findAll('term', ' id IN (' . $placeholders . ') ', $ids);
-    }
-
-    private function syncTerms(int $contentId, array $termIds): void
-    {
-        $termIds = array_values(array_unique(array_filter($termIds)));
-
-        if (!$termIds) {
-            R::exec('DELETE FROM content_term WHERE content_id = ?', [$contentId]);
-            return;
-        }
-
-        $placeholders = implode(',', array_fill(0, count($termIds), '?'));
-        R::exec(
-            'DELETE FROM content_term WHERE content_id = ? AND term_id NOT IN (' . $placeholders . ')',
-            array_merge([$contentId], $termIds)
-        );
-
-        $existing = R::getCol(
-            'SELECT term_id FROM content_term WHERE content_id = ? AND term_id IN (' . $placeholders . ')',
-            array_merge([$contentId], $termIds)
-        );
-
-        foreach ($termIds as $termId) {
-            if (in_array($termId, $existing, true)) {
-                continue;
-            }
-
-            $link = R::dispense('content_term');
-            $link->content_id = $contentId;
-            $link->term_id = $termId;
-            R::store($link);
-        }
-    }
-
-    private function loadTermIdsForContent(int $contentId): array
-    {
-        return array_map('intval', R::getCol('SELECT term_id FROM content_term WHERE content_id = ?', [$contentId]));
     }
 
     private function resolveType(string $slug): array

@@ -83,10 +83,12 @@ $router->post('/admin/pages/(\\d+)/delete', function ($id) {
 $router->get('/admin/content/([\\w-]+)', 'App\\Controller\\Admin\\ContentController@index');
 $router->get('/admin/content/([\\w-]+)/create', 'App\\Controller\\Admin\\ContentController@createForm');
 $router->post('/admin/content/([\\w-]+)/create', 'App\\Controller\\Admin\\ContentController@create');
+$router->post('/admin/content/([\\w-]+)/terms', 'App\\Controller\\Admin\\ContentController@createTerm');
 $router->get('/admin/content/([\\w-]+)/(\\d+)/edit', 'App\\Controller\\Admin\\ContentController@editForm');
 $router->post('/admin/content/([\\w-]+)/(\\d+)/edit', 'App\\Controller\\Admin\\ContentController@update');
 $router->post('/admin/content/([\\w-]+)/(\\d+)/delete', 'App\\Controller\\Admin\\ContentController@delete');
 $router->get('/admin/terms', 'App\\Controller\\Admin\\TermController@index');
+$router->get('/admin/terms/type/([\\w-]+)', 'App\\Controller\\Admin\\TermController@indexByType');
 $router->get('/admin/terms/create', 'App\\Controller\\Admin\\TermController@createForm');
 $router->post('/admin/terms/create', 'App\\Controller\\Admin\\TermController@create');
 $router->get('/admin/terms/(\\d+)/edit', 'App\\Controller\\Admin\\TermController@editForm');

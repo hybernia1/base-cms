@@ -32,26 +32,25 @@ class ContentController extends BaseAdminController
         Auth::requireRole(['admin', 'editor']);
 
         [$typeKey, $definition] = $this->resolveType($slug);
+        $allowedTermTypes = $this->allowedTermTypes($typeKey);
 
         $this->render('admin/content/form.twig', [
-            'types' => ContentType::all(),
             'values' => [
                 'title' => '',
                 'slug'  => '',
-                'type'  => $typeKey,
                 'body'  => '',
                 'thumbnail_id' => '',
-                'thumbnail_alt' => '',
             ],
             'errors' => [],
             'heading' => 'Nový obsah',
             'form_action' => '/admin/content/' . $definition['slug'] . '/create',
             'current_menu' => $definition['slug'],
             'media' => $this->mediaList(),
-            'terms' => $this->termsByType($typeKey),
+            'terms' => $this->termsByType($typeKey, array_keys($allowedTermTypes)),
             'selected_terms' => [],
             'term_types' => TermType::definitions(),
             'current_type' => $definition,
+            'allowed_term_types' => $allowedTermTypes,
         ]);
     }
 
@@ -60,10 +59,7 @@ class ContentController extends BaseAdminController
         Auth::requireRole(['admin', 'editor']);
 
         [$typeKey, $definition] = $this->resolveType($slug);
-        $data = $this->sanitizeInput();
-        if ($data['type'] === '') {
-            $data['type'] = $typeKey;
-        }
+        $data = $this->sanitizeInput($typeKey);
 
         [$data, $uploadError] = $this->handleThumbnailUpload($data);
         $errors = $this->validate($data);
@@ -73,17 +69,17 @@ class ContentController extends BaseAdminController
 
         if ($errors) {
             $this->render('admin/content/form.twig', [
-                'types' => ContentType::all(),
                 'values' => $data,
                 'errors' => $errors,
                 'heading' => 'Nový obsah',
                 'form_action' => '/admin/content/' . $definition['slug'] . '/create',
                 'current_menu' => $definition['slug'],
                 'media' => $this->mediaList(),
-                'terms' => $this->termsByType($data['type'] ?: $typeKey),
+                'terms' => $this->termsByType($data['type'] ?: $typeKey, array_keys($this->allowedTermTypes($typeKey))),
                 'selected_terms' => $data['terms'],
                 'term_types' => TermType::definitions(),
                 'current_type' => $definition,
+                'allowed_term_types' => $this->allowedTermTypes($typeKey),
             ]);
             return;
         }
@@ -94,7 +90,7 @@ class ContentController extends BaseAdminController
         $bean->type = $data['type'];
         $bean->body = $data['body'];
         $bean->thumbnail_id = $data['thumbnail_id'] ?: null;
-        $bean->thumbnail_alt = $data['thumbnail_alt'];
+        $bean->thumbnail_alt = null;
         $bean->created_at = date('Y-m-d H:i:s');
         $bean->updated_at = date('Y-m-d H:i:s');
         R::store($bean);
@@ -120,16 +116,14 @@ class ContentController extends BaseAdminController
         $definitions = ContentType::definitions();
         $definition = $definitions[$content->type] ?? ['slug' => $slug, 'name' => ContentType::label($content->type)];
         $menuSlug = $definition['slug'] ?? $slug;
+        $allowedTermTypes = $this->allowedTermTypes($content->type);
 
         $this->render('admin/content/form.twig', [
-            'types' => ContentType::all(),
             'values' => [
                 'title' => $content->title,
                 'slug'  => $content->slug,
-                'type'  => $content->type,
                 'body'  => $content->body,
                 'thumbnail_id' => $content->thumbnail_id,
-                'thumbnail_alt' => $content->thumbnail_alt,
             ],
             'errors' => [],
             'heading' => 'Upravit obsah',
@@ -137,10 +131,11 @@ class ContentController extends BaseAdminController
             'current_menu' => $menuSlug,
             'content_id' => $content->id,
             'media' => $this->mediaList(),
-            'terms' => $this->termsByType($content->type),
+            'terms' => $this->termsByType($content->type, array_keys($allowedTermTypes)),
             'selected_terms' => $this->loadTermIdsForContent((int) $content->id),
             'term_types' => TermType::definitions(),
             'current_type' => $definition,
+            'allowed_term_types' => $allowedTermTypes,
         ]);
     }
 
@@ -159,7 +154,7 @@ class ContentController extends BaseAdminController
         $definition = $definitions[$content->type] ?? ['slug' => $slug, 'name' => ContentType::label($content->type)];
         $menuSlug = $definition['slug'] ?? $slug;
 
-        $data = $this->sanitizeInput();
+        $data = $this->sanitizeInput($content->type);
         [$data, $uploadError] = $this->handleThumbnailUpload($data);
         $errors = $this->validate($data, (int) $content->id);
         if ($uploadError) {
@@ -168,7 +163,6 @@ class ContentController extends BaseAdminController
 
         if ($errors) {
             $this->render('admin/content/form.twig', [
-                'types' => ContentType::all(),
                 'values' => $data,
                 'errors' => $errors,
                 'heading' => 'Upravit obsah',
@@ -176,10 +170,11 @@ class ContentController extends BaseAdminController
                 'current_menu' => $menuSlug,
                 'content_id' => $content->id,
                 'media' => $this->mediaList(),
-                'terms' => $this->termsByType($data['type'] ?: $content->type),
+                'terms' => $this->termsByType($data['type'] ?: $content->type, array_keys($this->allowedTermTypes($content->type))),
                 'selected_terms' => $data['terms'],
                 'term_types' => TermType::definitions(),
                 'current_type' => $definition,
+                'allowed_term_types' => $this->allowedTermTypes($content->type),
             ]);
             return;
         }
@@ -189,7 +184,7 @@ class ContentController extends BaseAdminController
         $content->type = $data['type'];
         $content->body = $data['body'];
         $content->thumbnail_id = $data['thumbnail_id'] ?: null;
-        $content->thumbnail_alt = $data['thumbnail_alt'];
+        $content->thumbnail_alt = null;
         $content->updated_at = date('Y-m-d H:i:s');
         R::store($content);
 
@@ -218,15 +213,65 @@ class ContentController extends BaseAdminController
         exit;
     }
 
-    private function sanitizeInput(): array
+    public function createTerm($slug)
+    {
+        Auth::requireRole(['admin', 'editor']);
+
+        [$typeKey, $definition] = $this->resolveType($slug);
+        $allowedTypes = $this->allowedTermTypes($typeKey);
+
+        if (!$allowedTypes) {
+            return $this->jsonError('Pro tento typ obsahu nejsou povolené žádné termy.');
+        }
+
+        $name = trim($_POST['name'] ?? '');
+        $termType = trim($_POST['type'] ?? '');
+        $slugValue = trim($_POST['slug'] ?? '');
+
+        if ($name === '') {
+            return $this->jsonError('Název je povinný.');
+        }
+
+        if ($termType === '' || !isset($allowedTypes[$termType])) {
+            return $this->jsonError('Vyber platný typ termu.');
+        }
+
+        if ($slugValue === '') {
+            $slugValue = $this->slugify($name);
+        }
+
+        if ($slugValue === '' || $this->termSlugExists($slugValue, $termType)) {
+            return $this->jsonError('Slug je neplatný nebo již existuje.');
+        }
+
+        $term = R::dispense('term');
+        $term->name = $name;
+        $term->slug = $slugValue;
+        $term->type = $termType;
+        $term->description = '';
+        $term->content_types = null;
+        $term->created_at = date('Y-m-d H:i:s');
+        $term->updated_at = date('Y-m-d H:i:s');
+        R::store($term);
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'id' => $term->id,
+            'name' => $term->name,
+            'type' => $term->type,
+            'type_label' => $allowedTypes[$term->type]['label'] ?? $term->type,
+        ]);
+        exit;
+    }
+
+    private function sanitizeInput(string $type): array
     {
         return [
             'title' => trim($_POST['title'] ?? ''),
             'slug'  => trim($_POST['slug'] ?? ''),
-            'type'  => trim($_POST['type'] ?? ''),
+            'type'  => $type,
             'body'  => trim($_POST['body'] ?? ''),
             'thumbnail_id' => (int) ($_POST['thumbnail_id'] ?? 0),
-            'thumbnail_alt' => trim($_POST['thumbnail_alt'] ?? ''),
             'terms' => $this->extractTermIds($_POST['terms'] ?? []),
         ];
     }
@@ -308,13 +353,13 @@ class ContentController extends BaseAdminController
         }
 
         $data['thumbnail_id'] = $media->id;
-        $media->alt = $data['thumbnail_alt'];
+        $media->alt = '';
         R::store($media);
 
         return [$data, null];
     }
 
-    private function termsByType(string $contentType): array
+    private function termsByType(string $contentType, array $forcedTypes = []): array
     {
         $definitions = TermType::definitions();
         $allowedTypes = [];
@@ -322,6 +367,12 @@ class ContentController extends BaseAdminController
         foreach ($definitions as $key => $definition) {
             if (TermType::allowsContentType($key, $contentType)) {
                 $allowedTypes[] = $key;
+            }
+        }
+
+        foreach ($forcedTypes as $forced) {
+            if (!in_array($forced, $allowedTypes, true)) {
+                $allowedTypes[] = $forced;
             }
         }
 
@@ -341,7 +392,27 @@ class ContentController extends BaseAdminController
             $grouped[$term->type][] = $term;
         }
 
+        foreach ($allowedTypes as $allowed) {
+            if (!isset($grouped[$allowed])) {
+                $grouped[$allowed] = [];
+            }
+        }
+
         return $grouped;
+    }
+
+    private function allowedTermTypes(string $contentType): array
+    {
+        $definitions = TermType::definitions();
+        $allowed = [];
+
+        foreach ($definitions as $key => $definition) {
+            if (TermType::allowsContentType($key, $contentType)) {
+                $allowed[$key] = $definition;
+            }
+        }
+
+        return $allowed;
     }
 
     private function extractTermIds($input): array
@@ -447,5 +518,17 @@ class ContentController extends BaseAdminController
         }
 
         return [$typeKey, $definitions[$typeKey]];
+    }
+
+    private function termSlugExists(string $slug, string $type): bool
+    {
+        return (bool) R::findOne('term', ' slug = ? AND type = ? ', [$slug, $type]);
+    }
+
+    private function jsonError(string $message, int $status = 400)
+    {
+        header('Content-Type: application/json', true, $status);
+        echo json_encode(['error' => $message]);
+        exit;
     }
 }

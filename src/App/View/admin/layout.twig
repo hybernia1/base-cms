@@ -43,6 +43,18 @@
         .nav-link.active {
             font-weight: 600;
         }
+
+        .menu-toggle {
+            cursor: pointer;
+        }
+
+        .menu-chevron {
+            transition: transform 0.2s ease;
+        }
+
+        .menu-chevron.rotate {
+            transform: rotate(90deg);
+        }
     </style>
 
     {% block styles %}{% endblock %}
@@ -92,22 +104,31 @@
                         {% set isActive = current_menu is defined and current_menu == type.slug %}
                         {% set isCreate = form_action is defined and ('/create' in form_action) and isActive %}
                         {% set createPrefix = type.key is defined and type.key == 'page' ? 'Nová' : 'Nový' %}
+                        {% set menuId = 'content-menu-' ~ type.slug ~ '-desktop' %}
                         <li class="nav-item mb-1">
-                            <div class="nav-link d-flex align-items-center {% if isActive %}active{% endif %}">
+                            <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle {% if isActive %}active{% endif %}"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#{{ menuId }}"
+                                    aria-controls="{{ menuId }}"
+                                    aria-expanded="{{ isActive ? 'true' : 'false' }}">
                                 <i class="bi bi-journal-text me-2"></i> {{ type.menu_label }}
+                                <i class="bi bi-chevron-right ms-auto menu-chevron {% if isActive %}rotate{% endif %}"></i>
+                            </button>
+                            <div class="collapse {% if isActive %}show{% endif %}" id="{{ menuId }}">
+                                <ul class="nav flex-column ms-3 mt-1 small">
+                                    <li class="nav-item">
+                                        <a class="nav-link d-flex align-items-center {% if isActive and not isCreate %}active{% endif %}" href="/admin/content/{{ type.slug }}">
+                                            <i class="bi bi-list-ul me-2"></i> Přehled
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link d-flex align-items-center {% if isCreate %}active{% endif %}" href="/admin/content/{{ type.slug }}/create">
+                                            <i class="bi bi-plus-circle me-2"></i> {{ createPrefix }} {{ type.name|lower }}
+                                        </a>
+                                    </li>
+                                </ul>
                             </div>
-                            <ul class="nav flex-column ms-3 mt-1 small">
-                                <li class="nav-item">
-                                    <a class="nav-link d-flex align-items-center {% if isActive and not isCreate %}active{% endif %}" href="/admin/content/{{ type.slug }}">
-                                        <i class="bi bi-list-ul me-2"></i> Přehled
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link d-flex align-items-center {% if isCreate %}active{% endif %}" href="/admin/content/{{ type.slug }}/create">
-                                        <i class="bi bi-plus-circle me-2"></i> {{ createPrefix }} {{ type.name|lower }}
-                                    </a>
-                                </li>
-                            </ul>
                         </li>
                     {% endfor %}
                 {% endif %}
@@ -121,26 +142,35 @@
 
                 <li class="nav-item mb-1">
                     {% set termsActive = current_menu is defined and current_menu starts with 'terms' %}
-                    <div class="nav-link d-flex align-items-center {% if termsActive %}active{% endif %}">
+                    {% set termsMenuId = 'terms-menu-desktop' %}
+                    <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle {% if termsActive %}active{% endif %}"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#{{ termsMenuId }}"
+                            aria-controls="{{ termsMenuId }}"
+                            aria-expanded="{{ termsActive ? 'true' : 'false' }}">
                         <i class="bi bi-tags me-2"></i> Termy
+                        <i class="bi bi-chevron-right ms-auto menu-chevron {% if termsActive %}rotate{% endif %}"></i>
+                    </button>
+                    <div class="collapse {% if termsActive %}show{% endif %}" id="{{ termsMenuId }}">
+                        <ul class="nav flex-column ms-3 mt-1 small">
+                            <li class="nav-item">
+                                <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'terms' %}active{% endif %}" href="/admin/terms">
+                                    <i class="bi bi-list-ul me-2"></i> Přehled
+                                </a>
+                            </li>
+                            {% if term_type_menu is defined %}
+                                {% for termKey, termDef in term_type_menu %}
+                                    {% set termIsActive = current_menu is defined and current_menu == 'terms:' ~ termKey %}
+                                    <li class="nav-item">
+                                        <a class="nav-link d-flex align-items-center {% if termIsActive %}active{% endif %}" href="/admin/terms/type/{{ termKey }}">
+                                            <i class="bi bi-collection me-2"></i> {{ termDef.label|default(termKey) }}
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            {% endif %}
+                        </ul>
                     </div>
-                    <ul class="nav flex-column ms-3 mt-1 small">
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'terms' %}active{% endif %}" href="/admin/terms">
-                                <i class="bi bi-list-ul me-2"></i> Přehled
-                            </a>
-                        </li>
-                        {% if term_type_menu is defined %}
-                            {% for termKey, termDef in term_type_menu %}
-                                {% set termIsActive = current_menu is defined and current_menu == 'terms:' ~ termKey %}
-                                <li class="nav-item">
-                                    <a class="nav-link d-flex align-items-center {% if termIsActive %}active{% endif %}" href="/admin/terms/type/{{ termKey }}">
-                                        <i class="bi bi-collection me-2"></i> {{ termDef.label|default(termKey) }}
-                                    </a>
-                                </li>
-                            {% endfor %}
-                        {% endif %}
-                    </ul>
                 </li>
 
                 {% if app_user is defined and app_user and app_user.role == 'admin' %}
@@ -188,22 +218,31 @@
                         {% set isActive = current_menu is defined and current_menu == type.slug %}
                         {% set isCreate = form_action is defined and ('/create' in form_action) and isActive %}
                         {% set createPrefix = type.key is defined and type.key == 'page' ? 'Nová' : 'Nový' %}
+                        {% set menuId = 'content-menu-' ~ type.slug ~ '-mobile' %}
                         <li class="nav-item mb-1">
-                            <div class="nav-link d-flex align-items-center {% if isActive %}active{% endif %}">
+                            <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle {% if isActive %}active{% endif %}"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#{{ menuId }}"
+                                    aria-controls="{{ menuId }}"
+                                    aria-expanded="{{ isActive ? 'true' : 'false' }}">
                                 <i class="bi bi-journal-text me-2"></i> {{ type.menu_label }}
+                                <i class="bi bi-chevron-right ms-auto menu-chevron {% if isActive %}rotate{% endif %}"></i>
+                            </button>
+                            <div class="collapse {% if isActive %}show{% endif %}" id="{{ menuId }}">
+                                <ul class="nav flex-column ms-3 mt-1 small">
+                                    <li class="nav-item">
+                                        <a class="nav-link d-flex align-items-center {% if isActive and not isCreate %}active{% endif %}" href="/admin/content/{{ type.slug }}">
+                                            <i class="bi bi-list-ul me-2"></i> Přehled
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link d-flex align-items-center {% if isCreate %}active{% endif %}" href="/admin/content/{{ type.slug }}/create">
+                                            <i class="bi bi-plus-circle me-2"></i> {{ createPrefix }} {{ type.name|lower }}
+                                        </a>
+                                    </li>
+                                </ul>
                             </div>
-                            <ul class="nav flex-column ms-3 mt-1 small">
-                                <li class="nav-item">
-                                    <a class="nav-link d-flex align-items-center {% if isActive and not isCreate %}active{% endif %}" href="/admin/content/{{ type.slug }}">
-                                        <i class="bi bi-list-ul me-2"></i> Přehled
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link d-flex align-items-center {% if isCreate %}active{% endif %}" href="/admin/content/{{ type.slug }}/create">
-                                        <i class="bi bi-plus-circle me-2"></i> {{ createPrefix }} {{ type.name|lower }}
-                                    </a>
-                                </li>
-                            </ul>
                         </li>
                     {% endfor %}
                 {% endif %}
@@ -215,26 +254,35 @@
                 </li>
                 <li class="nav-item mb-1">
                     {% set termsActive = current_menu is defined and current_menu starts with 'terms' %}
-                    <div class="nav-link d-flex align-items-center {% if termsActive %}active{% endif %}">
+                    {% set termsMenuId = 'terms-menu-mobile' %}
+                    <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle {% if termsActive %}active{% endif %}"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#{{ termsMenuId }}"
+                            aria-controls="{{ termsMenuId }}"
+                            aria-expanded="{{ termsActive ? 'true' : 'false' }}">
                         <i class="bi bi-tags me-2"></i> Termy
+                        <i class="bi bi-chevron-right ms-auto menu-chevron {% if termsActive %}rotate{% endif %}"></i>
+                    </button>
+                    <div class="collapse {% if termsActive %}show{% endif %}" id="{{ termsMenuId }}">
+                        <ul class="nav flex-column ms-3 mt-1 small">
+                            <li class="nav-item">
+                                <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'terms' %}active{% endif %}" href="/admin/terms">
+                                    <i class="bi bi-list-ul me-2"></i> Přehled
+                                </a>
+                            </li>
+                            {% if term_type_menu is defined %}
+                                {% for termKey, termDef in term_type_menu %}
+                                    {% set termIsActive = current_menu is defined and current_menu == 'terms:' ~ termKey %}
+                                    <li class="nav-item">
+                                        <a class="nav-link d-flex align-items-center {% if termIsActive %}active{% endif %}" href="/admin/terms/type/{{ termKey }}">
+                                            <i class="bi bi-collection me-2"></i> {{ termDef.label|default(termKey) }}
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            {% endif %}
+                        </ul>
                     </div>
-                    <ul class="nav flex-column ms-3 mt-1 small">
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'terms' %}active{% endif %}" href="/admin/terms">
-                                <i class="bi bi-list-ul me-2"></i> Přehled
-                            </a>
-                        </li>
-                        {% if term_type_menu is defined %}
-                            {% for termKey, termDef in term_type_menu %}
-                                {% set termIsActive = current_menu is defined and current_menu == 'terms:' ~ termKey %}
-                                <li class="nav-item">
-                                    <a class="nav-link d-flex align-items-center {% if termIsActive %}active{% endif %}" href="/admin/terms/type/{{ termKey }}">
-                                        <i class="bi bi-collection me-2"></i> {{ termDef.label|default(termKey) }}
-                                    </a>
-                                </li>
-                            {% endfor %}
-                        {% endif %}
-                    </ul>
                 </li>
                 {% if app_user is defined and app_user and app_user.role == 'admin' %}
                     <li class="nav-item mb-1">
@@ -280,6 +328,35 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.menu-toggle').forEach((toggle) => {
+            const targetSelector = toggle.getAttribute('data-bs-target');
+            const target = targetSelector ? document.querySelector(targetSelector) : null;
+            const icon = toggle.querySelector('.menu-chevron');
+
+            if (!target) {
+                return;
+            }
+
+            const collapse = new bootstrap.Collapse(target, {toggle: false});
+
+            const updateIcon = () => {
+                if (!icon) return;
+                icon.classList.toggle('rotate', target.classList.contains('show'));
+            };
+
+            target.addEventListener('shown.bs.collapse', updateIcon);
+            target.addEventListener('hidden.bs.collapse', updateIcon);
+            toggle.addEventListener('click', (event) => {
+                event.preventDefault();
+                collapse.toggle();
+            });
+
+            updateIcon();
+        });
+    });
+</script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

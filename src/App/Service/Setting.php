@@ -18,7 +18,6 @@ class Setting
         'smtp_from_email' => '',
         'smtp_from_name' => '',
         'content_types' => '',
-        'term_types' => '',
     ];
 
     public static function get(string $key, $default = null)

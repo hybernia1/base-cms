@@ -4,7 +4,6 @@ namespace App\Controller\Admin;
 use App\Service\Auth;
 use App\Service\Flash;
 use App\Service\TermType;
-use App\Service\ContentType;
 use RedBeanPHP\R as R;
 
 class TermController extends BaseAdminController
@@ -14,14 +13,10 @@ class TermController extends BaseAdminController
         Auth::requireRole(['admin', 'editor']);
 
         $items = R::findAll('term', ' ORDER BY updated_at DESC ');
-        foreach ($items as $item) {
-            $item->allowed_for = $this->decodeContentTypes($item->content_types ?? '');
-        }
 
         $this->render('admin/terms/index.twig', [
             'items' => $items,
             'types' => TermType::all(),
-            'content_types' => ContentType::definitions(),
             'current_menu' => 'terms',
         ]);
     }
@@ -32,13 +27,11 @@ class TermController extends BaseAdminController
 
         $this->render('admin/terms/form.twig', [
             'types' => TermType::all(),
-            'content_types' => ContentType::definitions(),
             'values' => [
                 'name' => '',
                 'slug' => '',
                 'type' => 'tag',
                 'description' => '',
-                'content_types' => [],
             ],
             'errors' => [],
             'heading' => 'Nový term',
@@ -56,9 +49,8 @@ class TermController extends BaseAdminController
 
         if ($errors) {
             $this->render('admin/terms/form.twig', [
-            'types' => TermType::all(),
-            'content_types' => ContentType::definitions(),
-            'values' => $data,
+                'types' => TermType::all(),
+                'values' => $data,
                 'errors' => $errors,
                 'heading' => 'Nový term',
                 'form_action' => '/admin/terms/create',
@@ -72,7 +64,6 @@ class TermController extends BaseAdminController
         $term->slug = $data['slug'];
         $term->type = $data['type'];
         $term->description = $data['description'];
-        $term->content_types = json_encode($data['content_types']);
         $term->created_at = date('Y-m-d H:i:s');
         $term->updated_at = date('Y-m-d H:i:s');
         R::store($term);
@@ -95,13 +86,11 @@ class TermController extends BaseAdminController
 
         $this->render('admin/terms/form.twig', [
             'types' => TermType::all(),
-            'content_types' => ContentType::definitions(),
             'values' => [
                 'name' => $term->name,
                 'slug' => $term->slug,
                 'type' => $term->type,
                 'description' => $term->description,
-                'content_types' => $this->decodeContentTypes($term->content_types ?? ''),
             ],
             'errors' => [],
             'heading' => 'Upravit term',
@@ -127,9 +116,8 @@ class TermController extends BaseAdminController
 
         if ($errors) {
             $this->render('admin/terms/form.twig', [
-            'types' => TermType::all(),
-            'content_types' => ContentType::definitions(),
-            'values' => $data,
+                'types' => TermType::all(),
+                'values' => $data,
                 'errors' => $errors,
                 'heading' => 'Upravit term',
                 'form_action' => "/admin/terms/{$term->id}/edit",
@@ -143,7 +131,6 @@ class TermController extends BaseAdminController
         $term->slug = $data['slug'];
         $term->type = $data['type'];
         $term->description = $data['description'];
-        $term->content_types = json_encode($data['content_types']);
         $term->updated_at = date('Y-m-d H:i:s');
         R::store($term);
 
@@ -176,7 +163,6 @@ class TermController extends BaseAdminController
             'slug' => trim($_POST['slug'] ?? ''),
             'type' => trim($_POST['type'] ?? ''),
             'description' => trim($_POST['description'] ?? ''),
-            'content_types' => $this->sanitizeContentTypes($_POST['content_types'] ?? []),
         ];
     }
 
@@ -190,16 +176,6 @@ class TermController extends BaseAdminController
 
         if ($data['type'] === '' || !TermType::exists($data['type'])) {
             $errors['type'] = 'Vyber platný typ.';
-        }
-
-        if (!empty($data['content_types'])) {
-            $allowedTypes = array_keys(ContentType::definitions());
-            foreach ($data['content_types'] as $contentType) {
-                if (!in_array($contentType, $allowedTypes, true)) {
-                    $errors['content_types'] = 'Vyber platné typy obsahu.';
-                    break;
-                }
-            }
         }
 
         if ($data['slug'] === '') {
@@ -221,37 +197,6 @@ class TermController extends BaseAdminController
         $text = preg_replace('~[^\pL\d]+~u', '-', $text);
         $text = trim($text, '-');
         return $text ?? '';
-    }
-
-    private function sanitizeContentTypes($input): array
-    {
-        if (!is_array($input)) {
-            return [];
-        }
-
-        $result = [];
-        foreach ($input as $value) {
-            $value = trim((string) $value);
-            if ($value !== '') {
-                $result[] = $value;
-            }
-        }
-
-        return array_values(array_unique($result));
-    }
-
-    private function decodeContentTypes(string $raw): array
-    {
-        if ($raw === '') {
-            return [];
-        }
-
-        $decoded = json_decode($raw, true);
-        if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
-            return [];
-        }
-
-        return $this->sanitizeContentTypes($decoded);
     }
 
     private function slugExists(string $slug, string $type, int $ignoreId): bool

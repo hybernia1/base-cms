@@ -20,7 +20,6 @@
                         <th>Název</th>
                         <th>Typ</th>
                         <th>Slug</th>
-                        <th>Typy obsahu</th>
                         <th>Upraveno</th>
                         <th class="text-end">Akce</th>
                     </tr>
@@ -31,15 +30,6 @@
                             <td class="fw-semibold">{{ item.name }}</td>
                             <td>{{ types[item.type]|default(item.type) }}</td>
                             <td><code>{{ item.slug }}</code></td>
-                            <td>
-                                {% if item.allowed_for is iterable and item.allowed_for|length > 0 %}
-                                    {% for typeKey in item.allowed_for %}
-                                        <span class="badge text-bg-light text-body border">{{ content_types[typeKey].name|default(typeKey) }}</span>
-                                    {% endfor %}
-                                {% else %}
-                                    <span class="text-muted small">Vše</span>
-                                {% endif %}
-                            </td>
                             <td>{{ item.updated_at|date('j. n. Y H:i') }}</td>
                             <td class="text-end">
                                 <a href="/admin/terms/{{ item.id }}/edit" class="btn btn-sm btn-outline-primary">Upravit</a>

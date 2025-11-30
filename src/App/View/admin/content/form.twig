@@ -42,29 +42,16 @@
             <div class="mb-3">
                 <label class="form-label">Náhledový obrázek</label>
                 <input type="file" name="thumbnail_upload" class="form-control mb-2">
-                <div class="d-flex flex-wrap gap-2 mb-2">
-                    <select name="thumbnail_id" id="thumbnailSelect" class="form-select" style="max-width: 320px;">
-                        <option value="">Vyberte z médií</option>
-                        {% for mediaItem in media %}
-                            {% if mediaItem.is_image %}
-                                <option value="{{ mediaItem.id }}" data-preview="/{{ mediaItem.path }}/{{ mediaItem.webp_filename ?: mediaItem.filename }}" {% if values.thumbnail_id == mediaItem.id %}selected{% endif %}>
-                                    {{ mediaItem.original_name ?: mediaItem.filename }}
-                                </option>
-                            {% endif %}
-                        {% endfor %}
-                    </select>
-                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#mediaLibraryModal">Otevřít knihovnu médií</button>
-                </div>
-                <div id="thumbnailPreview" class="border rounded p-2 bg-light" style="max-width: 320px;{% if not values.thumbnail_id %} display:none;{% endif %}">
-                    {% if values.thumbnail_id %}
-                        {% for mediaItem in media %}
-                            {% if mediaItem.id == values.thumbnail_id %}
-                                <img src="/{{ mediaItem.path }}/{{ mediaItem.webp_filename ?: mediaItem.filename }}" class="img-fluid" alt="{{ mediaItem.alt }}">
-                                <div class="small mt-1 text-muted">{{ mediaItem.original_name ?: mediaItem.filename }}</div>
-                            {% endif %}
-                        {% endfor %}
-                    {% endif %}
-                </div>
+                <select name="thumbnail_id" class="form-select">
+                    <option value="">Vyberte z médií</option>
+                    {% for mediaItem in media %}
+                        {% if mediaItem.is_image %}
+                            <option value="{{ mediaItem.id }}" {% if values.thumbnail_id == mediaItem.id %}selected{% endif %}>
+                                {{ mediaItem.original_name ?: mediaItem.filename }}
+                            </option>
+                        {% endif %}
+                    {% endfor %}
+                </select>
                 <div class="form-text">Můžete nahrát nový obrázek nebo vybrat existující.</div>
                 {% if errors.thumbnail %}
                     <div class="text-danger small">{{ errors.thumbnail }}</div>
@@ -75,30 +62,6 @@
                 <label for="thumbnail_alt" class="form-label">Alt text</label>
                 <input type="text" name="thumbnail_alt" id="thumbnail_alt" value="{{ values.thumbnail_alt }}" class="form-control">
             </div>
-
-            {% if terms is not empty %}
-                <div class="mb-4">
-                    <label class="form-label">Termy</label>
-                    {% for typeKey, typeTerms in terms %}
-                        <div class="mb-2">
-                            <div class="fw-semibold">{{ term_types[typeKey].label|default(typeKey) }}</div>
-                            <div class="row g-2">
-                                {% for term in typeTerms %}
-                                    <div class="col-md-4">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="terms[{{ typeKey }}][]" value="{{ term.id }}" id="term-{{ term.id }}" {% if term.id in selected_terms %}checked{% endif %}>
-                                            <label class="form-check-label" for="term-{{ term.id }}">{{ term.name }}</label>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    {% endfor %}
-                    {% if errors.terms %}
-                        <div class="text-danger small">{{ errors.terms }}</div>
-                    {% endif %}
-                </div>
-            {% endif %}
 
             <div class="mb-3">
                 <label for="body" class="form-label">Text</label>
@@ -116,182 +79,4 @@
             <button class="btn btn-outline-danger" type="submit">Smazat</button>
         </form>
     {% endif %}
-
-    <div class="modal fade" id="mediaLibraryModal" tabindex="-1" aria-labelledby="mediaLibraryLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="mediaLibraryLabel">Knihovna médií</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="mediaUploadForm" class="row g-2 align-items-end mb-3" enctype="multipart/form-data">
-                        <div class="col-md-5">
-                            <label class="form-label" for="libraryFile">Soubor</label>
-                            <input type="file" id="libraryFile" name="file" class="form-control" required>
-                        </div>
-                        <div class="col-md-5">
-                            <label class="form-label" for="libraryAlt">Alt text / popisek</label>
-                            <input type="text" id="libraryAlt" name="alt" class="form-control" placeholder="Volitelný popis">
-                        </div>
-                        <div class="col-md-2">
-                            <button class="btn btn-primary w-100" type="submit">Nahrát</button>
-                        </div>
-                        <div class="col-12">
-                            <div class="small text-muted">Nahrané soubory se okamžitě přidají do knihovny bez obnovení stránky.</div>
-                        </div>
-                    </form>
-
-                    <div class="row row-cols-2 row-cols-md-4 row-cols-xl-6 g-3" id="mediaLibraryGrid">
-                        {% for mediaItem in media %}
-                            {% if mediaItem.is_image %}
-                                <div class="col">
-                                    <div class="card h-100 media-card" role="button" tabindex="0" data-media-id="{{ mediaItem.id }}" data-media-url="/{{ mediaItem.path }}/{{ mediaItem.webp_filename ?: mediaItem.filename }}" data-media-label="{{ mediaItem.original_name ?: mediaItem.filename }}">
-                                        <img src="/{{ mediaItem.path }}/{{ mediaItem.webp_filename ?: mediaItem.filename }}" class="card-img-top" alt="{{ mediaItem.alt }}">
-                                        <div class="card-body p-2">
-                                            <div class="small text-truncate" title="{{ mediaItem.original_name ?: mediaItem.filename }}">{{ mediaItem.original_name ?: mediaItem.filename }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                    <div class="alert alert-info mt-3" id="mediaLibraryEmpty" {% if media is not empty %}style="display:none;"{% endif %}>Zatím žádné obrázky.</div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zavřít</button>
-                </div>
-            </div>
-        </div>
-    </div>
-{% endblock %}
-
-{% block scripts %}
-    <script>
-        const thumbnailSelect = document.getElementById('thumbnailSelect');
-        const thumbnailPreview = document.getElementById('thumbnailPreview');
-        const mediaGrid = document.getElementById('mediaLibraryGrid');
-        const mediaModalEl = document.getElementById('mediaLibraryModal');
-        const mediaEmptyAlert = document.getElementById('mediaLibraryEmpty');
-
-        function updatePreview(url, label) {
-            if (!thumbnailPreview) return;
-            if (!url) {
-                thumbnailPreview.style.display = 'none';
-                thumbnailPreview.innerHTML = '';
-                return;
-            }
-
-            thumbnailPreview.style.display = '';
-            thumbnailPreview.innerHTML = `<img src="${url}" class="img-fluid" alt="">` +
-                `<div class="small mt-1 text-muted">${label || ''}</div>`;
-        }
-
-        if (thumbnailSelect) {
-            thumbnailSelect.addEventListener('change', function () {
-                const option = thumbnailSelect.selectedOptions[0];
-                const previewUrl = option ? option.dataset.preview : '';
-                updatePreview(previewUrl || '', option ? option.textContent : '');
-            });
-
-            if (thumbnailSelect.value) {
-                const option = thumbnailSelect.selectedOptions[0];
-                if (option && option.dataset.preview) {
-                    updatePreview(option.dataset.preview, option.textContent);
-                }
-            }
-        }
-
-        function setSelectedThumbnail(id, url, label) {
-            if (!thumbnailSelect) return;
-            let option = thumbnailSelect.querySelector(`option[value="${id}"]`);
-            if (!option) {
-                option = document.createElement('option');
-                option.value = id;
-                thumbnailSelect.appendChild(option);
-            }
-            option.textContent = label || `Médium #${id}`;
-            option.dataset.preview = url;
-            thumbnailSelect.value = id;
-            updatePreview(url, option.textContent);
-        }
-
-        if (mediaGrid) {
-            mediaGrid.addEventListener('click', function (event) {
-                const card = event.target.closest('.media-card');
-                if (!card) return;
-
-                const id = card.dataset.mediaId;
-                const url = card.dataset.mediaUrl;
-                const label = card.dataset.mediaLabel;
-                setSelectedThumbnail(id, url, label);
-
-                if (mediaModalEl) {
-                    const modalInstance = bootstrap.Modal.getInstance(mediaModalEl);
-                    if (modalInstance) {
-                        modalInstance.hide();
-                    }
-                }
-            });
-
-            if (mediaEmptyAlert) {
-                mediaEmptyAlert.style.display = mediaGrid.querySelector('.media-card') ? 'none' : '';
-            }
-        }
-
-        const mediaUploadForm = document.getElementById('mediaUploadForm');
-        if (mediaUploadForm) {
-            mediaUploadForm.addEventListener('submit', async function (event) {
-                event.preventDefault();
-
-                const formData = new FormData(mediaUploadForm);
-                try {
-                    const response = await fetch('/admin/media/upload', {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                    const result = await response.json();
-                    if (!response.ok || result.error) {
-                        alert(result.error || 'Nahrávání se nezdařilo.');
-                        return;
-                    }
-
-                    if (!result.is_image) {
-                        alert('Vybraný soubor není obrázek.');
-                        return;
-                    }
-
-                    appendMediaCard(result.id, result.path, result.original_name);
-                    setSelectedThumbnail(result.id, result.path, result.original_name);
-                    mediaUploadForm.reset();
-                } catch (error) {
-                    alert('Nahrávání se nezdařilo.');
-                }
-            });
-        }
-
-        function appendMediaCard(id, url, label) {
-            if (!mediaGrid) return;
-            if (mediaEmptyAlert) {
-                mediaEmptyAlert.style.display = 'none';
-            }
-
-            const col = document.createElement('div');
-            col.className = 'col';
-            col.innerHTML = `
-                <div class="card h-100 media-card" role="button" tabindex="0" data-media-id="${id}" data-media-url="${url}" data-media-label="${label}">
-                    <img src="${url}" class="card-img-top" alt="">
-                    <div class="card-body p-2">
-                        <div class="small text-truncate" title="${label}">${label}</div>
-                    </div>
-                </div>
-            `;
-            mediaGrid.prepend(col);
-        }
-    </script>
 {% endblock %}

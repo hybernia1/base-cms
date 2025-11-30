@@ -22,9 +22,6 @@
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="content-types-tab" data-bs-toggle="tab" data-bs-target="#content-types" type="button" role="tab" aria-controls="content-types" aria-selected="false">Typy obsahu</button>
                 </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="term-types-tab" data-bs-toggle="tab" data-bs-target="#term-types" type="button" role="tab" aria-controls="term-types" aria-selected="false">Typy termů</button>
-                </li>
             </ul>
 
             <div class="tab-content pt-3" id="settingsTabsContent">
@@ -136,40 +133,6 @@
                         </table>
                     </div>
                 </div>
-
-                <div class="tab-pane fade" id="term-types" role="tabpanel" aria-labelledby="term-types-tab">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <p class="mb-0">Stejně jako u typů obsahu si můžete definovat vlastní typy termů (tagy, kategorie...).</p>
-                        </div>
-                        <button type="button" class="btn btn-outline-primary" id="addTermType">Přidat typ termu</button>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table align-middle" id="termTypesTable">
-                            <thead>
-                                <tr>
-                                    <th>Klíč</th>
-                                    <th>Název</th>
-                                    <th class="text-end">Akce</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% set termTypes = term_types is defined and term_types ? term_types : [] %}
-                                {% if termTypes is empty %}
-                                    {% set termTypes = [{ key: 'tag', label: 'Tag' }, { key: 'category', label: 'Kategorie' }] %}
-                                {% endif %}
-                                {% for type in termTypes %}
-                                    <tr>
-                                        <td><input type="text" name="term_types[key][]" class="form-control" value="{{ type.key }}" required></td>
-                                        <td><input type="text" name="term_types[label][]" class="form-control" value="{{ type.label }}" required></td>
-                                        <td class="text-end"><button type="button" class="btn btn-outline-danger btn-sm remove-row">Smazat</button></td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
         </div>
         <div class="card-footer bg-light d-flex justify-content-between align-items-center">
@@ -196,24 +159,6 @@
         });
 
         document.getElementById('contentTypesTable').addEventListener('click', function (event) {
-            if (event.target.classList.contains('remove-row')) {
-                const row = event.target.closest('tr');
-                row.parentNode.removeChild(row);
-            }
-        });
-
-        document.getElementById('addTermType').addEventListener('click', function () {
-            const tbody = document.querySelector('#termTypesTable tbody');
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td><input type=\"text\" name=\"term_types[key][]\" class=\"form-control\" required></td>
-                <td><input type=\"text\" name=\"term_types[label][]\" class=\"form-control\" required></td>
-                <td class=\"text-end\"><button type=\"button\" class=\"btn btn-outline-danger btn-sm remove-row\">Smazat</button></td>
-            `;
-            tbody.appendChild(row);
-        });
-
-        document.getElementById('termTypesTable').addEventListener('click', function (event) {
             if (event.target.classList.contains('remove-row')) {
                 const row = event.target.closest('tr');
                 row.parentNode.removeChild(row);

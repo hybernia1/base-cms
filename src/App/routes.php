@@ -94,7 +94,6 @@ $router->post('/admin/terms/(\\d+)/edit', 'App\\Controller\\Admin\\TermControlle
 $router->post('/admin/terms/(\\d+)/delete', 'App\\Controller\\Admin\\TermController@delete');
 $router->get('/admin/media', 'App\\Controller\\Admin\\MediaController@index');
 $router->post('/admin/media/upload', 'App\\Controller\\Admin\\MediaController@upload');
-$router->post('/admin/media/(\\d+)/delete', 'App\\Controller\\Admin\\MediaController@delete');
 $router->get('/admin/settings', 'App\\Controller\\Admin\\SettingController@index');
 $router->post('/admin/settings', 'App\\Controller\\Admin\\SettingController@update');
 $router->get('/admin/email-templates', 'App\\Controller\\Admin\\EmailTemplateController@index');

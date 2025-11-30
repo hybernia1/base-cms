@@ -1,0 +1,36 @@
+{% extends 'front/layout.twig' %}
+
+{% block title %}
+    {% if item %}{{ item.title }} | {{ type.name|default('Obsah') }}{% else %}Nenalezeno{% endif %}
+{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            {% if not item %}
+                <div class="alert alert-warning mt-4">Obsah nebyl nalezen.</div>
+            {% else %}
+                <article class="card shadow-sm mt-4">
+                    {% if thumbnail %}
+                        <img src="/{{ thumbnail.path }}/{{ thumbnail.webp_filename ?: thumbnail.filename }}" class="card-img-top" alt="{{ thumbnail.alt ?: item.title }}">
+                    {% endif %}
+                    <div class="card-body p-4">
+                        <div class="text-muted mb-2">{{ item.created_at|date('j. n. Y') }} · {{ type.name|default(type.slug|default('Obsah')) }}</div>
+                        <h1 class="card-title">{{ item.title }}</h1>
+                        {% if terms %}
+                            <div class="mb-3 d-flex flex-wrap gap-2">
+                                {% for term in terms %}
+                                    <span class="badge text-bg-light border">{{ term.name }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <div class="content-body">
+                            {{ item.body|raw }}
+                        </div>
+                    </div>
+                </article>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+

@@ -3,20 +3,30 @@
 {% block title %}Úvod | Můj web{% endblock %}
 
 {% block body %}
-    <h1>Aktuální příspěvky</h1>
+    <div class="mb-4">
+        <h1 class="display-6 mb-1">{{ heading|default('Aktuální příspěvky') }}</h1>
+        <p class="text-muted mb-0">Nejnovější články a novinky z vašeho webu.</p>
+    </div>
 
     {% if posts is empty %}
-        <p>Žádné příspěvky zatím nejsou publikovány.</p>
+        <p class="text-muted">{{ empty_message|default('Žádné příspěvky zatím nejsou publikovány.') }}</p>
     {% else %}
-        <div class="list-group">
+        <div class="row row-cols-1 row-cols-md-2 g-4">
             {% for post in posts %}
-                <article class="list-group-item list-group-item-action mb-2">
-                    <h2 class="h5 mb-1">{{ post.title }}</h2>
-                    <div class="text-muted small">{{ post.created_at|date('j. n. Y H:i') }} · Typ: {{ post.type }}</div>
-                    {% if post.body %}
-                        <p class="mb-0 mt-2">{{ post.body|slice(0, 200) }}{% if post.body|length > 200 %}…{% endif %}</p>
-                    {% endif %}
-                </article>
+                {% set type_def = content_types[post.type]|default({'slug': post.type, 'name': post.type}) %}
+                <div class="col">
+                    <article class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <div class="text-muted small mb-1">{{ post.created_at|date('j. n. Y') }} · {{ type_def.name }}</div>
+                            <h2 class="h5 card-title">
+                                <a href="/{{ type_def.slug }}/{{ post.slug }}" class="stretched-link text-decoration-none">{{ post.title }}</a>
+                            </h2>
+                            {% if post.body %}
+                                <p class="card-text text-muted">{{ post.body|striptags|slice(0, 180) }}{% if post.body|striptags|length > 180 %}…{% endif %}</p>
+                            {% endif %}
+                        </div>
+                    </article>
+                </div>
             {% endfor %}
         </div>
     {% endif %}

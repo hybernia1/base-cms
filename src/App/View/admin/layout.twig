@@ -91,6 +91,13 @@
             <div class="fw-bold mb-3 text-uppercase small text-muted">
                 Navigace
             </div>
+            {% set settings_sections = settings_sections|default({
+                'main': {'label': 'Základní', 'icon': 'bi-gear', 'url': '/admin/settings/main'},
+                'uploads': {'label': 'Uploady', 'icon': 'bi-upload', 'url': '/admin/settings/uploads'},
+                'email': {'label': 'E-maily', 'icon': 'bi-envelope', 'url': '/admin/settings/email'},
+                'content-types': {'label': 'Typy obsahu', 'icon': 'bi-journal-text', 'url': '/admin/settings/content-types'},
+                'term-types': {'label': 'Typy termů', 'icon': 'bi-tags', 'url': '/admin/settings/term-types'}
+            }) %}
             <ul class="nav nav-pills flex-column">
                 <li class="nav-item mb-1">
                     <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'dashboard' %}active{% endif %}"
@@ -186,11 +193,30 @@
                             <i class="bi bi-envelope-paper me-2"></i> E-mailové šablony
                         </a>
                     </li>
+                    {% set settingsActive = current_menu is defined and current_menu starts with 'settings' %}
+                    {% set settingsMenuId = 'settings-menu-desktop' %}
                     <li class="nav-item mb-1">
-                        <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'settings' %}active{% endif %}"
-                           href="/admin/settings">
+                        <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle {% if settingsActive %}active{% endif %}"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#{{ settingsMenuId }}"
+                                aria-controls="{{ settingsMenuId }}"
+                                aria-expanded="{{ settingsActive ? 'true' : 'false' }}">
                             <i class="bi bi-gear me-2"></i> Nastavení
-                        </a>
+                            <i class="bi bi-chevron-right ms-auto menu-chevron {% if settingsActive %}rotate{% endif %}"></i>
+                        </button>
+                        <div class="collapse {% if settingsActive %}show{% endif %}" id="{{ settingsMenuId }}">
+                            <ul class="nav flex-column ms-3 mt-1 small">
+                                {% for key, section in settings_sections %}
+                                    {% set itemActive = current_menu is defined and current_menu == 'settings:' ~ key %}
+                                    <li class="nav-item">
+                                        <a class="nav-link d-flex align-items-center {% if itemActive %}active{% endif %}" href="{{ section.url|default('/admin/settings/' ~ key) }}">
+                                            <i class="bi {{ section.icon|default('bi-gear') }} me-2"></i> {{ section.label|default(key) }}
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     </li>
                 {% endif %}
                 {# další odkazy... #}
@@ -297,11 +323,30 @@
                             <i class="bi bi-envelope-paper me-2"></i> E-mailové šablony
                         </a>
                     </li>
+                    {% set settingsActive = current_menu is defined and current_menu starts with 'settings' %}
+                    {% set settingsMenuId = 'settings-menu-mobile' %}
                     <li class="nav-item mb-1">
-                        <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'settings' %}active{% endif %}"
-                           href="/admin/settings">
+                        <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle {% if settingsActive %}active{% endif %}"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#{{ settingsMenuId }}"
+                                aria-controls="{{ settingsMenuId }}"
+                                aria-expanded="{{ settingsActive ? 'true' : 'false' }}">
                             <i class="bi bi-gear me-2"></i> Nastavení
-                        </a>
+                            <i class="bi bi-chevron-right ms-auto menu-chevron {% if settingsActive %}rotate{% endif %}"></i>
+                        </button>
+                        <div class="collapse {% if settingsActive %}show{% endif %}" id="{{ settingsMenuId }}">
+                            <ul class="nav flex-column ms-3 mt-1 small">
+                                {% for key, section in settings_sections %}
+                                    {% set itemActive = current_menu is defined and current_menu == 'settings:' ~ key %}
+                                    <li class="nav-item">
+                                        <a class="nav-link d-flex align-items-center {% if itemActive %}active{% endif %}" href="{{ section.url|default('/admin/settings/' ~ key) }}">
+                                            <i class="bi {{ section.icon|default('bi-gear') }} me-2"></i> {{ section.label|default(key) }}
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
                     </li>
                 {% endif %}
             </ul>

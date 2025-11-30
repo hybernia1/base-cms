@@ -108,8 +108,12 @@ $router->post('/admin/terms/(\\d+)/delete', 'App\\Controller\\Admin\\TermControl
 $router->get('/admin/media', 'App\\Controller\\Admin\\MediaController@index');
 $router->post('/admin/media/upload', 'App\\Controller\\Admin\\MediaController@upload');
 $router->post('/admin/media/(\\d+)/delete', 'App\\Controller\\Admin\\MediaController@delete');
-$router->get('/admin/settings', 'App\\Controller\\Admin\\SettingController@index');
-$router->post('/admin/settings', 'App\\Controller\\Admin\\SettingController@update');
+$router->get('/admin/settings', function () {
+    header('Location: /admin/settings/main');
+    exit;
+});
+$router->get('/admin/settings/([\\w-]+)', 'App\\Controller\\Admin\\SettingController@index');
+$router->post('/admin/settings/([\\w-]+)', 'App\\Controller\\Admin\\SettingController@update');
 $router->get('/admin/email-templates', 'App\\Controller\\Admin\\EmailTemplateController@index');
 $router->get('/admin/email-templates/(.+)', 'App\\Controller\\Admin\\EmailTemplateController@editForm');
 $router->post('/admin/email-templates/(.+)', 'App\\Controller\\Admin\\EmailTemplateController@update');

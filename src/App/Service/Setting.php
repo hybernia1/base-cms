@@ -9,6 +9,7 @@ class Setting
         'site_name' => 'CMS',
         'allow_webp' => '0',
         'allowed_upload_types' => 'jpg,jpeg,png,gif,webp,pdf,zip',
+        'allow_registration' => '1',
     ];
 
     public static function get(string $key, $default = null)

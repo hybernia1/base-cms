@@ -26,10 +26,16 @@ class AuthController extends BaseAdminController
             exit;
         }
 
-        if (!Auth::attempt($email, $password)) {
-            Flash::addError('Neplatný e-mail nebo heslo.');
+        $result = Auth::attemptDetailed($email, $password);
+        if (!$result['success']) {
+            Flash::addError($result['message'] ?? 'Přihlášení se nezdařilo.');
             header('Location: /admin/login');
             exit;
+        }
+
+        if (!Auth::hasRole(['admin', 'editor'])) {
+            Flash::addError('Nemáš oprávnění pro přístup do administrace.');
+            Auth::logout();
         }
 
         header('Location: /admin');

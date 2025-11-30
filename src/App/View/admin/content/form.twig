@@ -93,6 +93,21 @@
                         <div class="card shadow-sm mb-3 term-box" data-term-type="{{ typeKey }}">
                             <div class="card-header fw-semibold">{{ typeDef.label|default(typeKey) }}</div>
                             <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label" for="term-search-{{ typeKey }}">Vyhledat term</label>
+                                    <div class="input-group term-search-group" data-term-type="{{ typeKey }}">
+                                        <input type="text" class="form-control term-search-input" id="term-search-{{ typeKey }}" list="term-suggestions-{{ typeKey }}" placeholder="Začni psát název termu">
+                                        <button class="btn btn-outline-primary term-search-apply" type="button">Přidat k obsahu</button>
+                                    </div>
+                                    <div class="form-text">Vyber existující term nebo níže vytvoř nový.</div>
+                                    <div class="text-danger small d-none term-search-error"></div>
+                                    <datalist id="term-suggestions-{{ typeKey }}">
+                                        {% for term in typeTerms %}
+                                            <option value="{{ term.name }}" data-id="{{ term.id }}"></option>
+                                        {% endfor %}
+                                    </datalist>
+                                </div>
+
                                 <div class="term-list" data-term-group="{{ typeKey }}">
                                     {% if typeTerms is not empty %}
                                         {% for term in typeTerms %}
@@ -110,7 +125,7 @@
                                 <div class="new-term-form" data-action="/admin/content/{{ current_type.slug }}/terms" data-term-type="{{ typeKey }}">
                                     <div class="mb-2">
                                         <label class="form-label" for="new-term-name-{{ typeKey }}">Přidat nový term</label>
-                                        <input type="text" id="new-term-name-{{ typeKey }}" class="form-control" placeholder="Např. Kategorie A" data-role="name" autocomplete="off">
+                                        <input type="text" id="new-term-name-{{ typeKey }}" class="form-control" placeholder="Např. Kategorie A" data-role="name" autocomplete="off" list="term-suggestions-{{ typeKey }}">
                                     </div>
                                     <div class="text-muted small mb-2">Slug se doplní automaticky podle názvu.</div>
                                     <div class="text-danger small new-term-error d-none"></div>
@@ -318,6 +333,46 @@
             mediaGrid.prepend(col);
         }
 
+        function appendSuggestionOption(typeKey, id, name) {
+            const list = document.getElementById(`term-suggestions-${typeKey}`);
+            if (!list || !id) return;
+
+            const existing = Array.from(list.options).find((option) => option.dataset.id === String(id));
+            if (existing) {
+                existing.value = name;
+                return;
+            }
+
+            const option = document.createElement('option');
+            option.value = name;
+            option.dataset.id = id;
+            list.appendChild(option);
+        }
+
+        function findTermSuggestion(typeKey, value) {
+            if (!value) return null;
+            const list = document.getElementById(`term-suggestions-${typeKey}`);
+            if (!list) return null;
+
+            const target = value.trim().toLowerCase();
+            const match = Array.from(list.options).find((option) => option.value.trim().toLowerCase() === target);
+            if (!match || !match.dataset.id) {
+                return null;
+            }
+
+            return { id: match.dataset.id, name: match.value };
+        }
+
+        function selectExistingTerm(typeKey, value) {
+            const suggestion = findTermSuggestion(typeKey, value);
+            if (!suggestion) {
+                return false;
+            }
+
+            appendTermCheckbox(typeKey, suggestion.id, suggestion.name, true);
+            return true;
+        }
+
         function appendTermCheckbox(typeKey, id, name, checked = false) {
             const group = document.querySelector(`[data-term-group="${typeKey}"]`);
             if (!group) {
@@ -348,6 +403,8 @@
             if (checked && checkbox) {
                 checkbox.checked = true;
             }
+
+            appendSuggestionOption(typeKey, id, name);
         }
 
         const termForms = document.querySelectorAll('.new-term-form');
@@ -378,6 +435,11 @@
 
                 if (!name) {
                     showError('Vyplň název termu.');
+                    return;
+                }
+
+                if (selectExistingTerm(typeKey, name)) {
+                    if (nameInput) nameInput.value = '';
                     return;
                 }
 
@@ -422,6 +484,48 @@
                     handleSubmit();
                 });
             }
+        });
+
+        document.querySelectorAll('.term-search-group').forEach((group) => {
+            const typeKey = group.dataset.termType || '';
+            const input = group.querySelector('.term-search-input');
+            const errorEl = group.querySelector('.term-search-error');
+            const submit = group.querySelector('.term-search-apply');
+
+            const showError = (message) => {
+                if (!errorEl) return;
+                errorEl.textContent = message;
+                errorEl.classList.remove('d-none');
+            };
+
+            const clearError = () => {
+                if (!errorEl) return;
+                errorEl.textContent = '';
+                errorEl.classList.add('d-none');
+            };
+
+            const applySelection = () => {
+                clearError();
+                const value = input?.value.trim();
+                if (!value) {
+                    showError('Zadej název termu.');
+                    return;
+                }
+
+                if (selectExistingTerm(typeKey, value)) {
+                    if (input) input.value = '';
+                    return;
+                }
+
+                showError('Vyber term ze seznamu nebo vytvoř nový níže.');
+            };
+
+            submit?.addEventListener('click', (event) => {
+                event.preventDefault();
+                applySelection();
+            });
+
+            input?.addEventListener('change', applySelection);
         });
     </script>
 {% endblock %}

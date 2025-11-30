@@ -244,6 +244,16 @@
         mediaModal.show();
     };
 
+    const parseJsonResponse = async (response) => {
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+            return response.json();
+        }
+
+        const text = await response.text();
+        throw new Error(text || 'Uložení se nezdařilo.');
+    };
+
     const saveMediaDetails = async (forceWebp = false) => {
         if (!mediaForm) return;
         const id = mediaForm.dataset.mediaId;
@@ -265,7 +275,7 @@
                 },
             });
 
-            const result = await response.json();
+            const result = await parseJsonResponse(response);
             if (!response.ok || result.error) {
                 throw new Error(result.error || 'Uložení se nezdařilo.');
             }

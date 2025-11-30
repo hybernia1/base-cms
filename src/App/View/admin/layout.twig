@@ -85,12 +85,16 @@
                         Dashboard
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if current_menu is defined and current_menu == 'pages' %}active{% endif %}"
-                       href="/admin/pages">
-                        Stránky
-                    </a>
-                </li>
+                {% if content_type_menu is defined %}
+                    {% for type in content_type_menu %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if current_menu is defined and current_menu == type.slug %}active{% endif %}"
+                               href="/admin/content/{{ type.slug }}">
+                                {{ type.menu_label }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                {% endif %}
                 <li class="nav-item">
                     <a class="nav-link {% if current_menu is defined and current_menu == 'media' %}active{% endif %}"
                        href="/admin/media">
@@ -143,12 +147,16 @@
                         Dashboard
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if current_menu is defined and current_menu == 'pages' %}active{% endif %}"
-                       href="/admin/pages">
-                        Stránky
-                    </a>
-                </li>
+                {% if content_type_menu is defined %}
+                    {% for type in content_type_menu %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if current_menu is defined and current_menu == type.slug %}active{% endif %}"
+                               href="/admin/content/{{ type.slug }}">
+                                {{ type.menu_label }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                {% endif %}
                 <li class="nav-item">
                     <a class="nav-link {% if current_menu is defined and current_menu == 'media' %}active{% endif %}"
                        href="/admin/media">

@@ -3,6 +3,7 @@ namespace App\Controller\Admin;
 
 use App\Service\Auth;
 use App\Service\Flash;
+use App\Service\ContentType;
 
 abstract class BaseAdminController
 {
@@ -22,6 +23,7 @@ abstract class BaseAdminController
             'app_user'      => $user,
             'flash_success' => $flash['success'],
             'flash_error'   => $flash['error'],
+            'content_type_menu' => ContentType::definitions(),
         ], $context));
     }
 }

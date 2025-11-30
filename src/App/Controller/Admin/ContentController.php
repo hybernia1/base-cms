@@ -9,46 +9,58 @@ use App\Service\Upload;
 
 class ContentController extends BaseAdminController
 {
-    public function index()
+    public function index($slug)
     {
         Auth::requireRole(['admin', 'editor']);
 
-        $items = R::findAll('content', ' ORDER BY updated_at DESC ');
+        [$typeKey, $definition] = $this->resolveType($slug);
+
+        $items = R::findAll('content', ' type = ? ORDER BY updated_at DESC ', [$typeKey]);
 
         $this->render('admin/content/index.twig', [
             'items' => $items,
             'types' => ContentType::all(),
-            'current_menu' => 'pages',
+            'current_menu' => $definition['slug'],
+            'current_type' => $definition,
+            'all_type_definitions' => ContentType::definitions(),
         ]);
     }
 
-    public function createForm()
+    public function createForm($slug)
     {
         Auth::requireRole(['admin', 'editor']);
+
+        [$typeKey, $definition] = $this->resolveType($slug);
 
         $this->render('admin/content/form.twig', [
             'types' => ContentType::all(),
             'values' => [
                 'title' => '',
                 'slug'  => '',
-                'type'  => 'post',
+                'type'  => $typeKey,
                 'body'  => '',
                 'thumbnail_id' => '',
                 'thumbnail_alt' => '',
             ],
             'errors' => [],
             'heading' => 'Nový obsah',
-            'form_action' => '/admin/pages/create',
-            'current_menu' => 'pages',
+            'form_action' => '/admin/content/' . $definition['slug'] . '/create',
+            'current_menu' => $definition['slug'],
             'media' => $this->mediaList(),
+            'current_type' => $definition,
         ]);
     }
 
-    public function create()
+    public function create($slug)
     {
         Auth::requireRole(['admin', 'editor']);
 
+        [$typeKey, $definition] = $this->resolveType($slug);
         $data = $this->sanitizeInput();
+        if ($data['type'] === '') {
+            $data['type'] = $typeKey;
+        }
+
         [$data, $uploadError] = $this->handleThumbnailUpload($data);
         $errors = $this->validate($data);
         if ($uploadError) {
@@ -61,8 +73,9 @@ class ContentController extends BaseAdminController
                 'values' => $data,
                 'errors' => $errors,
                 'heading' => 'Nový obsah',
-                'form_action' => '/admin/pages/create',
-                'current_menu' => 'pages',
+                'form_action' => '/admin/content/' . $definition['slug'] . '/create',
+                'current_menu' => $definition['slug'],
+                'current_type' => $definition,
             ]);
             return;
         }
@@ -79,20 +92,24 @@ class ContentController extends BaseAdminController
         R::store($bean);
 
         Flash::addSuccess('Obsah byl vytvořen.');
-        header('Location: /admin/pages');
+        header('Location: /admin/content/' . ContentType::slug($bean->type));
         exit;
     }
 
-    public function editForm($id)
+    public function editForm($slug, $id)
     {
         Auth::requireRole(['admin', 'editor']);
 
         $content = $this->findContent($id);
         if (!$content) {
             Flash::addError('Obsah nebyl nalezen.');
-            header('Location: /admin/pages');
+            header('Location: /admin/content');
             exit;
         }
+
+        $definitions = ContentType::definitions();
+        $definition = $definitions[$content->type] ?? ['slug' => $slug, 'name' => ContentType::label($content->type)];
+        $menuSlug = $definition['slug'] ?? $slug;
 
         $this->render('admin/content/form.twig', [
             'types' => ContentType::all(),
@@ -106,23 +123,28 @@ class ContentController extends BaseAdminController
             ],
             'errors' => [],
             'heading' => 'Upravit obsah',
-            'form_action' => "/admin/pages/{$content->id}/edit",
-            'current_menu' => 'pages',
+            'form_action' => "/admin/content/{$menuSlug}/{$content->id}/edit",
+            'current_menu' => $menuSlug,
             'content_id' => $content->id,
             'media' => $this->mediaList(),
+            'current_type' => $definition,
         ]);
     }
 
-    public function update($id)
+    public function update($slug, $id)
     {
         Auth::requireRole(['admin', 'editor']);
 
         $content = $this->findContent($id);
         if (!$content) {
             Flash::addError('Obsah nebyl nalezen.');
-            header('Location: /admin/pages');
+            header('Location: /admin/content');
             exit;
         }
+
+        $definitions = ContentType::definitions();
+        $definition = $definitions[$content->type] ?? ['slug' => $slug, 'name' => ContentType::label($content->type)];
+        $menuSlug = $definition['slug'] ?? $slug;
 
         $data = $this->sanitizeInput();
         [$data, $uploadError] = $this->handleThumbnailUpload($data);
@@ -137,9 +159,10 @@ class ContentController extends BaseAdminController
                 'values' => $data,
                 'errors' => $errors,
                 'heading' => 'Upravit obsah',
-                'form_action' => "/admin/pages/{$content->id}/edit",
-                'current_menu' => 'pages',
+                'form_action' => "/admin/content/{$menuSlug}/{$content->id}/edit",
+                'current_menu' => $menuSlug,
                 'content_id' => $content->id,
+                'current_type' => $definition,
             ]);
             return;
         }
@@ -154,24 +177,24 @@ class ContentController extends BaseAdminController
         R::store($content);
 
         Flash::addSuccess('Obsah byl upraven.');
-        header('Location: /admin/pages');
+        header('Location: /admin/content/' . ContentType::slug($content->type));
         exit;
     }
 
-    public function delete($id)
+    public function delete($slug, $id)
     {
         Auth::requireRole(['admin', 'editor']);
 
         $content = $this->findContent($id);
         if (!$content) {
             Flash::addError('Obsah nebyl nalezen.');
-            header('Location: /admin/pages');
+            header('Location: /admin/content');
             exit;
         }
 
         R::trash($content);
         Flash::addSuccess('Obsah byl smazán.');
-        header('Location: /admin/pages');
+        header('Location: /admin/content/' . ContentType::slug($content->type));
         exit;
     }
 
@@ -261,5 +284,24 @@ class ContentController extends BaseAdminController
         R::store($media);
 
         return [$data, null];
+    }
+
+    private function resolveType(string $slug): array
+    {
+        $typeKey = ContentType::keyFromSlug($slug);
+        $definitions = ContentType::definitions();
+
+        if (!$typeKey || !isset($definitions[$typeKey])) {
+            $first = reset($definitions);
+            if (!$first) {
+                Flash::addError('Nenalezen žádný typ obsahu.');
+                header('Location: /admin');
+                exit;
+            }
+
+            return [$first['key'], $first];
+        }
+
+        return [$typeKey, $definitions[$typeKey]];
     }
 }

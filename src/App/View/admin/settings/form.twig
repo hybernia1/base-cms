@@ -9,25 +9,130 @@
 
     <form method="post" action="/admin/settings" class="card shadow-sm">
         <div class="card-body p-4">
-            <div class="mb-3">
-                <label for="site_name" class="form-label">Název webu</label>
-                <input type="text" name="site_name" id="site_name" value="{{ values.site_name }}" class="form-control" required>
-            </div>
+            <ul class="nav nav-tabs" id="settingsTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="basic-tab" data-bs-toggle="tab" data-bs-target="#basic" type="button" role="tab" aria-controls="basic" aria-selected="true">Základní</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="uploads-tab" data-bs-toggle="tab" data-bs-target="#uploads" type="button" role="tab" aria-controls="uploads" aria-selected="false">Uploady</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email" type="button" role="tab" aria-controls="email" aria-selected="false">E-maily</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="content-types-tab" data-bs-toggle="tab" data-bs-target="#content-types" type="button" role="tab" aria-controls="content-types" aria-selected="false">Typy obsahu</button>
+                </li>
+            </ul>
 
-            <div class="form-check form-switch mb-3">
-                <input class="form-check-input" type="checkbox" role="switch" id="allow_webp" name="allow_webp" value="1" {% if values.allow_webp == '1' %}checked{% endif %}>
-                <label class="form-check-label" for="allow_webp">Povolit generování WebP variant</label>
-            </div>
+            <div class="tab-content pt-3" id="settingsTabsContent">
+                <div class="tab-pane fade show active" id="basic" role="tabpanel" aria-labelledby="basic-tab">
+                    <div class="mb-3">
+                        <label for="site_name" class="form-label">Název webu</label>
+                        <input type="text" name="site_name" id="site_name" value="{{ values.site_name }}" class="form-control" required>
+                    </div>
 
-            <div class="form-check form-switch mb-3">
-                <input class="form-check-input" type="checkbox" role="switch" id="allow_registration" name="allow_registration" value="1" {% if values.allow_registration == '1' %}checked{% endif %}>
-                <label class="form-check-label" for="allow_registration">Povolit frontend registrace</label>
-            </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="allow_registration" name="allow_registration" value="1" {% if values.allow_registration == '1' %}checked{% endif %}>
+                        <label class="form-check-label" for="allow_registration">Povolit frontend registrace</label>
+                    </div>
+                </div>
 
-            <div class="mb-3">
-                <label for="allowed_upload_types" class="form-label">Povolené přípony uploadů</label>
-                <input type="text" name="allowed_upload_types" id="allowed_upload_types" value="{{ values.allowed_upload_types }}" class="form-control">
-                <div class="form-text">Zadejte seznam přípon oddělených čárkou (např. jpg,jpeg,png,gif,webp,pdf,zip).</div>
+                <div class="tab-pane fade" id="uploads" role="tabpanel" aria-labelledby="uploads-tab">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch" id="allow_webp" name="allow_webp" value="1" {% if values.allow_webp == '1' %}checked{% endif %}>
+                        <label class="form-check-label" for="allow_webp">Povolit generování WebP variant</label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="allowed_upload_types" class="form-label">Povolené přípony uploadů</label>
+                        <input type="text" name="allowed_upload_types" id="allowed_upload_types" value="{{ values.allowed_upload_types }}" class="form-control">
+                        <div class="form-text">Zadejte seznam přípon oddělených čárkou (např. jpg,jpeg,png,gif,webp,pdf,zip).</div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="email" role="tabpanel" aria-labelledby="email-tab">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="smtp_host" class="form-label">SMTP server</label>
+                            <input type="text" class="form-control" id="smtp_host" name="smtp_host" value="{{ values.smtp_host }}" placeholder="smtp.example.com">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="smtp_port" class="form-label">Port</label>
+                            <input type="number" class="form-control" id="smtp_port" name="smtp_port" value="{{ values.smtp_port|default(587) }}" min="1">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="smtp_encryption" class="form-label">Zabezpečení</label>
+                            <select id="smtp_encryption" name="smtp_encryption" class="form-select">
+                                {% set encryption = values.smtp_encryption|default('tls') %}
+                                <option value="" {% if encryption == '' %}selected{% endif %}>Bez šifrování</option>
+                                <option value="tls" {% if encryption == 'tls' %}selected{% endif %}>TLS</option>
+                                <option value="ssl" {% if encryption == 'ssl' %}selected{% endif %}>SSL</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-3">
+                        <div class="col-md-6">
+                            <label for="smtp_username" class="form-label">Uživatelské jméno</label>
+                            <input type="text" class="form-control" id="smtp_username" name="smtp_username" value="{{ values.smtp_username }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="smtp_password" class="form-label">Heslo</label>
+                            <input type="password" class="form-control" id="smtp_password" name="smtp_password" value="{{ values.smtp_password }}">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-3">
+                        <div class="col-md-6">
+                            <label for="smtp_from_email" class="form-label">Odesílatel (e-mail)</label>
+                            <input type="email" class="form-control" id="smtp_from_email" name="smtp_from_email" value="{{ values.smtp_from_email }}" placeholder="noreply@example.com">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="smtp_from_name" class="form-label">Odesílatel (jméno)</label>
+                            <input type="text" class="form-control" id="smtp_from_name" name="smtp_from_name" value="{{ values.smtp_from_name }}" placeholder="Moje CMS">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="content-types" role="tabpanel" aria-labelledby="content-types-tab">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <p class="mb-0">Definujte typy obsahu podobně jako ve WordPressu. Každý typ musí mít klíč (používá se v databázi) a slug (pro URL v administraci).</p>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary" id="addContentType">Přidat typ</button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table align-middle" id="contentTypesTable">
+                            <thead>
+                                <tr>
+                                    <th>Klíč</th>
+                                    <th>Název</th>
+                                    <th>Plurál</th>
+                                    <th>Slug</th>
+                                    <th>Název v menu</th>
+                                    <th class="text-end">Akce</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% set types = content_types is defined and content_types ? content_types : [] %}
+                                {% if types is empty %}
+                                    {% set types = [{ key: 'post', name: 'Příspěvek', plural_name: 'Příspěvky', slug: 'prispevky', menu_label: 'Příspěvky' }, { key: 'page', name: 'Stránka', plural_name: 'Stránky', slug: 'stranky', menu_label: 'Stránky' }] %}
+                                {% endif %}
+                                {% for type in types %}
+                                    <tr>
+                                        <td><input type="text" name="content_types[key][]" class="form-control" value="{{ type.key }}" required></td>
+                                        <td><input type="text" name="content_types[name][]" class="form-control" value="{{ type.name }}" required></td>
+                                        <td><input type="text" name="content_types[plural_name][]" class="form-control" value="{{ type.plural_name|default(type.name ~ 'y') }}" required></td>
+                                        <td><input type="text" name="content_types[slug][]" class="form-control" value="{{ type.slug }}" required></td>
+                                        <td><input type="text" name="content_types[menu_label][]" class="form-control" value="{{ type.menu_label|default(type.plural_name) }}" required></td>
+                                        <td class="text-end"><button type="button" class="btn btn-outline-danger btn-sm remove-row">Smazat</button></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="card-footer bg-light d-flex justify-content-between align-items-center">
@@ -35,4 +140,29 @@
             <button class="btn btn-primary" type="submit">Uložit</button>
         </div>
     </form>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        document.getElementById('addContentType').addEventListener('click', function () {
+            const tbody = document.querySelector('#contentTypesTable tbody');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><input type="text" name="content_types[key][]" class="form-control" required></td>
+                <td><input type="text" name="content_types[name][]" class="form-control" required></td>
+                <td><input type="text" name="content_types[plural_name][]" class="form-control" required></td>
+                <td><input type="text" name="content_types[slug][]" class="form-control" required></td>
+                <td><input type="text" name="content_types[menu_label][]" class="form-control" required></td>
+                <td class="text-end"><button type="button" class="btn btn-outline-danger btn-sm remove-row">Smazat</button></td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        document.getElementById('contentTypesTable').addEventListener('click', function (event) {
+            if (event.target.classList.contains('remove-row')) {
+                const row = event.target.closest('tr');
+                row.parentNode.removeChild(row);
+            }
+        });
+    </script>
 {% endblock %}

@@ -10,6 +10,14 @@ class Setting
         'allow_webp' => '0',
         'allowed_upload_types' => 'jpg,jpeg,png,gif,webp,pdf,zip',
         'allow_registration' => '1',
+        'smtp_host' => '',
+        'smtp_port' => '587',
+        'smtp_username' => '',
+        'smtp_password' => '',
+        'smtp_encryption' => 'tls',
+        'smtp_from_email' => '',
+        'smtp_from_name' => '',
+        'content_types' => '',
     ];
 
     public static function get(string $key, $default = null)

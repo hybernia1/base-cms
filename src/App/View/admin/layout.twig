@@ -62,7 +62,7 @@
         <div class="d-flex ms-auto">
             {% if app_user is defined and app_user %}
                 <span class="navbar-text me-3 d-none d-sm-inline">
-                    {{ app_user.email }}
+                    {{ app_user.email }} ({{ app_user.role|default('') }})
                 </span>
             {% endif %}
             <a href="/admin/logout" class="btn btn-outline-light btn-sm">Odhlásit</a>
@@ -91,12 +91,14 @@
                         Stránky
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if current_menu is defined and current_menu == 'users' %}active{% endif %}"
-                       href="/admin/users">
-                        Uživatelé
-                    </a>
-                </li>
+                {% if app_user is defined and app_user and app_user.role == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if current_menu is defined and current_menu == 'users' %}active{% endif %}"
+                           href="/admin/users">
+                            Uživatelé
+                        </a>
+                    </li>
+                {% endif %}
                 {# další odkazy... #}
             </ul>
         </div>
@@ -123,12 +125,14 @@
                         Stránky
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link {% if current_menu is defined and current_menu == 'users' %}active{% endif %}"
-                       href="/admin/users">
-                        Uživatelé
-                    </a>
-                </li>
+                {% if app_user is defined and app_user and app_user.role == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if current_menu is defined and current_menu == 'users' %}active{% endif %}"
+                           href="/admin/users">
+                            Uživatelé
+                        </a>
+                    </li>
+                {% endif %}
             </ul>
         </div>
     </div>
@@ -137,10 +141,14 @@
     <main class="admin-content">
 
 {% if flash_success %}
-    <div class="alert alert-success">{{ flash_success }}</div>
+    {% for msg in flash_success %}
+        <div class="alert alert-success">{{ msg }}</div>
+    {% endfor %}
 {% endif %}
 {% if flash_error %}
-    <div class="alert alert-danger">{{ flash_error }}</div>
+    {% for msg in flash_error %}
+        <div class="alert alert-danger">{{ msg }}</div>
+    {% endfor %}
 {% endif %}
 
 

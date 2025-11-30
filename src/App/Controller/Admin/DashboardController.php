@@ -3,21 +3,15 @@ namespace App\Controller\Admin;
 
 use App\Service\Auth;
 
-class DashboardController
+class DashboardController extends BaseAdminController
 {
-    private $twig;
-
-    public function __construct()
-    {
-        $this->twig = $GLOBALS['app']['twig'];
-    }
-
     public function index()
     {
         $user = Auth::user();
 
-        echo $this->twig->render('admin/dashboard.twig', [
+        $this->render('admin/dashboard.twig', [
             'user' => $user,
+            'current_menu' => 'dashboard',
         ]);
     }
 }

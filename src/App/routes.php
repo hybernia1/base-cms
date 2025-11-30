@@ -30,3 +30,9 @@ $router->before('GET|POST', '/admin(?!/login).*', function () {
 // ADMIN routy
 $router->get('/admin', 'App\Controller\Admin\DashboardController@index');
 $router->get('/admin/logout', 'App\Controller\Admin\AuthController@logout');
+$router->get('/admin/users', 'App\Controller\Admin\UserController@index');
+$router->get('/admin/users/create', 'App\Controller\Admin\UserController@createForm');
+$router->post('/admin/users/create', 'App\Controller\Admin\UserController@create');
+$router->get('/admin/users/(\d+)/edit', 'App\Controller\Admin\UserController@editForm');
+$router->post('/admin/users/(\d+)/edit', 'App\Controller\Admin\UserController@update');
+$router->post('/admin/users/(\d+)/delete', 'App\Controller\Admin\UserController@delete');

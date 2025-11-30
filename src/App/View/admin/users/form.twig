@@ -1,0 +1,56 @@
+{% extends 'admin/layout.twig' %}
+
+{% set current_menu = 'users' %}
+
+{% block title %}{{ heading|default('Uživatel') }} | Administrace{% endblock %}
+
+{% block body %}
+    <div class="d-flex align-items-center mb-3">
+        <h1 class="h4 mb-0">{{ heading|default('Uživatel') }}</h1>
+        <a href="/admin/users" class="btn btn-outline-secondary ms-auto">Zpět na seznam</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post" action="{{ form_action }}">
+                <div class="mb-3">
+                    <label class="form-label">E-mail</label>
+                    <input type="email" name="email" class="form-control" value="{{ values.email|default('') }}" required>
+                    {% if errors.email %}
+                        <div class="text-danger small mt-1">{{ errors.email }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Role</label>
+                    <select name="role" class="form-select" required>
+                        <option value="">-- vyber roli --</option>
+                        {% for value, label in roles %}
+                            <option value="{{ value }}" {% if values.role|default('') == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if errors.role %}
+                        <div class="text-danger small mt-1">{{ errors.role }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Heslo</label>
+                    <input type="password" name="password" class="form-control" {% if not user_id %}required{% endif %}>
+                    <div class="form-text">
+                        {% if user_id %}
+                            Ponech prázdné, pokud nechceš měnit heslo.
+                        {% else %}
+                            Minimálně 6 znaků.
+                        {% endif %}
+                    </div>
+                    {% if errors.password %}
+                        <div class="text-danger small mt-1">{{ errors.password }}</div>
+                    {% endif %}
+                </div>
+
+                <button type="submit" class="btn btn-primary">Uložit</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}

@@ -1,6 +1,7 @@
 {% extends 'admin/layout.twig' %}
 
 {% set current_menu = current_type.slug %}
+{% import 'admin/partials/components.twig' as ui %}
 
 {% block title %}Obsah | Administrace{% endblock %}
 
@@ -60,15 +61,29 @@
                             <td><code>{{ item.slug }}</code></td>
                             <td>{{ item.updated_at|date('j. n. Y H:i') }}</td>
                             <td class="text-end">
-                                <a href="/admin/content/{{ current_type.slug }}/{{ item.id }}/edit" class="btn btn-sm btn-outline-primary">Upravit</a>
-                                <form action="/admin/content/{{ current_type.slug }}/{{ item.id }}/delete" method="post" class="d-inline" data-confirm="Opravdu smazat tento obsah?">
-                                    <button class="btn btn-sm btn-outline-danger" type="submit">Smazat</button>
-                                </form>
+                                {{ ui.actions([
+                                    {
+                                        type: 'link',
+                                        href: '/admin/content/' ~ current_type.slug ~ '/' ~ item.id ~ '/edit',
+                                        label: 'Upravit',
+                                        variant: 'primary',
+                                        icon: 'bi-pencil'
+                                    },
+                                    {
+                                        type: 'form',
+                                        action: '/admin/content/' ~ current_type.slug ~ '/' ~ item.id ~ '/delete',
+                                        label: 'Smazat',
+                                        variant: 'danger',
+                                        confirm: 'Opravdu smazat tento obsah?',
+                                        icon: 'bi-trash'
+                                    }
+                                ]) }}
                             </td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+        {{ ui.pagination(pagination) }}
     {% endif %}
 {% endblock %}

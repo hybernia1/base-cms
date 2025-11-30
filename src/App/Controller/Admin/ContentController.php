@@ -29,7 +29,14 @@ class ContentController extends BaseAdminController
             $params[] = $status;
         }
 
-        $items = R::findAll('content', $query . ' ORDER BY updated_at DESC ', $params);
+        $total = R::count('content', $query, $params);
+        $pagination = $this->buildPagination((int) $total, 12);
+
+        $items = R::findAll(
+            'content',
+            $query . ' ORDER BY updated_at DESC LIMIT ? OFFSET ? ',
+            array_merge($params, [$pagination['per_page'], $pagination['offset']])
+        );
 
         $this->render('admin/content/index.twig', [
             'items' => $items,
@@ -38,6 +45,7 @@ class ContentController extends BaseAdminController
             'current_type' => $definition,
             'all_type_definitions' => ContentType::definitions(),
             'current_status' => $status ?? 'all',
+            'pagination' => $pagination,
         ]);
     }
 

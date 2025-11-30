@@ -186,15 +186,22 @@ class TermController extends BaseAdminController
 
         $termTypeDefinitions = TermType::definitions();
         $contentTypeDefinitions = ContentType::definitions();
-        $query = ' ORDER BY updated_at DESC ';
+        $query = ' 1 = 1 ';
         $params = [];
 
         if ($typeFilter !== null) {
-            $query = ' type = ? ORDER BY updated_at DESC ';
+            $query .= ' AND type = ? ';
             $params[] = $typeFilter;
         }
 
-        $items = R::findAll('term', $query, $params);
+        $total = R::count('term', $query, $params);
+        $pagination = $this->buildPagination((int) $total, 15);
+
+        $items = R::findAll(
+            'term',
+            $query . ' ORDER BY updated_at DESC LIMIT ? OFFSET ? ',
+            array_merge($params, [$pagination['per_page'], $pagination['offset']])
+        );
         foreach ($items as $item) {
             $item->allowed_for = $termTypeDefinitions[$item->type]['content_types'] ?? [];
         }
@@ -205,6 +212,7 @@ class TermController extends BaseAdminController
             'content_types' => $contentTypeDefinitions,
             'current_menu' => $typeFilter ? 'terms:' . $typeFilter : 'terms',
             'current_term_type' => $typeFilter ? ($termTypeDefinitions[$typeFilter] ?? null) : null,
+            'pagination' => $pagination,
         ]);
     }
 

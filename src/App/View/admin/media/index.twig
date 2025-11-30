@@ -1,6 +1,7 @@
 {% extends 'admin/layout.twig' %}
 
 {% set current_menu = 'media' %}
+{% import 'admin/partials/components.twig' as ui %}
 
 {% block title %}Média | Administrace{% endblock %}
 
@@ -79,10 +80,24 @@
                                 <div class="text-muted small">Aktualizováno: {{ item.updated_at|date('j. n. Y H:i') }}</div>
                             </div>
                             <div class="card-footer bg-light text-end">
-                                <button class="btn btn-outline-secondary btn-sm" type="button">Upravit</button>
-                                <form action="/admin/media/{{ item.id }}/delete" method="post" class="d-inline" data-confirm="Opravdu smazat tento soubor?">
-                                    <button class="btn btn-outline-danger btn-sm" type="submit">Smazat</button>
-                                </form>
+                                {{ ui.actions([
+                                    {
+                                        type: 'link',
+                                        href: '#',
+                                        label: 'Upravit',
+                                        variant: 'primary',
+                                        icon: 'bi-pencil',
+                                        title: 'Otevřít detail pro úpravy'
+                                    },
+                                    {
+                                        type: 'form',
+                                        action: '/admin/media/' ~ item.id ~ '/delete',
+                                        label: 'Smazat',
+                                        variant: 'danger',
+                                        confirm: 'Opravdu smazat tento soubor?',
+                                        icon: 'bi-trash'
+                                    }
+                                ]) }}
                             </div>
                         </div>
                     </div>
@@ -113,10 +128,23 @@
                                     <td>{{ item.size }} B</td>
                                     <td>{{ item.created_at|date('j. n. Y H:i') }}</td>
                                     <td class="text-end">
-                                        <a href="/{{ item.path }}/{{ item.filename }}" class="btn btn-sm btn-outline-secondary" target="_blank">Otevřít</a>
-                                        <form action="/admin/media/{{ item.id }}/delete" method="post" class="d-inline" data-confirm="Opravdu smazat tento soubor?">
-                                            <button class="btn btn-sm btn-outline-danger" type="submit">Smazat</button>
-                                        </form>
+                                        {{ ui.actions([
+                                            {
+                                                type: 'link',
+                                                href: '/' ~ item.path ~ '/' ~ item.filename,
+                                                label: 'Otevřít',
+                                                variant: 'secondary',
+                                                icon: 'bi-box-arrow-up-right'
+                                            },
+                                            {
+                                                type: 'form',
+                                                action: '/admin/media/' ~ item.id ~ '/delete',
+                                                label: 'Smazat',
+                                                variant: 'danger',
+                                                confirm: 'Opravdu smazat tento soubor?',
+                                                icon: 'bi-trash'
+                                            }
+                                        ]) }}
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -126,6 +154,8 @@
             {% endif %}
         </div>
     </div>
+
+    {{ ui.pagination(pagination) }}
 
     <div class="modal fade" id="mediaDetailModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">

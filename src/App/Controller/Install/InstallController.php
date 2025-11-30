@@ -154,9 +154,20 @@ class InstallController
                 `slug` VARCHAR(191) NOT NULL,
                 `type` VARCHAR(50) NOT NULL,
                 `description` TEXT,
+                `content_types` TEXT,
                 `created_at` DATETIME NOT NULL,
                 `updated_at` DATETIME NOT NULL,
                 UNIQUE KEY `slug_type` (`slug`, `type`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
+        R::exec(
+            "CREATE TABLE IF NOT EXISTS `content_term` (
+                `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `content_id` INT UNSIGNED NOT NULL,
+                `term_id` INT UNSIGNED NOT NULL,
+                UNIQUE KEY `content_term_unique` (`content_id`, `term_id`),
+                KEY `idx_term` (`term_id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
 
@@ -202,6 +213,11 @@ class InstallController
 
         if (!isset($contentColumns['thumbnail_alt'])) {
             R::exec("ALTER TABLE `content` ADD COLUMN `thumbnail_alt` VARCHAR(255) DEFAULT '' AFTER `thumbnail_id`");
+        }
+
+        $termColumns = R::inspect('term');
+        if (!isset($termColumns['content_types'])) {
+            R::exec("ALTER TABLE `term` ADD COLUMN `content_types` TEXT AFTER `description`");
         }
 
         $userColumns = R::inspect('user');

@@ -2,6 +2,7 @@
 namespace App\Controller\Admin;
 
 use App\Service\Auth;
+use App\Service\EmailTemplateManager;
 use App\Service\Flash;
 use RedBeanPHP\R as R;
 
@@ -10,6 +11,7 @@ class UserController extends BaseAdminController
     private const ROLES = [
         'admin'  => 'Administrátor',
         'editor' => 'Editor',
+        'user'   => 'Uživatel',
     ];
 
     public function index()
@@ -42,6 +44,7 @@ class UserController extends BaseAdminController
     public function create()
     {
         Auth::requireRole('admin');
+        $this->ensureUserColumns();
 
         $data = $this->sanitizeInput();
         $errors = $this->validateUser($data);
@@ -66,6 +69,8 @@ class UserController extends BaseAdminController
         $user->email = $data['email'];
         $user->password = password_hash($data['password'], PASSWORD_DEFAULT);
         $user->role = $data['role'];
+        $user->is_banned = 0;
+        $user->ban_reason = '';
         R::store($user);
 
         Flash::addSuccess('Uživatel byl vytvořen.');
@@ -76,6 +81,7 @@ class UserController extends BaseAdminController
     public function editForm($id)
     {
         Auth::requireRole('admin');
+        $this->ensureUserColumns();
 
         $user = $this->findUser($id);
         if (!$user) {
@@ -89,6 +95,8 @@ class UserController extends BaseAdminController
             'values' => [
                 'email' => $user->email,
                 'role'  => $user->role,
+                'is_banned' => (int) ($user->is_banned ?? 0),
+                'ban_reason' => $user->ban_reason ?? '',
             ],
             'current_menu' => 'users',
             'form_action' => "/admin/users/{$user->id}/edit",
@@ -101,6 +109,7 @@ class UserController extends BaseAdminController
     public function update($id)
     {
         Auth::requireRole('admin');
+        $this->ensureUserColumns();
 
         $user = $this->findUser($id);
         if (!$user) {
@@ -120,7 +129,10 @@ class UserController extends BaseAdminController
             $this->render('admin/users/form.twig', [
                 'roles' => self::ROLES,
                 'errors' => $errors,
-                'values' => $data,
+                'values' => array_merge($data, [
+                    'is_banned' => (int) ($user->is_banned ?? 0),
+                    'ban_reason' => $user->ban_reason ?? '',
+                ]),
                 'current_menu' => 'users',
                 'form_action' => "/admin/users/{$user->id}/edit",
                 'heading' => 'Upravit uživatele',
@@ -137,6 +149,63 @@ class UserController extends BaseAdminController
         R::store($user);
 
         Flash::addSuccess('Uživatel byl upraven.');
+        header('Location: /admin/users');
+        exit;
+    }
+
+    public function ban($id)
+    {
+        Auth::requireRole('admin');
+        $this->ensureUserColumns();
+
+        $user = $this->findUser($id);
+        if (!$user) {
+            Flash::addError('Uživatel nenalezen.');
+            header('Location: /admin/users');
+            exit;
+        }
+
+        $currentUser = Auth::user();
+        if ($currentUser && (int) $currentUser->id === (int) $user->id) {
+            Flash::addError('Nemůžeš zablokovat sám sebe.');
+            header('Location: /admin/users');
+            exit;
+        }
+
+        $reason = trim($_POST['reason'] ?? '');
+
+        $user->is_banned = 1;
+        $user->banned_at = date('Y-m-d H:i:s');
+        $user->ban_reason = $reason;
+        R::store($user);
+
+        EmailTemplateManager::send('user_banned', $user->email, [
+            'email' => $user->email,
+            'reason' => $reason !== '' ? $reason : 'neuvedeno',
+        ]);
+
+        Flash::addSuccess('Uživatel byl zablokován.');
+        header('Location: /admin/users');
+        exit;
+    }
+
+    public function unban($id)
+    {
+        Auth::requireRole('admin');
+
+        $user = $this->findUser($id);
+        if (!$user) {
+            Flash::addError('Uživatel nenalezen.');
+            header('Location: /admin/users');
+            exit;
+        }
+
+        $user->is_banned = 0;
+        $user->banned_at = null;
+        $user->ban_reason = null;
+        R::store($user);
+
+        Flash::addSuccess('Blokace byla zrušena.');
         header('Location: /admin/users');
         exit;
     }
@@ -212,5 +281,22 @@ class UserController extends BaseAdminController
     {
         $user = R::load('user', (int) $id);
         return $user && $user->id ? $user : null;
+    }
+
+    private function ensureUserColumns(): void
+    {
+        $columns = R::inspect('user');
+
+        if (!isset($columns['is_banned'])) {
+            R::exec("ALTER TABLE `user` ADD COLUMN `is_banned` TINYINT(1) NOT NULL DEFAULT 0 AFTER `role`");
+        }
+
+        if (!isset($columns['ban_reason'])) {
+            R::exec("ALTER TABLE `user` ADD COLUMN `ban_reason` TEXT DEFAULT NULL AFTER `is_banned`");
+        }
+
+        if (!isset($columns['banned_at'])) {
+            R::exec("ALTER TABLE `user` ADD COLUMN `banned_at` DATETIME DEFAULT NULL AFTER `ban_reason`");
+        }
     }
 }

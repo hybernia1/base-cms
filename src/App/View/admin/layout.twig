@@ -390,6 +390,8 @@
     {# HLAVNÍ OBSAH #}
     <main class="admin-content">
 
+    <div id="ajaxMessageContainer"></div>
+
 {% if flash_success %}
     {% for msg in flash_success %}
         <div class="alert alert-success">{{ msg }}</div>
@@ -408,6 +410,43 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    const adminFlashMessages = (() => {
+        const container = document.createElement('div');
+        container.className = 'position-fixed top-0 end-0 p-3';
+        container.style.zIndex = '1080';
+
+        const ensureContainer = () => {
+            if (!container.parentElement) {
+                document.body.appendChild(container);
+            }
+        };
+
+        const push = (message, variant = 'success') => {
+            ensureContainer();
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${variant} shadow-sm fade show`; 
+            alert.role = 'alert';
+            alert.textContent = message;
+
+            const closeBtn = document.createElement('button');
+            closeBtn.type = 'button';
+            closeBtn.className = 'btn-close ms-2';
+            closeBtn.setAttribute('aria-label', 'Zavřít');
+            closeBtn.addEventListener('click', () => alert.remove());
+            alert.appendChild(closeBtn);
+
+            container.appendChild(alert);
+            setTimeout(() => alert.classList.add('show'), 10);
+            setTimeout(() => alert.remove(), 5000);
+        };
+
+        return {
+            success: (msg) => push(msg, 'success'),
+            error: (msg) => push(msg, 'danger'),
+            info: (msg) => push(msg, 'info'),
+        };
+    })();
+
     const adminDialog = (() => {
         const modalEl = document.getElementById('adminDialog');
         const modalSupported = typeof bootstrap !== 'undefined' && !!bootstrap?.Modal;
@@ -572,6 +611,92 @@
 
             element.dataset.confirmAttached = '1';
         });
+
+        const clearAjaxErrors = (form) => {
+            const errorBox = form.querySelector('[data-ajax-errors]');
+            if (errorBox) {
+                errorBox.classList.add('d-none');
+                errorBox.innerHTML = '';
+            }
+        };
+
+        const renderAjaxErrors = (form, errors) => {
+            const errorBox = form.querySelector('[data-ajax-errors]');
+            if (!errorBox) return;
+
+            const messages = Object.values(errors || {});
+            if (!messages.length) {
+                clearAjaxErrors(form);
+                return;
+            }
+
+            errorBox.classList.remove('d-none');
+            errorBox.innerHTML = `<ul class="mb-0">${messages.map(msg => `<li>${msg}</li>`).join('')}</ul>`;
+        };
+
+        const toggleSubmitting = (form, submitting) => {
+            form.querySelectorAll('[type="submit"]').forEach((btn) => {
+                btn.disabled = submitting;
+            });
+        };
+
+        const attachAjaxForm = (form) => {
+            if (form.dataset.ajaxBound === '1') return;
+
+            form.addEventListener('submit', async (event) => {
+                if (form.dataset.confirmHandled !== '1' && form.dataset.confirm) {
+                    return;
+                }
+
+                event.preventDefault();
+                toggleSubmitting(form, true);
+                clearAjaxErrors(form);
+
+                const formData = new FormData(form);
+                const headers = { 'X-Requested-With': 'XMLHttpRequest' };
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: form.method || 'POST',
+                        body: formData,
+                        headers,
+                    });
+
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok || data.success === false) {
+                        renderAjaxErrors(form, data.errors || { general: data.message || 'Akci se nepodařilo dokončit.' });
+                        adminFlashMessages.error(data.message || 'Akce se nezdařila.');
+                        return;
+                    }
+
+                    renderAjaxErrors(form, {});
+                    if (form.dataset.ajaxReset === '1' || form.dataset.ajaxReset === 'true') {
+                        form.reset();
+                    }
+
+                    const removeSelector = form.dataset.ajaxRemove;
+                    if (removeSelector) {
+                        const target = form.closest(removeSelector);
+                        if (target) {
+                            target.remove();
+                        }
+                    }
+
+                    if (data.message) {
+                        adminFlashMessages.success(data.message);
+                    }
+                } catch (error) {
+                    renderAjaxErrors(form, { general: 'Došlo k chybě spojení.' });
+                    adminFlashMessages.error('Došlo k chybě spojení.');
+                } finally {
+                    toggleSubmitting(form, false);
+                }
+            });
+
+            form.dataset.ajaxBound = '1';
+        };
+
+        document.querySelectorAll('form[data-ajax]').forEach(attachAjaxForm);
     });
 </script>
 <div class="modal fade" id="adminDialog" tabindex="-1" aria-hidden="true">

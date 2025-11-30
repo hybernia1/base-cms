@@ -28,4 +28,19 @@ abstract class BaseAdminController
             'term_type_menu' => TermType::definitions(),
         ], $context));
     }
+
+    protected function wantsJson(): bool
+    {
+        $requestedWith = strtolower(trim($_SERVER['HTTP_X_REQUESTED_WITH'] ?? ''));
+        $accept = strtolower($_SERVER['HTTP_ACCEPT'] ?? '');
+
+        return $requestedWith === 'xmlhttprequest' || str_contains($accept, 'application/json');
+    }
+
+    protected function json(array $payload, int $status = 200): void
+    {
+        header('Content-Type: application/json', true, $status);
+        echo json_encode($payload);
+        exit;
+    }
 }

@@ -2,23 +2,16 @@
 namespace App\Controller\Admin;
 
 use App\Service\Auth;
+use App\Service\Flash;
 
-class AuthController
+class AuthController extends BaseAdminController
 {
-    private $twig;
-
-    public function __construct()
-    {
-        $this->twig = $GLOBALS['app']['twig'];
-    }
-
     public function loginForm()
     {
-        $error = $_SESSION['flash_error'] ?? null;
-        unset($_SESSION['flash_error']);
+        $flash = Flash::consume();
 
-        echo $this->twig->render('admin/login.twig', [
-            'error' => $error,
+        $this->render('admin/login.twig', [
+            'error' => $flash['error'][0] ?? null,
         ]);
     }
 
@@ -28,13 +21,13 @@ class AuthController
         $password = $_POST['password'] ?? '';
 
         if ($email === '' || $password === '') {
-            $_SESSION['flash_error'] = 'Vyplň e-mail i heslo.';
+            Flash::addError('Vyplň e-mail i heslo.');
             header('Location: /admin/login');
             exit;
         }
 
         if (!Auth::attempt($email, $password)) {
-            $_SESSION['flash_error'] = 'Neplatný e-mail nebo heslo.';
+            Flash::addError('Neplatný e-mail nebo heslo.');
             header('Location: /admin/login');
             exit;
         }

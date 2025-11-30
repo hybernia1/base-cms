@@ -7,7 +7,7 @@ class Auth
 {
     public static function requireLogin(): void
     {
-        if (empty($_SESSION['user_id'])) {
+        if (!self::user()) {
             header('Location: /admin/login');
             exit;
         }
@@ -33,7 +33,30 @@ class Auth
         if (empty($_SESSION['user_id'])) {
             return null;
         }
-        return R::load('user', (int) $_SESSION['user_id']);
+        $user = R::load('user', (int) $_SESSION['user_id']);
+        return $user && $user->id ? $user : null;
+    }
+
+    public static function hasRole($roles): bool
+    {
+        $user = self::user();
+        if (!$user) {
+            return false;
+        }
+
+        $roleList = is_array($roles) ? $roles : [$roles];
+        return in_array($user->role, $roleList, true);
+    }
+
+    public static function requireRole($roles): void
+    {
+        if (self::hasRole($roles)) {
+            return;
+        }
+
+        Flash::addError('Nemáš oprávnění pro tuto akci.');
+        header('Location: /admin');
+        exit;
     }
 
     public static function logout(): void

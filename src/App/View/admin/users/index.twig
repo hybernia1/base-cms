@@ -1,0 +1,48 @@
+{% extends 'admin/layout.twig' %}
+
+{% set current_menu = 'users' %}
+
+{% block title %}Uživatelé | Administrace{% endblock %}
+
+{% block body %}
+    <div class="d-flex align-items-center mb-3">
+        <h1 class="h4 mb-0">Uživatelé</h1>
+        <a href="/admin/users/create" class="btn btn-primary ms-auto">Přidat uživatele</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>E-mail</th>
+                            <th>Role</th>
+                            <th class="text-end">Akce</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% if users %}
+                        {% for user in users %}
+                            <tr>
+                                <td>{{ user.email }}</td>
+                                <td>{{ roles[user.role] ?? user.role }}</td>
+                                <td class="text-end">
+                                    <a href="/admin/users/{{ user.id }}/edit" class="btn btn-sm btn-outline-secondary">Upravit</a>
+                                    <form method="post" action="/admin/users/{{ user.id }}/delete" class="d-inline" onsubmit="return confirm('Opravdu smazat tohoto uživatele?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center p-4 text-muted">Zatím žádní uživatelé.</td>
+                        </tr>
+                    {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

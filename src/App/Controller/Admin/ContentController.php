@@ -39,6 +39,7 @@ class ContentController extends BaseAdminController
                 'title' => '',
                 'slug'  => '',
                 'body'  => '',
+                'status' => 'draft',
                 'thumbnail_id' => '',
             ],
             'errors' => [],
@@ -88,6 +89,7 @@ class ContentController extends BaseAdminController
         $bean->title = $data['title'];
         $bean->slug = $data['slug'];
         $bean->type = $data['type'];
+        $bean->status = $data['status'] ?: 'draft';
         $bean->body = $data['body'];
         $bean->thumbnail_id = $data['thumbnail_id'] ?: null;
         $bean->thumbnail_alt = null;
@@ -123,6 +125,7 @@ class ContentController extends BaseAdminController
                 'title' => $content->title,
                 'slug'  => $content->slug,
                 'body'  => $content->body,
+                'status' => $content->status,
                 'thumbnail_id' => $content->thumbnail_id,
             ],
             'errors' => [],
@@ -182,6 +185,7 @@ class ContentController extends BaseAdminController
         $content->title = $data['title'];
         $content->slug = $data['slug'];
         $content->type = $data['type'];
+        $content->status = $data['status'] ?: 'draft';
         $content->body = $data['body'];
         $content->thumbnail_id = $data['thumbnail_id'] ?: null;
         $content->thumbnail_alt = null;
@@ -270,6 +274,7 @@ class ContentController extends BaseAdminController
             'title' => trim($_POST['title'] ?? ''),
             'slug'  => trim($_POST['slug'] ?? ''),
             'type'  => $type,
+            'status' => trim($_POST['status'] ?? 'draft'),
             'body'  => trim($_POST['body'] ?? ''),
             'thumbnail_id' => (int) ($_POST['thumbnail_id'] ?? 0),
             'terms' => $this->extractTermIds($_POST['terms'] ?? []),
@@ -296,6 +301,15 @@ class ContentController extends BaseAdminController
             $errors['slug'] = 'Slug musí být vyplněn.';
         } elseif ($this->slugExists($data['slug'], $data['type'], $ignoreId)) {
             $errors['slug'] = 'Slug je již použit pro tento typ obsahu.';
+        }
+
+        $allowedStatuses = ['draft', 'published'];
+        if ($data['status'] === '') {
+            $data['status'] = 'draft';
+        }
+
+        if (!in_array($data['status'], $allowedStatuses, true)) {
+            $errors['status'] = 'Vyber platný stav.';
         }
 
         if (!empty($data['terms'])) {

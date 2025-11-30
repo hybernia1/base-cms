@@ -7,119 +7,132 @@
 {% block body %}
     <h1 class="h3 mb-4">{{ heading }}</h1>
 
-    <form method="post" action="{{ form_action }}" class="card shadow-sm mb-3" enctype="multipart/form-data">
-        <div class="card-body p-4">
-            <div class="mb-3">
-                <label for="title" class="form-label">Název</label>
-                <input type="text" name="title" id="title" class="form-control {% if errors.title %}is-invalid{% endif %}" value="{{ values.title }}">
-                {% if errors.title %}
-                    <div class="invalid-feedback">{{ errors.title }}</div>
-                {% endif %}
-            </div>
-
-            <div class="mb-3">
-                <label for="slug" class="form-label">Slug</label>
-                <input type="text" name="slug" id="slug" class="form-control {% if errors.slug %}is-invalid{% endif %}" value="{{ values.slug }}" placeholder="např. muj-prispevek">
-                {% if errors.slug %}
-                    <div class="invalid-feedback">{{ errors.slug }}</div>
-                {% else %}
-                    <div class="form-text">Pokud necháš prázdné, vytvoří se automaticky z názvu.</div>
-                {% endif %}
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label">Náhledový obrázek</label>
-                <div class="d-flex flex-wrap gap-2 mb-2">
-                    <select name="thumbnail_id" id="thumbnailSelect" class="form-select" style="max-width: 320px;">
-                        <option value="">Vyberte z médií</option>
-                        {% for mediaItem in media %}
-                            {% if mediaItem.is_image %}
-                                <option value="{{ mediaItem.id }}" data-preview="/{{ mediaItem.path }}/{{ mediaItem.webp_filename ?: mediaItem.filename }}" {% if values.thumbnail_id == mediaItem.id %}selected{% endif %}>
-                                    {{ mediaItem.original_name ?: mediaItem.filename }}
-                                </option>
+    <form method="post" action="{{ form_action }}" class="mb-4" enctype="multipart/form-data" id="contentForm">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Název</label>
+                            <input type="text" name="title" id="title" class="form-control {% if errors.title %}is-invalid{% endif %}" value="{{ values.title }}">
+                            {% if errors.title %}
+                                <div class="invalid-feedback">{{ errors.title }}</div>
                             {% endif %}
-                        {% endfor %}
-                    </select>
-                    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#mediaLibraryModal">Otevřít knihovnu médií</button>
-                </div>
-                <div id="thumbnailPreview" class="border rounded p-2 bg-light" style="max-width: 320px;{% if not values.thumbnail_id %} display:none;{% endif %}">
-                    {% if values.thumbnail_id %}
-                        {% for mediaItem in media %}
-                            {% if mediaItem.id == values.thumbnail_id %}
-                                <img src="/{{ mediaItem.path }}/{{ mediaItem.webp_filename ?: mediaItem.filename }}" class="img-fluid" alt="{{ mediaItem.alt }}">
-                                <div class="small mt-1 text-muted">{{ mediaItem.original_name ?: mediaItem.filename }}</div>
-                            {% endif %}
-                        {% endfor %}
-                    {% endif %}
-                </div>
-                <div class="form-text">Vyberte existující obrázek nebo použijte knihovnu médií pro nahrání.</div>
-                {% if errors.thumbnail %}
-                    <div class="text-danger small">{{ errors.thumbnail }}</div>
-                {% endif %}
-            </div>
-
-            {% if allowed_term_types is not empty %}
-                <div class="mb-4">
-                    <label class="form-label">Přidat term</label>
-                    <form id="newTermForm" class="card card-body bg-light border" action="/admin/content/{{ current_type.slug }}/terms" method="post">
-                        <div class="row g-2 align-items-end">
-                            <div class="col-lg-5">
-                                <label class="form-label" for="newTermName">Název</label>
-                                <input type="text" id="newTermName" name="name" class="form-control" placeholder="např. Kategorie A" required>
-                            </div>
-                            <div class="col-lg-4">
-                                <label class="form-label" for="newTermType">Typ</label>
-                                <select id="newTermType" name="type" class="form-select">
-                                    {% for typeKey, typeDef in allowed_term_types %}
-                                        <option value="{{ typeKey }}">{{ typeDef.label|default(typeKey) }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-lg-3">
-                                <label class="form-label" for="newTermSlug">Slug (volitelně)</label>
-                                <input type="text" id="newTermSlug" name="slug" class="form-control" placeholder="např. kategorie-a">
-                            </div>
                         </div>
-                        <div class="text-danger small mt-2" id="newTermError" style="display:none;"></div>
-                        <div class="text-muted small mt-1">Nové termy se po uložení automaticky zaškrtnou a přidají do seznamu.</div>
-                    </form>
-                </div>
-            {% endif %}
 
-            {% if terms is not empty %}
-                <div class="mb-4">
-                    <label class="form-label">Termy</label>
-                    {% for typeKey, typeTerms in terms %}
-                        <div class="mb-2">
-                            <div class="fw-semibold">{{ term_types[typeKey].label|default(typeKey) }}</div>
-                            <div class="row g-2" data-term-group="{{ typeKey }}">
-                                {% if typeTerms is not empty %}
-                                    {% for term in typeTerms %}
-                                        <div class="col-md-4 term-item">
-                                            <div class="form-check">
+                        <div class="mb-3">
+                            <label for="slug" class="form-label">Slug</label>
+                            <input type="text" name="slug" id="slug" class="form-control {% if errors.slug %}is-invalid{% endif %}" value="{{ values.slug }}" placeholder="např. muj-prispevek">
+                            {% if errors.slug %}
+                                <div class="invalid-feedback">{{ errors.slug }}</div>
+                            {% else %}
+                                <div class="form-text">Pokud necháš prázdné, vytvoří se automaticky z názvu.</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="body" class="form-label">Text</label>
+                            <textarea name="body" id="body" rows="8" class="form-control">{{ values.body }}</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header fw-semibold">Publikace</div>
+                    <div class="card-body">
+                        <label for="status" class="form-label">Stav</label>
+                        <select name="status" id="status" class="form-select {% if errors.status %}is-invalid{% endif %}">
+                            <option value="draft" {% if values.status == 'draft' %}selected{% endif %}>Draft</option>
+                            <option value="published" {% if values.status == 'published' %}selected{% endif %}>Publikováno</option>
+                        </select>
+                        {% if errors.status %}
+                            <div class="invalid-feedback d-block">{{ errors.status }}</div>
+                        {% endif %}
+                        <div class="text-muted small mt-2">Drafty se na webu nezobrazí, dokud je nepřepneš na publikované.</div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header fw-semibold">Náhledový obrázek</div>
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap gap-2 mb-2">
+                            <select name="thumbnail_id" id="thumbnailSelect" class="form-select" style="max-width: 320px;">
+                                <option value="">Vyberte z médií</option>
+                                {% for mediaItem in media %}
+                                    {% if mediaItem.is_image %}
+                                        <option value="{{ mediaItem.id }}" data-preview="/{{ mediaItem.path }}/{{ mediaItem.webp_filename ?: mediaItem.filename }}" {% if values.thumbnail_id == mediaItem.id %}selected{% endif %}>
+                                            {{ mediaItem.original_name ?: mediaItem.filename }}
+                                        </option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#mediaLibraryModal">Otevřít knihovnu médií</button>
+                        </div>
+                        <div id="thumbnailPreview" class="border rounded p-2 bg-light" style="max-width: 320px;{% if not values.thumbnail_id %} display:none;{% endif %}">
+                            {% if values.thumbnail_id %}
+                                {% for mediaItem in media %}
+                                    {% if mediaItem.id == values.thumbnail_id %}
+                                        <img src="/{{ mediaItem.path }}/{{ mediaItem.webp_filename ?: mediaItem.filename }}" class="img-fluid" alt="{{ mediaItem.alt }}">
+                                        <div class="small mt-1 text-muted">{{ mediaItem.original_name ?: mediaItem.filename }}</div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="form-text">Vyberte existující obrázek nebo použijte knihovnu médií pro nahrání.</div>
+                        {% if errors.thumbnail %}
+                            <div class="text-danger small">{{ errors.thumbnail }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if allowed_term_types is not empty %}
+                    {% for typeKey, typeDef in allowed_term_types %}
+                        {% set typeTerms = terms[typeKey]|default([]) %}
+                        <div class="card shadow-sm mb-3 term-box" data-term-type="{{ typeKey }}">
+                            <div class="card-header fw-semibold">{{ typeDef.label|default(typeKey) }}</div>
+                            <div class="card-body">
+                                <div class="term-list" data-term-group="{{ typeKey }}">
+                                    {% if typeTerms is not empty %}
+                                        {% for term in typeTerms %}
+                                            <div class="form-check mb-1">
                                                 <input class="form-check-input" type="checkbox" name="terms[{{ typeKey }}][]" value="{{ term.id }}" id="term-{{ term.id }}" {% if term.id in selected_terms %}checked{% endif %}>
                                                 <label class="form-check-label" for="term-{{ term.id }}">{{ term.name }}</label>
                                             </div>
-                                        </div>
-                                    {% endfor %}
-                                {% else %}
-                                    <div class="col-12 text-muted small empty-term-state">Zatím žádné termy.</div>
-                                {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="text-muted small empty-term-state">Zatím žádné termy.</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="card-footer bg-light">
+                                <div class="new-term-form" data-action="/admin/content/{{ current_type.slug }}/terms" data-term-type="{{ typeKey }}">
+                                    <div class="mb-2">
+                                        <label class="form-label" for="new-term-name-{{ typeKey }}">Přidat nový term</label>
+                                        <input type="text" id="new-term-name-{{ typeKey }}" class="form-control" placeholder="Např. Kategorie A" data-role="name" autocomplete="off">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label" for="new-term-slug-{{ typeKey }}">Slug (volitelně)</label>
+                                        <input type="text" id="new-term-slug-{{ typeKey }}" class="form-control" placeholder="napr-kategorie-a" data-role="slug" autocomplete="off">
+                                    </div>
+                                    <div class="text-danger small new-term-error d-none"></div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="text-muted small">Nový term se rovnou zaškrtne.</div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary new-term-submit">Přidat</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     {% endfor %}
                     {% if errors.terms %}
                         <div class="text-danger small">{{ errors.terms }}</div>
                     {% endif %}
-                </div>
-            {% endif %}
-
-            <div class="mb-3">
-                <label for="body" class="form-label">Text</label>
-                <textarea name="body" id="body" rows="8" class="form-control">{{ values.body }}</textarea>
+                {% endif %}
             </div>
         </div>
-        <div class="card-footer bg-light d-flex justify-content-between align-items-center">
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
             <a href="/admin/content/{{ current_type.slug }}" class="btn btn-outline-secondary">Zpět</a>
             <button class="btn btn-primary" type="submit">Uložit</button>
         </div>
@@ -308,21 +321,6 @@
             mediaGrid.prepend(col);
         }
 
-        const newTermForm = document.getElementById('newTermForm');
-        const newTermError = document.getElementById('newTermError');
-
-        function showTermError(message) {
-            if (!newTermError) return;
-            newTermError.textContent = message;
-            newTermError.style.display = '';
-        }
-
-        function clearTermError() {
-            if (!newTermError) return;
-            newTermError.textContent = '';
-            newTermError.style.display = 'none';
-        }
-
         function appendTermCheckbox(typeKey, id, name, checked = false) {
             const group = document.querySelector(`[data-term-group="${typeKey}"]`);
             if (!group) {
@@ -335,12 +333,10 @@
             }
 
             const wrapper = document.createElement('div');
-            wrapper.className = 'col-md-4 term-item';
+            wrapper.className = 'form-check mb-1 term-item';
             wrapper.innerHTML = `
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" name="terms[${typeKey}][]" value="${id}" id="term-${id}">
-                    <label class="form-check-label" for="term-${id}">${name}</label>
-                </div>
+                <input class="form-check-input" type="checkbox" name="terms[${typeKey}][]" value="${id}" id="term-${id}">
+                <label class="form-check-label" for="term-${id}">${name}</label>
             `;
 
             group.prepend(wrapper);
@@ -351,15 +347,46 @@
             }
         }
 
-        if (newTermForm) {
-            newTermForm.addEventListener('submit', async function (event) {
-                event.preventDefault();
-                clearTermError();
+        const termForms = document.querySelectorAll('.new-term-form');
 
-                const formData = new FormData(newTermForm);
+        termForms.forEach((form) => {
+            const nameInput = form.querySelector('[data-role="name"]');
+            const slugInput = form.querySelector('[data-role="slug"]');
+            const errorEl = form.querySelector('.new-term-error');
+            const submitBtn = form.querySelector('.new-term-submit');
+            const action = form.dataset.action;
+            const typeKey = form.dataset.termType;
+
+            const showError = (message) => {
+                if (!errorEl) return;
+                errorEl.textContent = message;
+                errorEl.classList.remove('d-none');
+            };
+
+            const clearError = () => {
+                if (!errorEl) return;
+                errorEl.textContent = '';
+                errorEl.classList.add('d-none');
+            };
+
+            const handleSubmit = async () => {
+                clearError();
+
+                const name = nameInput?.value.trim();
+                const slug = slugInput?.value.trim();
+
+                if (!name) {
+                    showError('Vyplň název termu.');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('name', name || '');
+                formData.append('slug', slug || '');
+                formData.append('type', typeKey || '');
 
                 try {
-                    const response = await fetch(newTermForm.action, {
+                    const response = await fetch(action, {
                         method: 'POST',
                         body: formData,
                         headers: {
@@ -370,16 +397,29 @@
 
                     const result = await response.json();
                     if (!response.ok || result.error) {
-                        showTermError(result.error || 'Vytvoření termu se nezdařilo.');
+                        showError(result.error || 'Vytvoření termu se nezdařilo.');
                         return;
                     }
 
                     appendTermCheckbox(result.type, result.id, result.name, true);
-                    newTermForm.reset();
+                    if (nameInput) nameInput.value = '';
+                    if (slugInput) slugInput.value = '';
                 } catch (error) {
-                    showTermError('Vytvoření termu se nezdařilo.');
+                    showError('Vytvoření termu se nezdařilo.');
                 }
+            };
+
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                handleSubmit();
             });
-        }
+
+            if (submitBtn) {
+                submitBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    handleSubmit();
+                });
+            }
+        });
     </script>
 {% endblock %}

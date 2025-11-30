@@ -8,7 +8,7 @@ class HomeController extends BaseFrontController
 
     public function index()
     {
-        $posts = R::findAll('content', ' type = ? ORDER BY created_at DESC ', ['post']);
+        $posts = R::findAll('content', ' type = ? AND status = ? ORDER BY created_at DESC ', ['post', 'published']);
 
         $this->render('front/home.twig', [
             'posts' => $posts,

@@ -138,6 +138,7 @@ class InstallController
                 `title` VARCHAR(255) NOT NULL,
                 `slug` VARCHAR(191) NOT NULL,
                 `type` VARCHAR(50) NOT NULL,
+                `status` VARCHAR(20) NOT NULL DEFAULT 'published',
                 `body` TEXT,
                 `thumbnail_id` INT UNSIGNED DEFAULT NULL,
                 `thumbnail_alt` VARCHAR(255) DEFAULT '',
@@ -213,6 +214,10 @@ class InstallController
 
         if (!isset($contentColumns['thumbnail_alt'])) {
             R::exec("ALTER TABLE `content` ADD COLUMN `thumbnail_alt` VARCHAR(255) DEFAULT '' AFTER `thumbnail_id`");
+        }
+
+        if (!isset($contentColumns['status'])) {
+            R::exec("ALTER TABLE `content` ADD COLUMN `status` VARCHAR(20) NOT NULL DEFAULT 'published' AFTER `type`");
         }
 
         $termColumns = R::inspect('term');

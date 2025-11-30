@@ -31,6 +31,7 @@
                     <tr>
                         <th>Název</th>
                         <th>Typ</th>
+                        <th>Stav</th>
                         <th>Slug</th>
                         <th>Upraveno</th>
                         <th class="text-end">Akce</th>
@@ -41,6 +42,13 @@
                         <tr>
                             <td class="fw-semibold">{{ item.title }}</td>
                             <td>{{ types[item.type]|default(item.type) }}</td>
+                            <td>
+                                {% if item.status == 'published' %}
+                                    <span class="badge text-bg-success">Publikováno</span>
+                                {% else %}
+                                    <span class="badge text-bg-secondary">Draft</span>
+                                {% endif %}
+                            </td>
                             <td><code>{{ item.slug }}</code></td>
                             <td>{{ item.updated_at|date('j. n. Y H:i') }}</td>
                             <td class="text-end">

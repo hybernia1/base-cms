@@ -5,6 +5,7 @@ use App\Service\Auth;
 use App\Service\Flash;
 use App\Service\Setting;
 use App\Service\ContentType;
+use App\Service\TermType;
 
 class SettingController extends BaseAdminController
 {
@@ -16,6 +17,7 @@ class SettingController extends BaseAdminController
         $this->render('admin/settings/form.twig', [
             'values' => $values,
             'content_types' => ContentType::definitions(),
+            'term_types' => TermType::definitions(),
             'current_menu' => 'settings',
         ]);
     }
@@ -36,6 +38,7 @@ class SettingController extends BaseAdminController
         $smtpFromEmail = trim($_POST['smtp_from_email'] ?? '');
         $smtpFromName = trim($_POST['smtp_from_name'] ?? '');
         $contentTypes = $this->parseContentTypes($_POST['content_types'] ?? []);
+        $termTypes = $this->parseTermTypes($_POST['term_types'] ?? []);
 
         if ($siteName === '') {
             Flash::addError('Název webu je povinný.');
@@ -55,6 +58,7 @@ class SettingController extends BaseAdminController
         Setting::set('smtp_from_email', $smtpFromEmail);
         Setting::set('smtp_from_name', $smtpFromName);
         Setting::set('content_types', json_encode($contentTypes ?: ContentType::defaults()));
+        Setting::set('term_types', json_encode($termTypes ?: TermType::defaults()));
 
         Flash::addSuccess('Nastavení bylo uloženo.');
         header('Location: /admin/settings');
@@ -83,6 +87,44 @@ class SettingController extends BaseAdminController
                 'plural_name' => trim((string) ($pluralNames[$index] ?? $key)) ?: $key,
                 'slug' => trim((string) ($slugs[$index] ?? $key)) ?: $key,
                 'menu_label' => trim((string) ($menuLabels[$index] ?? ($pluralNames[$index] ?? $key))) ?: $key,
+            ];
+        }
+
+        return $result;
+    }
+
+    private function parseTermTypes(array $input): array
+    {
+        $keys = $input['key'] ?? [];
+        $labels = $input['label'] ?? [];
+        $contentTypes = $input['content_types'] ?? [];
+        $allowedContentTypes = array_keys(ContentType::definitions());
+
+        $result = [];
+
+        foreach ($keys as $index => $key) {
+            $key = trim((string) $key);
+            if ($key === '') {
+                continue;
+            }
+
+            $selectedContentTypes = $contentTypes[$index] ?? [];
+            if (!is_array($selectedContentTypes)) {
+                $selectedContentTypes = [];
+            }
+
+            $cleanContentTypes = [];
+            foreach ($selectedContentTypes as $value) {
+                $value = trim((string) $value);
+                if ($value !== '' && in_array($value, $allowedContentTypes, true)) {
+                    $cleanContentTypes[] = $value;
+                }
+            }
+
+            $result[] = [
+                'key' => $key,
+                'label' => trim((string) ($labels[$index] ?? $key)) ?: $key,
+                'content_types' => array_values(array_unique($cleanContentTypes)),
             ];
         }
 

@@ -52,8 +52,10 @@
                                 </select>
                             </div>
                         </div>
+
                     {% elseif active_section == 'uploads' %}
                         <h2 class="h5 mb-3">Uploady</h2>
+
                         <div class="form-check form-switch mb-3">
                             <input class="form-check-input" type="checkbox" role="switch" id="allow_webp" name="allow_webp" value="1" {% if values.allow_webp == '1' %}checked{% endif %}>
                             <label class="form-check-label" for="allow_webp">Povolit generování WebP variant</label>
@@ -64,8 +66,10 @@
                             <input type="text" name="allowed_upload_types" id="allowed_upload_types" value="{{ values.allowed_upload_types }}" class="form-control">
                             <div class="form-text">Zadejte seznam přípon oddělených čárkou (např. jpg,jpeg,png,gif,webp,pdf,zip).</div>
                         </div>
+
                     {% elseif active_section == 'email' %}
                         <h2 class="h5 mb-3">E-mailové nastavení</h2>
+
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="smtp_host" class="form-label">SMTP server</label>
@@ -107,70 +111,109 @@
                                 <input type="text" class="form-control" id="smtp_from_name" name="smtp_from_name" value="{{ values.smtp_from_name }}" placeholder="Moje CMS">
                             </div>
                         </div>
+
                     {% elseif active_section == 'content-types' %}
                         <h2 class="h5 mb-3">Typy obsahu</h2>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <p class="mb-0">Definujte typy obsahu podobně jako ve WordPressu. Každý typ musí mít klíč (používá se v databázi) a slug (pro URL v administraci).</p>
-                            <button type="button" class="btn btn-outline-primary" id="addContentType">Přidat typ</button>
+
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                            <p class="mb-0 flex-grow-1">
+                                Definujte typy obsahu podobně jako ve WordPressu. Každý typ musí mít klíč (používá se v databázi) a slug (pro URL v administraci).
+                            </p>
+                            <button type="button" class="btn btn-outline-primary ms-auto" id="addContentType">
+                                Přidat typ
+                            </button>
                         </div>
 
-                        <div class="table-responsive">
-                            <table class="table align-middle" id="contentTypesTable">
-                                <thead>
-                                    <tr>
-                                        <th>Klíč</th>
-                                        <th>Název</th>
-                                        <th>Plurál</th>
-                                        <th>Slug</th>
-                                        <th>Název v menu</th>
-                                        <th class="text-end">Akce</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% set types = content_types is defined and content_types ? content_types : [] %}
-                                    {% if types is empty %}
-                                        {% set types = [{ key: 'post', name: 'Příspěvek', plural_name: 'Příspěvky', slug: 'prispevky', menu_label: 'Příspěvky' }, { key: 'page', name: 'Stránka', plural_name: 'Stránky', slug: 'stranky', menu_label: 'Stránky' }] %}
-                                    {% endif %}
-                                    {% for type in types %}
-                                        <tr>
-                                            <td><input type="text" name="content_types[key][]" class="form-control" value="{{ type.key }}" required></td>
-                                            <td><input type="text" name="content_types[name][]" class="form-control" value="{{ type.name }}" required></td>
-                                            <td><input type="text" name="content_types[plural_name][]" class="form-control" value="{{ type.plural_name|default(type.name ~ 'y') }}" required></td>
-                                            <td><input type="text" name="content_types[slug][]" class="form-control" value="{{ type.slug }}" required></td>
-                                            <td><input type="text" name="content_types[menu_label][]" class="form-control" value="{{ type.menu_label|default(type.plural_name) }}" required></td>
-                                            <td class="text-end"><button type="button" class="btn btn-outline-danger btn-sm remove-row">Smazat</button></td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                        {% set types = content_types is defined and content_types ? content_types : [] %}
+                        {% if types is empty %}
+                            {% set types = [
+                                { key: 'post', name: 'Příspěvek', plural_name: 'Příspěvky', slug: 'prispevky', menu_label: 'Příspěvky' },
+                                { key: 'page', name: 'Stránka', plural_name: 'Stránky', slug: 'stranky', menu_label: 'Stránky' }
+                            ] %}
+                        {% endif %}
+
+                        <div id="contentTypesList" class="row gy-3">
+                            {% for type in types %}
+                                <div class="col-12">
+                                    <div class="border rounded p-3 bg-light h-100">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="fw-semibold">
+                                                {{ type.name }} ({{ type.key }})
+                                            </span>
+                                            <button type="button" class="btn btn-outline-danger btn-sm remove-content-type">
+                                                Smazat
+                                            </button>
+                                        </div>
+                                        <div class="row g-2">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Klíč</label>
+                                                <input type="text" name="content_types[key][]" class="form-control" value="{{ type.key }}" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Název</label>
+                                                <input type="text" name="content_types[name][]" class="form-control" value="{{ type.name }}" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Plurál</label>
+                                                <input type="text" name="content_types[plural_name][]" class="form-control" value="{{ type.plural_name|default(type.name ~ 'y') }}" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Slug</label>
+                                                <input type="text" name="content_types[slug][]" class="form-control" value="{{ type.slug }}" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Název v menu</label>
+                                                <input type="text" name="content_types[menu_label][]" class="form-control" value="{{ type.menu_label|default(type.plural_name) }}" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
                         </div>
+
                     {% elseif active_section == 'term-types' %}
                         <h2 class="h5 mb-3">Typy termů</h2>
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <p class="mb-0">Stejně jako u typů obsahu si můžete definovat vlastní typy termů (tagy, kategorie...).</p>
-                            <button type="button" class="btn btn-outline-primary" id="addTermType">Přidat typ termu</button>
+
+                        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                            <p class="mb-0 flex-grow-1">
+                                Stejně jako u typů obsahu si můžete definovat vlastní typy termů (tagy, kategorie...).
+                            </p>
+                            <button type="button" class="btn btn-outline-primary ms-auto" id="addTermType">
+                                Přidat typ termu
+                            </button>
                         </div>
 
-                        <div class="table-responsive">
-                            <table class="table align-middle" id="termTypesTable">
-                                <thead>
-                                      <tr>
-                                          <th>Klíč</th>
-                                          <th>Název</th>
-                                          <th>Typy obsahu</th>
-                                          <th class="text-end">Akce</th>
-                                      </tr>
-                                </thead>
-                                <tbody>
-                                    {% set termTypes = term_types is defined and term_types ? term_types : [] %}
-                                    {% if termTypes is empty %}
-                                        {% set termTypes = [{ key: 'tag', label: 'Tag', content_types: [] }, { key: 'category', label: 'Kategorie', content_types: [] }] %}
-                                    {% endif %}
-                                    {% for type in termTypes %}
-                                        <tr>
-                                            <td><input type="text" name="term_types[key][{{ loop.index0 }}]" class="form-control" value="{{ type.key }}" required></td>
-                                            <td><input type="text" name="term_types[label][{{ loop.index0 }}]" class="form-control" value="{{ type.label }}" required></td>
-                                            <td>
+                        {% set termTypes = term_types is defined and term_types ? term_types : [] %}
+                        {% if termTypes is empty %}
+                            {% set termTypes = [
+                                { key: 'tag', label: 'Tag', content_types: [] },
+                                { key: 'category', label: 'Kategorie', content_types: [] }
+                            ] %}
+                        {% endif %}
+
+                        <div id="termTypesList" class="row gy-3">
+                            {% for type in termTypes %}
+                                <div class="col-12">
+                                    <div class="border rounded p-3 bg-light h-100">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="fw-semibold">
+                                                {{ type.label }} ({{ type.key }})
+                                            </span>
+                                            <button type="button" class="btn btn-outline-danger btn-sm remove-term-type">
+                                                Smazat
+                                            </button>
+                                        </div>
+                                        <div class="row g-2">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Klíč</label>
+                                                <input type="text" name="term_types[key][{{ loop.index0 }}]" class="form-control" value="{{ type.key }}" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Název</label>
+                                                <input type="text" name="term_types[label][{{ loop.index0 }}]" class="form-control" value="{{ type.label }}" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Typy obsahu</label>
                                                 <select name="term_types[content_types][{{ loop.index0 }}][]" class="form-select" multiple>
                                                     {% set allowed = type.content_types is defined and type.content_types is iterable ? type.content_types : [] %}
                                                     {% for key, contentType in content_types %}
@@ -178,15 +221,15 @@
                                                     {% endfor %}
                                                 </select>
                                                 <div class="form-text">Nevybráno = dostupné všude.</div>
-                                            </td>
-                                            <td class="text-end"><button type="button" class="btn btn-outline-danger btn-sm remove-row">Smazat</button></td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
                         </div>
                     {% endif %}
                 </div>
+
                 <div class="card-footer bg-light d-flex justify-content-between align-items-center">
                     <a href="/admin" class="btn btn-outline-secondary">Zpět</a>
                     <button class="btn btn-primary" type="submit">Uložit</button>
@@ -199,65 +242,112 @@
 {% block scripts %}
     <script>
         (function () {
+            // ---------- Typy obsahu ----------
+            const contentTypesList = document.getElementById('contentTypesList');
             const addContentTypeButton = document.getElementById('addContentType');
-            if (addContentTypeButton) {
-                addContentTypeButton.addEventListener('click', function () {
-                    const tbody = document.querySelector('#contentTypesTable tbody');
-                    if (!tbody) return;
 
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td><input type="text" name="content_types[key][]" class="form-control" required></td>
-                        <td><input type="text" name="content_types[name][]" class="form-control" required></td>
-                        <td><input type="text" name="content_types[plural_name][]" class="form-control" required></td>
-                        <td><input type="text" name="content_types[slug][]" class="form-control" required></td>
-                        <td><input type="text" name="content_types[menu_label][]" class="form-control" required></td>
-                        <td class="text-end"><button type="button" class="btn btn-outline-danger btn-sm remove-row">Smazat</button></td>
+            if (addContentTypeButton && contentTypesList) {
+                addContentTypeButton.addEventListener('click', function () {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'col-12';
+                    wrapper.innerHTML = `
+                        <div class="border rounded p-3 bg-light h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-semibold">
+                                    Nový typ
+                                </span>
+                                <button type="button" class="btn btn-outline-danger btn-sm remove-content-type">
+                                    Smazat
+                                </button>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label class="form-label">Klíč</label>
+                                    <input type="text" name="content_types[key][]" class="form-control" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Název</label>
+                                    <input type="text" name="content_types[name][]" class="form-control" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Plurál</label>
+                                    <input type="text" name="content_types[plural_name][]" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Slug</label>
+                                    <input type="text" name="content_types[slug][]" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Název v menu</label>
+                                    <input type="text" name="content_types[menu_label][]" class="form-control" required>
+                                </div>
+                            </div>
+                        </div>
                     `;
-                    tbody.appendChild(row);
+                    contentTypesList.appendChild(wrapper);
                 });
 
-                const contentTypesTable = document.getElementById('contentTypesTable');
-                contentTypesTable?.addEventListener('click', function (event) {
+                contentTypesList.addEventListener('click', function (event) {
                     if (!(event.target instanceof HTMLElement)) return;
-                    if (event.target.classList.contains('remove-row')) {
-                        const row = event.target.closest('tr');
-                        row?.parentNode?.removeChild(row);
+                    if (event.target.classList.contains('remove-content-type')) {
+                        const col = event.target.closest('.col-12');
+                        if (col) {
+                            col.parentNode.removeChild(col);
+                        }
                     }
                 });
             }
 
-            const termTypeContentOptions = `{% for key, contentType in content_types %}<option value="{{ key }}">{{ contentType.name }}</option>{% endfor %}`;
-            let termTypeIndex = document.querySelectorAll('#termTypesTable tbody tr').length;
-
+            // ---------- Typy termů ----------
+            const termTypesList = document.getElementById('termTypesList');
             const addTermTypeButton = document.getElementById('addTermType');
-            if (addTermTypeButton) {
-                addTermTypeButton.addEventListener('click', function () {
-                    const tbody = document.querySelector('#termTypesTable tbody');
-                    if (!tbody) return;
+            let termTypeIndex = termTypesList ? termTypesList.querySelectorAll('.col-12').length : 0;
+            const termTypeContentOptions = `{% for key, contentType in content_types %}<option value="{{ key }}">{{ contentType.name }}</option>{% endfor %}`;
 
-                    const row = document.createElement('tr');
+            if (addTermTypeButton && termTypesList) {
+                addTermTypeButton.addEventListener('click', function () {
                     const currentIndex = termTypeIndex++;
-                    row.innerHTML = `
-                        <td><input type="text" name="term_types[key][${currentIndex}]" class="form-control" required></td>
-                        <td><input type="text" name="term_types[label][${currentIndex}]" class="form-control" required></td>
-                        <td>
-                            <select name="term_types[content_types][${currentIndex}][]" class="form-select" multiple>
-                                ${termTypeContentOptions}
-                            </select>
-                            <div class="form-text">Nevybráno = dostupné všude.</div>
-                        </td>
-                        <td class="text-end"><button type="button" class="btn btn-outline-danger btn-sm remove-row">Smazat</button></td>
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'col-12';
+                    wrapper.innerHTML = `
+                        <div class="border rounded p-3 bg-light h-100">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-semibold">
+                                    Nový term
+                                </span>
+                                <button type="button" class="btn btn-outline-danger btn-sm remove-term-type">
+                                    Smazat
+                                </button>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <label class="form-label">Klíč</label>
+                                    <input type="text" name="term_types[key][${currentIndex}]" class="form-control" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Název</label>
+                                    <input type="text" name="term_types[label][${currentIndex}]" class="form-control" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Typy obsahu</label>
+                                    <select name="term_types[content_types][${currentIndex}][]" class="form-select" multiple>
+                                        ${termTypeContentOptions}
+                                    </select>
+                                    <div class="form-text">Nevybráno = dostupné všude.</div>
+                                </div>
+                            </div>
+                        </div>
                     `;
-                    tbody.appendChild(row);
+                    termTypesList.appendChild(wrapper);
                 });
 
-                const termTypesTable = document.getElementById('termTypesTable');
-                termTypesTable?.addEventListener('click', function (event) {
+                termTypesList.addEventListener('click', function (event) {
                     if (!(event.target instanceof HTMLElement)) return;
-                    if (event.target.classList.contains('remove-row')) {
-                        const row = event.target.closest('tr');
-                        row?.parentNode?.removeChild(row);
+                    if (event.target.classList.contains('remove-term-type')) {
+                        const col = event.target.closest('.col-12');
+                        if (col) {
+                            col.parentNode.removeChild(col);
+                        }
                     }
                 });
             }

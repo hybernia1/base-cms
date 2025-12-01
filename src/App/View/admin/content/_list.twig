@@ -54,7 +54,7 @@
                             {% endif %}
                         </td>
                         <td><code>{{ item.slug }}</code></td>
-                        <td>{{ item.updated_at|date('j. n. Y H:i') }}</td>
+                        <td>{{ item.updated_at|date(settings.date_format|default('j. n. Y H:i')) }}</td>
                         <td class="text-end">
                             {{ ui.actions([
                                 {

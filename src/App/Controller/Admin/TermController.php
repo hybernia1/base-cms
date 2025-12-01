@@ -215,13 +215,12 @@ class TermController extends AjaxController
             $item->allowed_for = $termTypeDefinitions[$item->type]['content_types'] ?? [];
         }
 
-        if ($this->respondAjax('admin/terms/_list.twig', [
-            'items' => $items,
+        if ($this->respondAjax('admin/terms/_list.twig', $this->prepareTermsAjaxPayload($items, [
             'types' => TermType::all(),
             'content_types' => $contentTypeDefinitions,
             'current_term_type' => $typeFilter ? ($termTypeDefinitions[$typeFilter] ?? null) : null,
             'pagination' => $pagination,
-        ], $pagination['current_url'])) {
+        ]), $pagination['current_url'])) {
             return;
         }
 
@@ -233,6 +232,29 @@ class TermController extends AjaxController
             'current_term_type' => $typeFilter ? ($termTypeDefinitions[$typeFilter] ?? null) : null,
             'pagination' => $pagination,
         ]);
+    }
+
+    private function prepareTermsAjaxPayload(array $items, array $context): array
+    {
+        $settings = $this->baseContext(false)['settings'];
+        $format = ($settings['date_format'] ?? 'd/m/Y') . ' ' . ($settings['time_format'] ?? 'H:i');
+
+        $serializedItems = [];
+        foreach ($items as $item) {
+            $serializedItems[] = [
+                'id' => (int) $item->id,
+                'name' => $item->name,
+                'slug' => $item->slug,
+                'type' => $item->type,
+                'allowed_for' => $item->allowed_for ?? [],
+                'updated_at' => $item->updated_at,
+                'updated_at_formatted' => $item->updated_at ? date($format, strtotime($item->updated_at)) : null,
+            ];
+        }
+
+        $context['items'] = $serializedItems;
+
+        return $context;
     }
 
     private function sanitizeInput(?string $forcedType = null): array

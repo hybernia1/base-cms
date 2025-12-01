@@ -22,10 +22,9 @@ class MediaController extends AjaxController
             [$pagination['per_page'], $pagination['offset']]
         );
 
-        if ($this->respondAjax('admin/media/_list.twig', [
-            'items' => $items,
+        if ($this->respondAjax('admin/media/_list.twig', $this->prepareMediaAjaxPayload($items, [
             'pagination' => $pagination,
-        ], $pagination['current_url'])) {
+        ]), $pagination['current_url'])) {
             return;
         }
 
@@ -34,6 +33,30 @@ class MediaController extends AjaxController
             'current_menu' => 'media',
             'pagination' => $pagination,
         ]);
+    }
+
+    private function prepareMediaAjaxPayload(array $items, array $context): array
+    {
+        $serializedItems = [];
+        foreach ($items as $item) {
+            $serializedItems[] = [
+                'id' => (int) $item->id,
+                'path' => $item->path,
+                'filename' => $item->filename,
+                'webp_filename' => $item->webp_filename,
+                'original_name' => $item->original_name,
+                'mime_type' => $item->mime_type,
+                'size' => (int) $item->size,
+                'is_image' => (bool) $item->is_image,
+                'alt' => $item->alt,
+                'created_at' => $item->created_at,
+                'updated_at' => $item->updated_at,
+            ];
+        }
+
+        $context['items'] = $serializedItems;
+
+        return $context;
     }
 
     public function upload()

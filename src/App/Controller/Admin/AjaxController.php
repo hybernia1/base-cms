@@ -10,12 +10,13 @@ abstract class AjaxController extends BaseAdminController
         }
 
         $payload = array_merge([
-            'html' => $this->twig->render($template, $context),
+            'success' => true,
+            'view' => [
+                'template' => $template,
+                'context' => array_merge($this->baseContext(false), $context),
+            ],
+            'state_url' => $stateUrl,
         ], $extra);
-
-        if ($stateUrl !== null) {
-            $payload['state_url'] = $stateUrl;
-        }
 
         $this->jsonResponse($payload);
 
@@ -25,6 +26,7 @@ abstract class AjaxController extends BaseAdminController
     protected function respondAjaxMessage(string $message, array $extra = [], int $status = 200): void
     {
         $this->jsonResponse(array_merge([
+            'success' => $status >= 200 && $status < 300,
             'message' => $message,
         ], $extra), $status);
     }

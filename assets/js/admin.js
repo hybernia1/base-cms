@@ -236,6 +236,380 @@ document.addEventListener('DOMContentLoaded', () => {
         return parsed.pathname + (parsed.search || '');
     };
 
+    const escapeHtml = (value) => {
+        if (value === null || value === undefined) return '';
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    };
+
+    const renderActions = (actions = [], size = 'sm') => {
+        if (!actions.length) return '';
+
+        const buttons = actions.map((action) => {
+            const tooltip = action.title || action.label || '';
+            if (action.type === 'link') {
+                return `
+                    <a href="${escapeHtml(action.href)}"
+                       class="btn btn-outline-${escapeHtml(action.variant || 'secondary')}"
+                       title="${escapeHtml(tooltip)}">
+                        ${action.icon ? `<i class="bi ${escapeHtml(action.icon)}"></i>` : ''}
+                    </a>`;
+            }
+
+            if (action.type === 'form') {
+                const hidden = action.hidden || {};
+                const hiddenInputs = Object.entries(hidden)
+                    .map(([name, value]) => `<input type="hidden" name="${escapeHtml(name)}" value="${escapeHtml(value)}">`)
+                    .join('');
+
+                return `
+                    <form method="${escapeHtml(action.method || 'post')}"
+                          action="${escapeHtml(action.action)}"
+                          class="d-inline"
+                          ${action.ajax ? 'data-ajax-delete="1"' : ''}
+                          ${action.confirm ? `data-confirm="${escapeHtml(action.confirm)}"` : ''}>
+                        ${hiddenInputs}
+                        <button type="submit"
+                                class="btn btn-outline-${escapeHtml(action.variant || 'secondary')}"
+                                title="${escapeHtml(tooltip)}">
+                            ${action.icon ? `<i class="bi ${escapeHtml(action.icon)}"></i>` : ''}
+                        </button>
+                    </form>`;
+            }
+
+            return '';
+        }).join('');
+
+        return `<div class="btn-group btn-group-${escapeHtml(size)}" role="group">${buttons}</div>`;
+    };
+
+    const renderPagination = (pagination) => {
+        if (!pagination || pagination.pages <= 1) return '';
+
+        const pageLinks = (pagination.page_numbers || []).map((page) => {
+            const active = page === pagination.page ? 'active' : '';
+            const url = pagination.page_urls?.[page] || '#';
+            return `<li class="page-item ${active}"><a class="page-link" href="${escapeHtml(url)}">${escapeHtml(page)}</a></li>`;
+        }).join('');
+
+        return `
+            <nav aria-label="Stránkování" class="mt-3">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item ${pagination.has_prev ? '' : 'disabled'}">
+                        <a class="page-link" href="${escapeHtml(pagination.prev_url || '#')}" aria-label="Předchozí">&laquo;</a>
+                    </li>
+                    ${pageLinks}
+                    <li class="page-item ${pagination.has_next ? '' : 'disabled'}">
+                        <a class="page-link" href="${escapeHtml(pagination.next_url || '#')}" aria-label="Další">&raquo;</a>
+                    </li>
+                </ul>
+            </nav>`;
+    };
+
+    const ajaxRenderers = {
+        'admin/terms/_list.twig': (context = {}) => {
+            if (!context.items || context.items.length === 0) {
+                return '<div class="alert alert-info">Zatím zde nejsou žádné termy.</div>';
+            }
+
+            const types = context.types || {};
+            const contentTypes = context.content_types || {};
+            const currentType = context.current_term_type || null;
+
+            const rows = context.items.map((item) => {
+                const allowedFor = Array.isArray(item.allowed_for) ? item.allowed_for : [];
+                const contentBadges = allowedFor.length
+                    ? allowedFor.map((typeKey) => `<span class="badge text-bg-light text-body border">${escapeHtml(contentTypes[typeKey]?.name || typeKey)}</span>`).join('')
+                    : '<span class="text-muted small">Vše</span>';
+
+                const actions = renderActions([
+                    {
+                        type: 'link',
+                        href: `/admin/terms/${item.id}/edit`,
+                        variant: 'primary',
+                        icon: 'bi-pencil',
+                        label: 'Upravit',
+                    },
+                    {
+                        type: 'form',
+                        action: `/admin/terms/${item.id}/delete`,
+                        variant: 'danger',
+                        confirm: 'Opravdu smazat tento term?',
+                        icon: 'bi-trash',
+                        ajax: true,
+                        hidden: {
+                            redirect: context.pagination?.current_url || '',
+                            type: currentType?.key || item.type,
+                        },
+                    },
+                ]);
+
+                return `
+                    <tr>
+                        <td class="fw-semibold">
+                            <span class="badge text-bg-light text-body border me-2">${escapeHtml(types[item.type] || item.type)}</span>
+                            ${escapeHtml(item.name)}
+                            <div class="text-muted small mt-1"><code>${escapeHtml(item.slug)}</code></div>
+                        </td>
+                        <td>${contentBadges}</td>
+                        <td>${item.updated_at_formatted ? escapeHtml(item.updated_at_formatted) : ''}</td>
+                        <td class="text-end">${actions}</td>
+                    </tr>`;
+            }).join('');
+
+            return `
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Název</th>
+                                <th>Typy obsahu</th>
+                                <th>Upraveno</th>
+                                <th class="text-end">Akce</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+                ${renderPagination(context.pagination)}`;
+        },
+        'admin/content/_list.twig': (context = {}) => {
+            const statuses = [
+                {key: 'published', label: 'Publikované'},
+                {key: 'draft', label: 'Koncepty'},
+                {key: 'all', label: 'Vše'},
+            ];
+            const currentStatus = context.current_status || 'all';
+            const statusTabs = statuses.map((status) => `
+                <li class="nav-item">
+                    <a class="nav-link ${currentStatus === status.key ? 'active' : ''}"
+                       href="/admin/content/${context.current_type?.slug || ''}${status.key !== 'all' ? `?status=${status.key}` : ''}"
+                       data-ajax-link>${escapeHtml(status.label)}</a>
+                </li>`).join('');
+
+            if (!context.items || context.items.length === 0) {
+                let emptyMessage = 'Zatím zde není žádný obsah.';
+                if (currentStatus === 'published') emptyMessage = 'Zatím zde není žádný publikovaný obsah.';
+                if (currentStatus === 'draft') emptyMessage = 'Zatím zde nejsou žádné koncepty.';
+
+                return `<ul class="nav nav-pills mb-3">${statusTabs}</ul><div class="alert alert-info">${escapeHtml(emptyMessage)}</div>`;
+            }
+
+            const rows = context.items.map((item) => {
+                const actions = renderActions([
+                    {
+                        type: 'link',
+                        href: `/admin/content/${context.current_type?.slug || ''}/${item.id}/edit`,
+                        variant: 'primary',
+                        icon: 'bi-pencil',
+                        label: 'Upravit',
+                    },
+                    {
+                        type: 'form',
+                        action: `/admin/content/${context.current_type?.slug || ''}/${item.id}/delete`,
+                        variant: 'danger',
+                        confirm: 'Opravdu smazat tento obsah?',
+                        icon: 'bi-trash',
+                        ajax: true,
+                        hidden: {redirect: context.pagination?.current_url || ''},
+                    },
+                ]);
+
+                const statusBadge = item.status === 'published'
+                    ? '<span class="badge text-bg-success">Publ.</span>'
+                    : '<span class="badge text-bg-secondary">Draft</span>';
+
+                return `
+                    <tr>
+                        <td class="fw-semibold">
+                            <div class="d-flex align-items-center gap-2">${statusBadge}<span>${escapeHtml(item.title)}</span></div>
+                            <div class="small text-muted mt-1"><code>${escapeHtml(item.slug)}</code></div>
+                        </td>
+                        <td>${item.updated_at_formatted ? escapeHtml(item.updated_at_formatted) : ''}</td>
+                        <td class="text-end">${actions}</td>
+                    </tr>`;
+            }).join('');
+
+            return `
+                <ul class="nav nav-pills mb-3">${statusTabs}</ul>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr><th>Název</th><th>Upraveno</th><th class="text-end">Akce</th></tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+                ${renderPagination(context.pagination)}`;
+        },
+        'admin/users/_list.twig': (context = {}) => {
+            const roles = context.roles || {};
+            const rows = (context.users || []).map((user) => {
+                const actions = renderActions([
+                    {
+                        type: 'link',
+                        href: `/admin/users/${user.id}/edit`,
+                        variant: 'primary',
+                        icon: 'bi-pencil',
+                        label: 'Upravit',
+                    },
+                    {
+                        type: 'form',
+                        action: `/admin/users/${user.id}/delete`,
+                        variant: 'danger',
+                        confirm: 'Opravdu smazat tohoto uživatele?',
+                        icon: 'bi-trash',
+                        ajax: true,
+                        hidden: {redirect: context.pagination?.current_url || ''},
+                    },
+                ], 'sm');
+
+                const banForm = user.is_banned
+                    ? `<form method="post" action="/admin/users/${user.id}/unban" class="d-inline"><button type="submit" class="btn btn-sm btn-outline-success">Odblokovat</button></form>`
+                    : `<form method="post" action="/admin/users/${user.id}/ban" class="d-inline d-flex align-items-center gap-2"><input type="text" name="reason" class="form-control form-control-sm w-auto" placeholder="Důvod" aria-label="Důvod blokace"><button type="submit" class="btn btn-sm btn-outline-warning">Zablokovat</button></form>`;
+
+                const statusBadge = user.is_banned
+                    ? `<span class="badge bg-danger">Zablokován</span>${user.ban_reason ? `<div class="small text-muted">${escapeHtml(user.ban_reason)}</div>` : ''}`
+                    : '<span class="badge bg-success">Aktivní</span>';
+
+                return `
+                    <tr>
+                        <td>${escapeHtml(user.email)}</td>
+                        <td>${escapeHtml(roles[user.role] || user.role)}</td>
+                        <td>${statusBadge}</td>
+                        <td class="text-end">
+                            <div class="d-flex flex-wrap justify-content-end gap-2 align-items-center">${actions}${banForm}</div>
+                        </td>
+                    </tr>`;
+            }).join('');
+
+            const body = rows || '<tr><td colspan="4" class="text-center p-4 text-muted">Zatím žádní uživatelé.</td></tr>';
+
+            return `
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr><th>E-mail</th><th>Role</th><th>Stav</th><th class="text-end">Akce</th></tr>
+                            </thead>
+                            <tbody>${body}</tbody>
+                        </table>
+                    </div>
+                </div>
+                ${renderPagination(context.pagination)}`;
+        },
+        'admin/media/_list.twig': (context = {}) => {
+            const items = context.items || [];
+            const images = items.filter((item) => item.is_image);
+            const files = items.filter((item) => !item.is_image);
+
+            const imageCards = images.length
+                ? images.map((item) => {
+                    const badge = item.webp_filename
+                        ? '<span class="badge bg-success position-absolute top-0 end-0 m-2 badge-webp">WebP</span>'
+                        : '<span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2 badge-webp">Bez WebP</span>';
+
+                    const actions = renderActions([
+                        {
+                            type: 'link',
+                            href: '#',
+                            variant: 'primary',
+                            icon: 'bi-pencil',
+                            label: 'Upravit',
+                            title: 'Otevřít detail pro úpravy',
+                        },
+                        {
+                            type: 'form',
+                            action: `/admin/media/${item.id}/delete`,
+                            variant: 'danger',
+                            confirm: 'Opravdu smazat tento soubor?',
+                            icon: 'bi-trash',
+                            ajax: true,
+                        },
+                    ]);
+
+                    const previewUrl = `/${item.path}/${item.webp_filename || item.filename}`;
+                    const created = item.created_at || '';
+                    const updated = item.updated_at || '';
+
+                    return `
+                        <div class="col">
+                            <div class="card h-100 media-card position-relative" role="button" tabindex="0"
+                                 data-media-id="${item.id}"
+                                 data-name="${escapeHtml(item.original_name || item.filename)}"
+                                 data-alt="${escapeHtml(item.alt || '')}"
+                                 data-mime="${escapeHtml(item.mime_type || '')}"
+                                 data-size="${escapeHtml(item.size || '')}"
+                                 data-created="${escapeHtml(created)}"
+                                 data-path="/${escapeHtml(item.path || '')}"
+                                 data-filename="${escapeHtml(item.filename || '')}"
+                                 data-webp-filename="${escapeHtml(item.webp_filename || '')}"
+                                 data-preview-url="${escapeHtml(previewUrl)}">
+                                ${badge}
+                                <img src="${escapeHtml(previewUrl)}" class="card-img-top" alt="${escapeHtml(item.alt || '')}">
+                                <div class="card-body">
+                                    <h6 class="card-title small mb-1">${escapeHtml(item.original_name || item.filename)}</h6>
+                                    <div class="text-muted small">${escapeHtml(item.mime_type || '')} · ${escapeHtml(item.size)} B</div>
+                                    <div class="text-muted small">Aktualizováno: ${escapeHtml(updated)}</div>
+                                </div>
+                                <div class="card-footer bg-light text-end">${actions}</div>
+                            </div>
+                        </div>`;
+                }).join('')
+                : '<div class="col"><div class="alert alert-info">Zatím žádné obrázky.</div></div>';
+
+            const fileRows = files.length
+                ? files.map((item) => {
+                    const actions = renderActions([
+                        {
+                            type: 'link',
+                            href: `/${item.path}/${item.filename}`,
+                            variant: 'secondary',
+                            icon: 'bi-box-arrow-up-right',
+                            label: 'Otevřít',
+                        },
+                        {
+                            type: 'form',
+                            action: `/admin/media/${item.id}/delete`,
+                            variant: 'danger',
+                            confirm: 'Opravdu smazat tento soubor?',
+                            icon: 'bi-trash',
+                            ajax: true,
+                        },
+                    ]);
+
+                    return `
+                        <tr>
+                            <td class="fw-semibold">${escapeHtml(item.original_name || item.filename)}</td>
+                            <td>${escapeHtml(item.mime_type || '')}</td>
+                            <td>${escapeHtml(item.size)} B</td>
+                            <td>${escapeHtml(item.created_at || '')}</td>
+                            <td class="text-end">${actions}</td>
+                        </tr>`;
+                }).join('')
+                : '<tr><td colspan="5"> <div class="alert alert-info mb-0">Zatím žádné nahrané soubory.</div></td></tr>';
+
+            return `
+                <ul class="nav nav-tabs mb-3" role="tablist">
+                    <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#images" type="button" role="tab">Obrázky</button></li>
+                    <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#files" type="button" role="tab">Soubory</button></li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="images" role="tabpanel">
+                        <div class="row row-cols-1 row-cols-md-3 g-3">${imageCards}</div>
+                    </div>
+                    <div class="tab-pane fade" id="files" role="tabpanel">
+                        ${files.length ? `<div class="table-responsive"><table class="table align-middle"><thead><tr><th>Název</th><th>MIME</th><th>Velikost</th><th>Vytvořeno</th><th class="text-end">Akce</th></tr></thead><tbody>${fileRows}</tbody></table></div>` : fileRows}
+                    </div>
+                </div>
+                ${renderPagination(context.pagination)}`;
+        },
+    };
+
     const loadAjaxContainer = async (container, targetUrl, options = {}) => {
         if (!targetUrl || !container) return;
 
@@ -251,11 +625,17 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const data = await response.json();
-            if (!response.ok || data.error) {
-                throw new Error(data.error || 'Načtení selhalo.');
+            if (!response.ok || data.error || data.success === false) {
+                throw new Error(data.error || data.message || 'Načtení selhalo.');
             }
 
-            container.innerHTML = data.html || '';
+            const renderer = ajaxRenderers[data.view?.template];
+            if (!renderer) {
+                throw new Error('Chybí renderer pro AJAX odpověď.');
+            }
+
+            const viewHtml = renderer(data.view?.context || {});
+            container.innerHTML = viewHtml;
             const stateUrl = data.state_url ? normalizeUrl(data.state_url) : normalizeUrl(targetUrl);
             if (stateUrl) {
                 container.dataset.currentUrl = stateUrl;
@@ -307,8 +687,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const data = await response.json();
 
-                    if (!response.ok || data.error) {
-                        throw new Error(data.error || 'Akce selhala.');
+                    if (!response.ok || data.error || data.success === false) {
+                        throw new Error(data.error || data.message || 'Akce selhala.');
                     }
 
                     if (row) {

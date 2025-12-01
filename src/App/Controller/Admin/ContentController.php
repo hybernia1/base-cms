@@ -38,13 +38,12 @@ class ContentController extends AjaxController
             array_merge($params, [$pagination['per_page'], $pagination['offset']])
         );
 
-        if ($this->respondAjax('admin/content/_list.twig', [
-            'items' => $items,
+        if ($this->respondAjax('admin/content/_list.twig', $this->prepareContentAjaxPayload($items, [
             'types' => ContentType::all(),
             'current_type' => $definition,
             'current_status' => $status ?? 'all',
             'pagination' => $pagination,
-        ], $pagination['current_url'])) {
+        ]), $pagination['current_url'])) {
             return;
         }
 
@@ -57,6 +56,28 @@ class ContentController extends AjaxController
             'current_status' => $status ?? 'all',
             'pagination' => $pagination,
         ]);
+    }
+
+    private function prepareContentAjaxPayload(array $items, array $context): array
+    {
+        $settings = $this->baseContext(false)['settings'];
+        $format = ($settings['date_format'] ?? 'd/m/Y') . ' ' . ($settings['time_format'] ?? 'H:i');
+
+        $serializedItems = [];
+        foreach ($items as $item) {
+            $serializedItems[] = [
+                'id' => (int) $item->id,
+                'title' => $item->title,
+                'slug' => $item->slug,
+                'status' => $item->status,
+                'updated_at' => $item->updated_at,
+                'updated_at_formatted' => $item->updated_at ? date($format, strtotime($item->updated_at)) : null,
+            ];
+        }
+
+        $context['items'] = $serializedItems;
+
+        return $context;
     }
 
     public function createForm($slug)

@@ -27,11 +27,10 @@ class UserController extends AjaxController
             [$pagination['per_page'], $pagination['offset']]
         );
 
-        if ($this->respondAjax('admin/users/_list.twig', [
-            'users' => $users,
+        if ($this->respondAjax('admin/users/_list.twig', $this->prepareUsersAjaxPayload($users, [
             'roles' => self::ROLES,
             'pagination' => $pagination,
-        ], $pagination['current_url'])) {
+        ]), $pagination['current_url'])) {
             return;
         }
 
@@ -41,6 +40,24 @@ class UserController extends AjaxController
             'current_menu' => 'users',
             'pagination' => $pagination,
         ]);
+    }
+
+    private function prepareUsersAjaxPayload(array $users, array $context): array
+    {
+        $serializedUsers = [];
+        foreach ($users as $user) {
+            $serializedUsers[] = [
+                'id' => (int) $user->id,
+                'email' => $user->email,
+                'role' => $user->role,
+                'is_banned' => (bool) $user->is_banned,
+                'ban_reason' => $user->ban_reason,
+            ];
+        }
+
+        $context['users'] = $serializedUsers;
+
+        return $context;
     }
 
     public function createForm()

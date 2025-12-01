@@ -4,6 +4,11 @@
 
 {% block title %}{{ heading }} | Administrace{% endblock %}
 
+{% block styles %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css">
+{% endblock %}
+
 {% block body %}
     <h1 class="h3 mb-4">{{ heading }}</h1>
 
@@ -31,8 +36,26 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="body" class="form-label">Text</label>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label for="body" class="form-label mb-0">Text</label>
+                                <div class="d-flex gap-2">
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-secondary btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#mediaLibraryModal"
+                                        data-media-action="body"
+                                    >
+                                        <i class="bi bi-image"></i> Vložit obrázek z knihovny
+                                    </button>
+                                </div>
+                            </div>
                             <textarea name="body" id="body" rows="8" class="form-control">{{ values.body }}</textarea>
+                            <div id="bodyMediaInputs" class="d-none">
+                                {% for mediaId in values.media_ids %}
+                                    <input type="hidden" name="media_ids[]" value="{{ mediaId }}" data-media-id="{{ mediaId }}">
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -108,7 +131,7 @@
                         <input type="hidden" name="thumbnail_id" id="thumbnail_id" value="{{ values.thumbnail_id }}">
 
                         <div class="mb-2 d-flex flex-wrap gap-2">
-                            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#mediaLibraryModal">
+                            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#mediaLibraryModal" data-media-action="thumbnail">
                                 Otevřít knihovnu médií
                             </button>
                             <button class="btn btn-outline-danger" type="button" id="removeThumbnailBtn">Odebrat náhled</button>
@@ -223,6 +246,8 @@
 {% endblock %}
 
 {% block scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
     <script>
         const termOptions = [
             {% for typeKey, typeDef in allowed_term_types %}
@@ -244,6 +269,60 @@
         const mediaModalEl = document.getElementById('mediaLibraryModal');
         const mediaEmptyAlert = document.getElementById('mediaLibraryEmpty');
         const removeThumbnailBtn = document.getElementById('removeThumbnailBtn');
+        const bodyMediaInputs = document.getElementById('bodyMediaInputs');
+        const initialBodyMediaIds = {{ values.media_ids|json_encode|raw }};
+        const bodyMediaSet = new Set((Array.isArray(initialBodyMediaIds) ? initialBodyMediaIds : [])
+            .map((id) => Number(id))
+            .filter((id) => id > 0));
+        const mediaActionButtons = document.querySelectorAll('[data-media-action]');
+        let currentMediaAction = 'thumbnail';
+        const $bodyEditor = window.jQuery ? window.jQuery('#body') : null;
+
+        const ensureBodyMediaInputs = () => {
+            if (!bodyMediaInputs) return;
+            bodyMediaSet.forEach((id) => {
+                if (!bodyMediaInputs.querySelector(`[data-media-id="${id}"]`)) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'media_ids[]';
+                    input.value = String(id);
+                    input.dataset.mediaId = String(id);
+                    bodyMediaInputs.appendChild(input);
+                }
+            });
+        };
+
+        const addBodyMediaId = (id) => {
+            if (!bodyMediaInputs) return;
+            const normalized = Number(id);
+            if (Number.isNaN(normalized) || normalized <= 0 || bodyMediaSet.has(normalized)) {
+                return;
+            }
+
+            bodyMediaSet.add(normalized);
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'media_ids[]';
+            input.value = String(normalized);
+            input.dataset.mediaId = String(normalized);
+            bodyMediaInputs.appendChild(input);
+        };
+
+        const removeBodyMediaId = (id) => {
+            if (!bodyMediaInputs) return;
+            const normalized = Number(id);
+            if (Number.isNaN(normalized) || normalized <= 0) {
+                return;
+            }
+
+            bodyMediaSet.delete(normalized);
+            const existing = bodyMediaInputs.querySelector(`[data-media-id="${normalized}"]`);
+            if (existing) {
+                existing.remove();
+            }
+        };
+
+        ensureBodyMediaInputs();
 
         function updatePreview(url, label) {
             if (!thumbnailPreview) return;
@@ -264,11 +343,92 @@
             updatePreview(url, label);
         }
 
+        function openMediaModalFor(action) {
+            currentMediaAction = action || 'thumbnail';
+            if (mediaModalEl) {
+                const modalInstance = bootstrap.Modal.getOrCreateInstance(mediaModalEl);
+                modalInstance.show();
+            }
+        }
+
+        function insertImageToEditor(id, url, label) {
+            if (!$bodyEditor || typeof $bodyEditor.summernote !== 'function') {
+                return;
+            }
+
+            $bodyEditor.summernote('insertImage', url, function ($image) {
+                if ($image && typeof $image.attr === 'function') {
+                    if (id) {
+                        $image.attr('data-media-id', id);
+                    }
+                    if (label) {
+                        $image.attr('alt', label);
+                    }
+                }
+            });
+
+            addBodyMediaId(Number(id));
+        }
+
+        const handleMediaSelection = (id, url, label) => {
+            if (currentMediaAction === 'body') {
+                insertImageToEditor(id, url, label);
+            } else {
+                setSelectedThumbnail(id, url, label);
+            }
+
+            if (mediaModalEl) {
+                const modalInstance = bootstrap.Modal.getInstance(mediaModalEl);
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+            }
+        };
+
+        if ($bodyEditor && typeof $bodyEditor.summernote === 'function') {
+            $bodyEditor.summernote({
+                height: 320,
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'italic', 'underline', 'clear']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['insert', ['link', 'imageLibrary']],
+                    ['view', ['codeview']],
+                ],
+                buttons: {
+                    imageLibrary: function () {
+                        const ui = $.summernote.ui;
+                        return ui.button({
+                            contents: '<i class="bi bi-image"></i>',
+                            tooltip: 'Vložit obrázek z knihovny',
+                            click: () => openMediaModalFor('body'),
+                        }).render();
+                    },
+                },
+                callbacks: {
+                    onMediaDelete(target) {
+                        const mediaId = Number(target?.data && typeof target.data === 'function'
+                            ? target.data('media-id')
+                            : target?.getAttribute?.('data-media-id'));
+                        if (!Number.isNaN(mediaId)) {
+                            removeBodyMediaId(mediaId);
+                        }
+                    },
+                },
+            });
+        }
+
         if (removeThumbnailBtn) {
             removeThumbnailBtn.addEventListener('click', function () {
                 setSelectedThumbnail('', '', '');
             });
         }
+
+        mediaActionButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                currentMediaAction = button.dataset.mediaAction || 'thumbnail';
+            });
+        });
 
         if (mediaGrid) {
             mediaGrid.addEventListener('click', function (event) {
@@ -278,14 +438,7 @@
                 const id = card.dataset.mediaId;
                 const url = card.dataset.mediaUrl;
                 const label = card.dataset.mediaLabel;
-                setSelectedThumbnail(id, url, label);
-
-                if (mediaModalEl) {
-                    const modalInstance = bootstrap.Modal.getInstance(mediaModalEl);
-                    if (modalInstance) {
-                        modalInstance.hide();
-                    }
-                }
+                handleMediaSelection(id, url, label);
             });
 
             if (mediaEmptyAlert) {
@@ -331,7 +484,7 @@
                     const label = payload.original_name || payload.filename || `Médium #${payload.id || ''}`;
 
                     appendMediaCard(payload.id, url, label);
-                    setSelectedThumbnail(payload.id, url, label);
+                    handleMediaSelection(payload.id, url, label);
                     mediaUploadForm.reset();
                 } catch (error) {
                     adminDialog.alert('Nahrávání se nezdařilo.', {variant: 'danger'});

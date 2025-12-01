@@ -189,6 +189,19 @@ class InstallController
         );
 
         R::exec(
+            "CREATE TABLE IF NOT EXISTS `content_media` (
+                `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `content_id` INT UNSIGNED NOT NULL,
+                `media_id` INT UNSIGNED NOT NULL,
+                `relation` VARCHAR(50) NOT NULL DEFAULT 'body',
+                `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY `content_media_unique` (`content_id`, `media_id`, `relation`),
+                KEY `idx_media` (`media_id`),
+                KEY `idx_relation` (`relation`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
+        R::exec(
             "CREATE TABLE IF NOT EXISTS `setting` (
                 `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                 `key` VARCHAR(191) NOT NULL UNIQUE,
@@ -220,6 +233,23 @@ class InstallController
         if (!isset($contentColumns['status'])) {
             R::exec("ALTER TABLE `content` ADD COLUMN `status` VARCHAR(20) NOT NULL DEFAULT 'published' AFTER `type`");
         }
+
+        $contentMediaColumns = R::inspect('content_media');
+
+        if (!isset($contentMediaColumns['relation'])) {
+            R::exec("ALTER TABLE `content_media` ADD COLUMN `relation` VARCHAR(50) NOT NULL DEFAULT 'body' AFTER `media_id`");
+        }
+
+        if (!isset($contentMediaColumns['created_at'])) {
+            R::exec("ALTER TABLE `content_media` ADD COLUMN `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `relation`");
+        }
+
+        R::exec(
+            "INSERT IGNORE INTO content_media (content_id, media_id, relation, created_at)
+             SELECT id, thumbnail_id, 'thumbnail', NOW()
+             FROM content
+             WHERE thumbnail_id IS NOT NULL"
+        );
 
         $termColumns = R::inspect('term');
         if (!isset($termColumns['content_types'])) {

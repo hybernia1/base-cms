@@ -176,17 +176,20 @@ class ContentController extends AjaxController
 
         $this->syncTerms((int) $bean->id, $data['terms']);
 
+        // URL na editaci právě vytvořeného obsahu
+        $editUrl = '/admin/content/' . ContentType::slug($bean->type) . '/' . $bean->id . '/edit'; // ← změna
+
         if ($this->wantsJson()) {
             $this->respondApi(
                 $this->serializeContent($bean),
                 'Obsah byl vytvořen.',
                 201,
-                ['redirect_to' => '/admin/content/' . ContentType::slug($bean->type)]
+                ['redirect_to' => $editUrl] // ← změna
             );
         }
 
         Flash::addSuccess('Obsah byl vytvořen.');
-        header('Location: /admin/content/' . ContentType::slug($bean->type));
+        header('Location: ' . $editUrl); // ← změna
         exit;
     }
 
@@ -291,17 +294,20 @@ class ContentController extends AjaxController
 
         $this->syncTerms((int) $content->id, $data['terms']);
 
+        // URL na editaci právě uloženého obsahu
+        $editUrl = '/admin/content/' . ContentType::slug($content->type) . '/' . $content->id . '/edit'; // ← změna
+
         if ($this->wantsJson()) {
             $this->respondApi(
                 $this->serializeContent($content),
                 'Obsah byl upraven.',
                 200,
-                ['redirect_to' => '/admin/content/' . ContentType::slug($content->type)]
+                ['redirect_to' => $editUrl] // ← změna
             );
         }
 
         Flash::addSuccess('Obsah byl upraven.');
-        header('Location: /admin/content/' . ContentType::slug($content->type));
+        header('Location: ' . $editUrl); // ← změna
         exit;
     }
 

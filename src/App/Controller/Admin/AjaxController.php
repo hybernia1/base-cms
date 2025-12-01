@@ -30,11 +30,13 @@ abstract class AjaxController extends BaseAdminController
             return false;
         }
 
+        $safeContext = $this->safeAjaxContext($context);
+
         $payload = array_merge([
             'success' => true,
             'view' => [
                 'template' => $template,
-                'context' => array_merge($this->baseContext(false), $context),
+                'context' => $safeContext,
             ],
             'state_url' => $stateUrl,
         ], $extra);
@@ -50,5 +52,17 @@ abstract class AjaxController extends BaseAdminController
             'success' => $status >= 200 && $status < 300,
             'message' => $message,
         ], $extra), $status);
+    }
+
+    /**
+     * Build a context payload for AJAX responses without leaking sensitive data.
+     */
+    private function safeAjaxContext(array $context): array
+    {
+        $baseContext = $this->baseContext(false);
+
+        unset($baseContext['app_user'], $baseContext['settings']);
+
+        return array_merge($baseContext, $context);
     }
 }

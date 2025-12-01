@@ -57,19 +57,14 @@
                 <div class="card shadow-sm mb-3">
                     <div class="card-header fw-semibold">Náhledový obrázek</div>
                     <div class="card-body">
-                        <div class="d-flex flex-wrap gap-2 mb-2">
-                            <select name="thumbnail_id" id="thumbnailSelect" class="form-select" style="max-width: 320px;">
-                                <option value="">Vyberte z médií</option>
-                                {% for mediaItem in media %}
-                                    {% if mediaItem.is_image %}
-                                        <option value="{{ mediaItem.id }}" data-preview="/{{ mediaItem.path }}/{{ mediaItem.webp_filename ?: mediaItem.filename }}" {% if values.thumbnail_id == mediaItem.id %}selected{% endif %}>
-                                            {{ mediaItem.original_name ?: mediaItem.filename }}
-                                        </option>
-                                    {% endif %}
-                                {% endfor %}
-                            </select>
-                            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#mediaLibraryModal">Otevřít knihovnu médií</button>
+                        <input type="hidden" name="thumbnail_id" id="thumbnail_id" value="{{ values.thumbnail_id }}">
+
+                        <div class="mb-2">
+                            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#mediaLibraryModal">
+                                Otevřít knihovnu médií
+                            </button>
                         </div>
+
                         <div id="thumbnailPreview" class="border rounded p-2 bg-light" style="max-width: 320px;{% if not values.thumbnail_id %} display:none;{% endif %}">
                             {% if values.thumbnail_id %}
                                 {% for mediaItem in media %}
@@ -80,7 +75,7 @@
                                 {% endfor %}
                             {% endif %}
                         </div>
-                        <div class="form-text">Vyberte existující obrázek nebo použijte knihovnu médií pro nahrání.</div>
+                        <div class="form-text">Vyber existující obrázek z knihovny nebo nahraj nový.</div>
                         {% if errors.thumbnail %}
                             <div class="text-danger small">{{ errors.thumbnail }}</div>
                         {% endif %}
@@ -195,7 +190,7 @@
         ];
         const selectedTermIds = {{ selected_terms|json_encode|raw }};
 
-        const thumbnailSelect = document.getElementById('thumbnailSelect');
+        const thumbnailInput = document.getElementById('thumbnail_id');
         const thumbnailPreview = document.getElementById('thumbnailPreview');
         const mediaGrid = document.getElementById('mediaLibraryGrid');
         const mediaModalEl = document.getElementById('mediaLibraryModal');
@@ -214,33 +209,10 @@
                 `<div class="small mt-1 text-muted">${label || ''}</div>`;
         }
 
-        if (thumbnailSelect) {
-            thumbnailSelect.addEventListener('change', function () {
-                const option = thumbnailSelect.selectedOptions[0];
-                const previewUrl = option ? option.dataset.preview : '';
-                updatePreview(previewUrl || '', option ? option.textContent : '');
-            });
-
-            if (thumbnailSelect.value) {
-                const option = thumbnailSelect.selectedOptions[0];
-                if (option && option.dataset.preview) {
-                    updatePreview(option.dataset.preview, option.textContent);
-                }
-            }
-        }
-
         function setSelectedThumbnail(id, url, label) {
-            if (!thumbnailSelect) return;
-            let option = thumbnailSelect.querySelector(`option[value="${id}"]`);
-            if (!option) {
-                option = document.createElement('option');
-                option.value = id;
-                thumbnailSelect.appendChild(option);
-            }
-            option.textContent = label || `Médium #${id}`;
-            option.dataset.preview = url;
-            thumbnailSelect.value = id;
-            updatePreview(url, option.textContent);
+            if (!thumbnailInput) return;
+            thumbnailInput.value = id || '';
+            updatePreview(url, label);
         }
 
         if (mediaGrid) {
@@ -293,8 +265,11 @@
                         return;
                     }
 
-                    appendMediaCard(result.id, result.path, result.original_name);
-                    setSelectedThumbnail(result.id, result.path, result.original_name);
+                    const url = result.preview_url || (`/${result.path}/${result.webp_filename || result.filename}`);
+                    const label = result.original_name || result.filename || `Médium #${result.id}`;
+
+                    appendMediaCard(result.id, url, label);
+                    setSelectedThumbnail(result.id, url, label);
                     mediaUploadForm.reset();
                 } catch (error) {
                     adminDialog.alert('Nahrávání se nezdařilo.', {variant: 'danger'});
@@ -424,31 +399,27 @@
             const tagify = new Tagify(input, {
                 whitelist,
                 enforceWhitelist: false,
-                tagTextProp: 'name', 
+                tagTextProp: 'name',
                 dropdown: {
                     enabled: 0,
                     maxItems: 12,
                     searchKeys: ['name'],
                 },
-
                 templates: {
-            dropdownItem(tagData) {
-                // zobraz jen jméno termu (případně si sem můžeš přidat i ID)
-                return `
-                    <div ${this.getAttributes(tagData)}
-                         class="tagify__dropdown__item">
-                        <span>${tagData.name || tagData.value}</span>
-                    </div>
-                `;
-            },
-        },
-        editTags: false,
-        duplicates: false,
-        originalInputValueFormat: (values) =>
-            JSON.stringify(values.map((tag) => enhanceTagData(tag, typeKey))),
-    });
-
-
+                    dropdownItem(tagData) {
+                        return `
+                            <div ${this.getAttributes(tagData)}
+                                 class="tagify__dropdown__item">
+                                <span>${tagData.name || tagData.value}</span>
+                            </div>
+                        `;
+                    },
+                },
+                editTags: false,
+                duplicates: false,
+                originalInputValueFormat: (values) =>
+                    JSON.stringify(values.map((tag) => enhanceTagData(tag, typeKey))),
+            });
 
             const initialTags = selectedByType[typeKey] || [];
             if (initialTags.length) {

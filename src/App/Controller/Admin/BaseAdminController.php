@@ -3,6 +3,7 @@ namespace App\Controller\Admin;
 
 use App\Service\Auth;
 use App\Service\Flash;
+use App\Service\Setting;
 use App\Service\ContentType;
 use App\Service\TermType;
 
@@ -17,17 +18,20 @@ abstract class BaseAdminController
 
     protected function render(string $template, array $context = []): void
     {
-        $user = Auth::user();
-        $flash = Flash::consume();
+        $user   = Auth::user();
+        $flash  = Flash::consume();
+        $settings = Setting::all(); // <-- tady si je natáhneš z DB
 
         echo $this->twig->render($template, array_merge([
-            'app_user'      => $user,
-            'flash_success' => $flash['success'],
-            'flash_error'   => $flash['error'],
-            'content_type_menu' => ContentType::definitions(),
-            'term_type_menu' => TermType::definitions(),
+            'app_user'         => $user,
+            'flash_success'    => $flash['success'],
+            'flash_error'      => $flash['error'],
+            'content_type_menu'=> ContentType::definitions(),
+            'term_type_menu'   => TermType::definitions(),
+            'settings'         => $settings, // <-- a pošleš do šablon
         ], $context));
     }
+
 
    protected function buildPagination(int $totalItems, int $perPage = 15): array
 {

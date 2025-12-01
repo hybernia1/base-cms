@@ -76,14 +76,12 @@ class MediaController extends AjaxController
         R::store($media);
 
         if ($this->wantsJson()) {
-            header('Content-Type: application/json');
-            echo json_encode([
-                'id' => $media->id,
+            $this->respondApi([
+                'id' => (int) $media->id,
                 'path' => '/' . $media->path . '/' . ($media->webp_filename ?: $media->filename),
                 'is_image' => (bool) $media->is_image,
                 'original_name' => $media->original_name ?: $media->filename,
-            ]);
-            exit;
+            ], 'Soubor byl nahrán.', 201);
         }
 
         Flash::addSuccess('Soubor byl nahrán.');
@@ -129,15 +127,14 @@ class MediaController extends AjaxController
         $media->updated_at = date('Y-m-d H:i:s');
         R::store($media);
 
-        return $this->jsonResponse([
+        return $this->respondApi([
             'id' => (int) $media->id,
             'alt' => $media->alt,
             'webp_filename' => $media->webp_filename,
             'filename' => $media->filename,
             'path' => '/' . ltrim($media->path, '/'),
             'preview_url' => '/' . ltrim($media->path, '/') . '/' . ($media->webp_filename ?: $media->filename),
-            'message' => $messages ? implode(' ', $messages) : 'Změny byly uloženy.',
-        ]);
+        ], $messages ? implode(' ', $messages) : 'Změny byly uloženy.');
     }
 
     public function delete($id)
@@ -146,6 +143,10 @@ class MediaController extends AjaxController
 
         $media = R::load('media', (int) $id);
         if (!$media || !$media->id) {
+            if ($this->wantsJson()) {
+                $this->jsonError('Soubor nebyl nalezen.', 404);
+            }
+
             Flash::addError('Soubor nebyl nalezen.');
             header('Location: /admin/media');
             exit;
@@ -173,7 +174,7 @@ class MediaController extends AjaxController
         R::trash($media);
 
         if ($this->wantsJson()) {
-            $this->respondAjaxMessage('Soubor byl smazán.', ['success' => true]);
+            $this->respondApi([], 'Soubor byl smazán.');
         }
 
         Flash::addSuccess('Soubor byl smazán.');
@@ -247,9 +248,7 @@ class MediaController extends AjaxController
     private function handleUploadError(string $message)
     {
         if ($this->wantsJson()) {
-            header('Content-Type: application/json', true, 400);
-            echo json_encode(['error' => $message]);
-            exit;
+            $this->respondApi([], $message, 400);
         }
 
         Flash::addError($message);

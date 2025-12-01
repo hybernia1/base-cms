@@ -80,6 +80,23 @@ class ContentController extends AjaxController
         return $context;
     }
 
+    private function serializeContent($content): array
+    {
+        return [
+            'id' => (int) $content->id,
+            'title' => $content->title,
+            'slug' => $content->slug,
+            'type' => $content->type,
+            'status' => $content->status,
+            'body' => $content->body,
+            'thumbnail_id' => $content->thumbnail_id ? (int) $content->thumbnail_id : null,
+            'created_at' => $content->created_at,
+            'updated_at' => $content->updated_at,
+            'terms' => $this->loadTermIdsForContent((int) $content->id),
+            'admin_url' => '/admin/content/' . ContentType::slug($content->type) . '/' . $content->id . '/edit',
+        ];
+    }
+
     public function createForm($slug)
     {
         Auth::requireRole(['admin', 'editor']);
@@ -122,6 +139,13 @@ class ContentController extends AjaxController
         }
 
         if ($errors) {
+            if ($this->wantsJson()) {
+                $this->jsonResponse([
+                    'success' => false,
+                    'errors' => $errors,
+                ], 422);
+            }
+
             $this->render('admin/content/form.twig', [
                 'values' => $data,
                 'errors' => $errors,
@@ -152,6 +176,15 @@ class ContentController extends AjaxController
 
         $this->syncTerms((int) $bean->id, $data['terms']);
 
+        if ($this->wantsJson()) {
+            $this->respondApi(
+                $this->serializeContent($bean),
+                'Obsah byl vytvořen.',
+                201,
+                ['redirect_to' => '/admin/content/' . ContentType::slug($bean->type)]
+            );
+        }
+
         Flash::addSuccess('Obsah byl vytvořen.');
         header('Location: /admin/content/' . ContentType::slug($bean->type));
         exit;
@@ -163,6 +196,10 @@ class ContentController extends AjaxController
 
         $content = $this->findContent($id);
         if (!$content) {
+            if ($this->wantsJson()) {
+                $this->jsonError('Obsah nebyl nalezen.', 404);
+            }
+
             Flash::addError('Obsah nebyl nalezen.');
             header('Location: /admin/content');
             exit;
@@ -218,6 +255,13 @@ class ContentController extends AjaxController
         }
 
         if ($errors) {
+            if ($this->wantsJson()) {
+                $this->jsonResponse([
+                    'success' => false,
+                    'errors' => $errors,
+                ], 422);
+            }
+
             $this->render('admin/content/form.twig', [
                 'values' => $data,
                 'errors' => $errors,
@@ -247,6 +291,15 @@ class ContentController extends AjaxController
 
         $this->syncTerms((int) $content->id, $data['terms']);
 
+        if ($this->wantsJson()) {
+            $this->respondApi(
+                $this->serializeContent($content),
+                'Obsah byl upraven.',
+                200,
+                ['redirect_to' => '/admin/content/' . ContentType::slug($content->type)]
+            );
+        }
+
         Flash::addSuccess('Obsah byl upraven.');
         header('Location: /admin/content/' . ContentType::slug($content->type));
         exit;
@@ -271,7 +324,9 @@ class ContentController extends AjaxController
         R::trash($content);
 
         if ($this->wantsJson()) {
-            $this->respondAjaxMessage('Obsah byl smazán.', ['success' => true]);
+            $this->respondApi([], 'Obsah byl smazán.', 200, [
+                'redirect_to' => $this->redirectToList($content->type, $_POST['redirect'] ?? null),
+            ]);
         }
 
         Flash::addSuccess('Obsah byl smazán.');
@@ -588,12 +643,6 @@ class ContentController extends AjaxController
         }
 
         return [$typeKey, $definitions[$typeKey]];
-    }
-
-protected function jsonError(string $message, int $status = 400): void    {
-        header('Content-Type: application/json', true, $status);
-        echo json_encode(['error' => $message]);
-        exit;
     }
 
     private function redirectToList(string $type, ?string $redirect): string

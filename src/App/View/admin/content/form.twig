@@ -63,6 +63,7 @@
                             <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#mediaLibraryModal">
                                 Otevřít knihovnu médií
                             </button>
+                            <button class="btn btn-outline-danger ms-2" type="button" id="removeThumbnailBtn">Odebrat náhled</button>
                         </div>
 
                         <div id="thumbnailPreview" class="border rounded p-2 bg-light" style="max-width: 320px;{% if not values.thumbnail_id %} display:none;{% endif %}">
@@ -195,6 +196,7 @@
         const mediaGrid = document.getElementById('mediaLibraryGrid');
         const mediaModalEl = document.getElementById('mediaLibraryModal');
         const mediaEmptyAlert = document.getElementById('mediaLibraryEmpty');
+        const removeThumbnailBtn = document.getElementById('removeThumbnailBtn');
 
         function updatePreview(url, label) {
             if (!thumbnailPreview) return;
@@ -213,6 +215,12 @@
             if (!thumbnailInput) return;
             thumbnailInput.value = id || '';
             updatePreview(url, label);
+        }
+
+        if (removeThumbnailBtn) {
+            removeThumbnailBtn.addEventListener('click', function () {
+                setSelectedThumbnail('', '', '');
+            });
         }
 
         if (mediaGrid) {
@@ -255,21 +263,28 @@
                     });
 
                     const result = await response.json();
-                    if (!response.ok || result.error) {
-                        adminDialog.alert(result.error || 'Nahrávání se nezdařilo.', {variant: 'danger'});
+                    const payload = result.data || result || {};
+
+                    if (!response.ok || result.error || result.success === false) {
+                        adminDialog.alert(result.error || result.message || 'Nahrávání se nezdařilo.', {variant: 'danger'});
                         return;
                     }
 
-                    if (!result.is_image) {
+                    if (!payload.is_image) {
                         adminDialog.alert('Vybraný soubor není obrázek.', {variant: 'warning'});
                         return;
                     }
 
-                    const url = result.preview_url || (`/${result.path}/${result.webp_filename || result.filename}`);
-                    const label = result.original_name || result.filename || `Médium #${result.id}`;
+                    const basePath = (payload.path || '').trim();
+                    const normalizedPath = basePath.startsWith('/') ? basePath : (basePath ? `/${basePath}` : '');
+                    const fileName = payload.webp_filename || payload.filename || '';
+                    const url = payload.preview_url
+                        || (fileName ? `${normalizedPath.replace(/\/$/, '')}/${fileName}` : normalizedPath)
+                        || '';
+                    const label = payload.original_name || payload.filename || `Médium #${payload.id || ''}`;
 
-                    appendMediaCard(result.id, url, label);
-                    setSelectedThumbnail(result.id, url, label);
+                    appendMediaCard(payload.id, url, label);
+                    setSelectedThumbnail(payload.id, url, label);
                     mediaUploadForm.reset();
                 } catch (error) {
                     adminDialog.alert('Nahrávání se nezdařilo.', {variant: 'danger'});

@@ -34,9 +34,6 @@
             <thead>
                 <tr>
                     <th>Název</th>
-                    <th>Typ</th>
-                    <th>Stav</th>
-                    <th>Slug</th>
                     <th>Upraveno</th>
                     <th class="text-end">Akce</th>
                 </tr>
@@ -44,17 +41,25 @@
             <tbody>
                 {% for item in items %}
                     <tr>
-                        <td class="fw-semibold">{{ item.title }}</td>
-                        <td>{{ types[item.type]|default(item.type) }}</td>
-                        <td>
-                            {% if item.status == 'published' %}
-                                <span class="badge text-bg-success">Publikováno</span>
-                            {% else %}
-                                <span class="badge text-bg-secondary">Draft</span>
-                            {% endif %}
+                        <td class="fw-semibold">
+                            {# Stav + Titulek #}
+                            <div class="d-flex align-items-center gap-2">
+                                {% if item.status == 'published' %}
+                                    <span class="badge text-bg-success">Publ.</span>
+                                {% else %}
+                                    <span class="badge text-bg-secondary">Draft</span>
+                                {% endif %}
+                                <span>{{ item.title }}</span>
+                            </div>
+
+                            {# Slug pod tím #}
+                            <div class="small text-muted mt-1">
+                                <code>{{ item.slug }}</code>
+                            </div>
                         </td>
-                        <td><code>{{ item.slug }}</code></td>
+
                         <td>{{ item.updated_at|date(settings.date_format|default('j. n. Y H:i')) }}</td>
+
                         <td class="text-end">
                             {{ ui.actions([
                                 {
@@ -81,5 +86,6 @@
             </tbody>
         </table>
     </div>
+
     {{ ui.pagination(pagination) }}
 {% endif %}

@@ -149,57 +149,113 @@
         mediaModal.show();
     };
 
-    const saveMediaDetails = async (forceWebp = false) => {
-        if (!mediaForm) return;
-        const id = mediaForm.dataset.mediaId;
-        if (!id) return;
+const saveMediaDetails = async (forceWebp = false) => {
+    if (!mediaForm) return;
 
-        const formData = new FormData();
-        formData.append('alt', mediaAltInput?.value || '');
-        if (forceWebp) {
-            formData.append('convert_webp', '1');
+    const id = mediaForm.dataset.mediaId;
+    if (!id) return;
+
+    const formData = new FormData();
+    const altFromInput = mediaAltInput?.value || '';
+
+    formData.append('alt', altFromInput);
+    if (forceWebp) {
+        formData.append('convert_webp', '1');
+    }
+
+    try {
+        const response = await fetch(`/admin/media/${id}/update`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+            },
+        });
+
+        const result = await response.json();
+        if (!response.ok || result.error || result.success === false) {
+            throw new Error(result.error || result.message || 'Uložení se nezdařilo.');
         }
 
-        try {
-            const response = await fetch(`/admin/media/${id}/update`, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json',
-                },
-            });
+        // VŠECHNA DATA JSOU V result.data
+        const data = result.data || {};
 
-            const result = await response.json();
-            if (!response.ok || result.error) {
-                throw new Error(result.error || 'Uložení se nezdařilo.');
+        // Najdeme kartu
+        const card = document.querySelector(`.media-card[data-media-id="${id}"]`);
+
+        // ALT – primárně z API, jinak z inputu
+        const newAlt = (typeof data.alt !== 'undefined' && data.alt !== null)
+            ? data.alt
+            : altFromInput;
+
+        // URL náhledu – ideálně WebP, které server poslal
+        const existingPreviewFromCard = card?.dataset.previewUrl || '';
+        const existingPreviewFromImg  = card?.querySelector('img')?.src || mediaPreview?.src || '';
+        const previewUrl = data.preview_url || existingPreviewFromCard || existingPreviewFromImg || '';
+
+        const hasWebp = Boolean(data.webp_filename);
+
+        if (card) {
+            // dataset z API
+            if (typeof data.alt !== 'undefined') {
+                card.dataset.alt = data.alt;
+            } else {
+                card.dataset.alt = newAlt;
             }
 
-            const card = document.querySelector(`.media-card[data-media-id="${id}"]`);
-            const previewUrl = result.preview_url || '';
-            if (card) {
-                card.dataset.alt = result.alt || '';
-                card.dataset.webpFilename = result.webp_filename || '';
-                card.dataset.previewUrl = previewUrl;
-                if (card.querySelector('img')) {
-                    card.querySelector('img').alt = result.alt || '';
-                }
-                updateCardBadge(card, Boolean(result.webp_filename), previewUrl);
+            if (data.preview_url) {
+                card.dataset.previewUrl = data.preview_url;
             }
 
-            if (mediaPreview) mediaPreview.src = previewUrl;
-            if (mediaWebpBadge) {
-                const hasWebp = Boolean(result.webp_filename);
-                mediaWebpBadge.textContent = hasWebp ? 'WebP varianta dostupná' : 'Bez WebP';
-                mediaWebpBadge.className = hasWebp ? 'badge bg-success' : 'badge bg-secondary';
-                if (convertBtn) convertBtn.disabled = hasWebp;
+            if (data.webp_filename) {
+                card.dataset.webpFilename = data.webp_filename;
             }
 
-            adminDialog.alert(result.message || 'Změny byly uloženy.', {variant: 'success'});
-        } catch (error) {
-            adminDialog.alert(error.message || 'Uložení se nezdařilo.', {variant: 'danger'});
+            if (data.filename) {
+                card.dataset.name = data.filename;
+            }
+
+            const cardImg = card.querySelector('img');
+            if (cardImg) {
+                if (previewUrl) cardImg.src = previewUrl;
+                cardImg.alt = newAlt;
+            }
+
+            updateCardBadge(card, hasWebp, previewUrl);
         }
-    };
+
+        // MODÁL
+        if (mediaPreview && previewUrl) {
+            mediaPreview.src = previewUrl;
+        }
+        if (mediaPreview) {
+            mediaPreview.alt = newAlt;
+        }
+        if (mediaAltInput) {
+            mediaAltInput.value = newAlt;
+        }
+
+        if (mediaWebpBadge) {
+            mediaWebpBadge.textContent = hasWebp ? 'WebP varianta dostupná' : 'Bez WebP';
+            mediaWebpBadge.className = hasWebp ? 'badge bg-success' : 'badge bg-secondary';
+        }
+
+        if (mediaOpenLink) {
+            mediaOpenLink.href = previewUrl || '#';
+            mediaOpenLink.style.display = previewUrl ? '' : 'none';
+        }
+
+        if (convertBtn) {
+            convertBtn.disabled = hasWebp;
+        }
+
+        adminDialog.alert(result.message || 'Změny byly uloženy.', { variant: 'success' });
+    } catch (error) {
+        adminDialog.alert(error.message || 'Uložení se nezdařilo.', { variant: 'danger' });
+    }
+};
+
 
     document.querySelectorAll('.media-card').forEach((card) => {
         card.addEventListener('click', () => fillMediaModal(card));

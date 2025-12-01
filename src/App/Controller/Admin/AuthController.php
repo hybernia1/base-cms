@@ -4,7 +4,7 @@ namespace App\Controller\Admin;
 use App\Service\Auth;
 use App\Service\Flash;
 
-class AuthController extends BaseAdminController
+class AuthController extends AjaxController
 {
     public function loginForm()
     {

@@ -9,7 +9,7 @@ use App\Service\TermType;
 use App\Service\Slugger;
 use DateTimeZone;
 
-class SettingController extends BaseAdminController
+class SettingController extends AjaxController
 {
     private const SECTION_DEFINITIONS = [
         'main' => ['label' => 'Základní', 'icon' => 'bi-gear'],

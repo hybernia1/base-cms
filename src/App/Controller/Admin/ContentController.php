@@ -9,7 +9,7 @@ use RedBeanPHP\R as R;
 use App\Service\Upload;
 use App\Service\TermType;
 
-class ContentController extends BaseAdminController
+class ContentController extends AjaxController
 {
     public function index($slug)
     {
@@ -38,19 +38,14 @@ class ContentController extends BaseAdminController
             array_merge($params, [$pagination['per_page'], $pagination['offset']])
         );
 
-        if ($this->wantsJson()) {
-            $html = $this->twig->render('admin/content/_list.twig', [
-                'items' => $items,
-                'types' => ContentType::all(),
-                'current_type' => $definition,
-                'current_status' => $status ?? 'all',
-                'pagination' => $pagination,
-            ]);
-
-            $this->jsonResponse([
-                'html' => $html,
-                'state_url' => $pagination['current_url'],
-            ]);
+        if ($this->respondAjax('admin/content/_list.twig', [
+            'items' => $items,
+            'types' => ContentType::all(),
+            'current_type' => $definition,
+            'current_status' => $status ?? 'all',
+            'pagination' => $pagination,
+        ], $pagination['current_url'])) {
+            return;
         }
 
         $this->render('admin/content/index.twig', [
@@ -255,10 +250,7 @@ class ContentController extends BaseAdminController
         R::trash($content);
 
         if ($this->wantsJson()) {
-            $this->jsonResponse([
-                'success' => true,
-                'message' => 'Obsah byl smazán.',
-            ]);
+            $this->respondAjaxMessage('Obsah byl smazán.', ['success' => true]);
         }
 
         Flash::addSuccess('Obsah byl smazán.');

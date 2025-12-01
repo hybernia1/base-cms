@@ -7,7 +7,7 @@ use App\Service\Setting;
 use App\Service\Upload;
 use RedBeanPHP\R as R;
 
-class MediaController extends BaseAdminController
+class MediaController extends AjaxController
 {
     public function index()
     {
@@ -22,16 +22,11 @@ class MediaController extends BaseAdminController
             [$pagination['per_page'], $pagination['offset']]
         );
 
-        if ($this->wantsJson()) {
-            $html = $this->twig->render('admin/media/_list.twig', [
-                'items' => $items,
-                'pagination' => $pagination,
-            ]);
-
-            $this->jsonResponse([
-                'html' => $html,
-                'state_url' => $pagination['current_url'],
-            ]);
+        if ($this->respondAjax('admin/media/_list.twig', [
+            'items' => $items,
+            'pagination' => $pagination,
+        ], $pagination['current_url'])) {
+            return;
         }
 
         $this->render('admin/media/index.twig', [
@@ -155,10 +150,7 @@ class MediaController extends BaseAdminController
         R::trash($media);
 
         if ($this->wantsJson()) {
-            $this->jsonResponse([
-                'success' => true,
-                'message' => 'Soubor byl smazán.',
-            ]);
+            $this->respondAjaxMessage('Soubor byl smazán.', ['success' => true]);
         }
 
         Flash::addSuccess('Soubor byl smazán.');

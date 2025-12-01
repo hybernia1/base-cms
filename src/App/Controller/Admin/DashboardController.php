@@ -3,7 +3,7 @@ namespace App\Controller\Admin;
 
 use App\Service\Auth;
 
-class DashboardController extends BaseAdminController
+class DashboardController extends AjaxController
 {
     public function index()
     {

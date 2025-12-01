@@ -250,15 +250,30 @@ const saveMediaDetails = async (forceWebp = false) => {
             convertBtn.disabled = hasWebp;
         }
 
-        adminDialog.alert(result.message || 'Změny byly uloženy.', { variant: 'success' });
+        adminNotify.show({
+            title: 'Hotovo',
+            message: result.message || 'Změny byly uloženy.',
+            variant: 'success',
+        });
     } catch (error) {
-        adminDialog.alert(error.message || 'Uložení se nezdařilo.', { variant: 'danger' });
+        adminNotify.show({
+            title: 'Chyba',
+            message: error.message || 'Uložení se nezdařilo.',
+            variant: 'danger',
+            autohide: false,
+        });
     }
 };
 
 
     document.querySelectorAll('.media-card').forEach((card) => {
-        card.addEventListener('click', () => fillMediaModal(card));
+        card.addEventListener('click', (event) => {
+            if (event.target.closest('.btn-group') || event.target.closest('form')) {
+                return;
+            }
+
+            fillMediaModal(card);
+        });
         card.addEventListener('keypress', (event) => {
             if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();

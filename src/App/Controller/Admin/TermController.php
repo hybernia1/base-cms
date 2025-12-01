@@ -8,7 +8,7 @@ use App\Service\ContentType;
 use App\Service\Slugger;
 use RedBeanPHP\R as R;
 
-class TermController extends BaseAdminController
+class TermController extends AjaxController
 {
     public function index()
     {
@@ -181,10 +181,7 @@ class TermController extends BaseAdminController
         R::trash($term);
 
         if ($this->wantsJson()) {
-            $this->jsonResponse([
-                'success' => true,
-                'message' => 'Term byl smazán.',
-            ]);
+            $this->respondAjaxMessage('Term byl smazán.', ['success' => true]);
         }
 
         Flash::addSuccess('Term byl smazán.');
@@ -218,19 +215,14 @@ class TermController extends BaseAdminController
             $item->allowed_for = $termTypeDefinitions[$item->type]['content_types'] ?? [];
         }
 
-        if ($this->wantsJson()) {
-            $html = $this->twig->render('admin/terms/_list.twig', [
-                'items' => $items,
-                'types' => TermType::all(),
-                'content_types' => $contentTypeDefinitions,
-                'current_term_type' => $typeFilter ? ($termTypeDefinitions[$typeFilter] ?? null) : null,
-                'pagination' => $pagination,
-            ]);
-
-            $this->jsonResponse([
-                'html' => $html,
-                'state_url' => $pagination['current_url'],
-            ]);
+        if ($this->respondAjax('admin/terms/_list.twig', [
+            'items' => $items,
+            'types' => TermType::all(),
+            'content_types' => $contentTypeDefinitions,
+            'current_term_type' => $typeFilter ? ($termTypeDefinitions[$typeFilter] ?? null) : null,
+            'pagination' => $pagination,
+        ], $pagination['current_url'])) {
+            return;
         }
 
         $this->render('admin/terms/index.twig', [

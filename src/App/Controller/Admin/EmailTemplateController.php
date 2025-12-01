@@ -5,7 +5,7 @@ use App\Service\Auth;
 use App\Service\EmailTemplateManager;
 use App\Service\Flash;
 
-class EmailTemplateController extends BaseAdminController
+class EmailTemplateController extends AjaxController
 {
     public function index()
     {

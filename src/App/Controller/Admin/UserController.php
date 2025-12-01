@@ -6,7 +6,7 @@ use App\Service\EmailTemplateManager;
 use App\Service\Flash;
 use RedBeanPHP\R as R;
 
-class UserController extends BaseAdminController
+class UserController extends AjaxController
 {
     private const ROLES = [
         'admin'  => 'Administrátor',
@@ -27,17 +27,12 @@ class UserController extends BaseAdminController
             [$pagination['per_page'], $pagination['offset']]
         );
 
-        if ($this->wantsJson()) {
-            $html = $this->twig->render('admin/users/_list.twig', [
-                'users' => $users,
-                'roles' => self::ROLES,
-                'pagination' => $pagination,
-            ]);
-
-            $this->jsonResponse([
-                'html' => $html,
-                'state_url' => $pagination['current_url'],
-            ]);
+        if ($this->respondAjax('admin/users/_list.twig', [
+            'users' => $users,
+            'roles' => self::ROLES,
+            'pagination' => $pagination,
+        ], $pagination['current_url'])) {
+            return;
         }
 
         $this->render('admin/users/index.twig', [
@@ -260,10 +255,7 @@ class UserController extends BaseAdminController
         R::trash($user);
 
         if ($this->wantsJson()) {
-            $this->jsonResponse([
-                'success' => true,
-                'message' => 'Uživatel byl smazán.',
-            ]);
+            $this->respondAjaxMessage('Uživatel byl smazán.', ['success' => true]);
         }
 
         Flash::addSuccess('Uživatel byl smazán.');

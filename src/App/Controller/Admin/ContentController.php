@@ -90,6 +90,7 @@ class ContentController extends AjaxController
             'status' => $content->status,
             'body' => $content->body,
             'thumbnail_id' => $content->thumbnail_id ? (int) $content->thumbnail_id : null,
+            'media_ids' => $this->loadMediaIdsForContent((int) $content->id),
             'created_at' => $content->created_at,
             'updated_at' => $content->updated_at,
             'terms' => $this->loadTermIdsForContent((int) $content->id),
@@ -111,6 +112,7 @@ class ContentController extends AjaxController
                 'body'  => '',
                 'status' => 'draft',
                 'thumbnail_id' => '',
+                'media_ids' => [],
             ],
             'errors' => [],
             'heading' => 'Nový obsah',
@@ -175,6 +177,7 @@ class ContentController extends AjaxController
         R::store($bean);
 
         $this->syncTerms((int) $bean->id, $data['terms']);
+        $this->syncMediaAttachments((int) $bean->id, $data['media_ids'], $data['thumbnail_id'] ?: null);
 
         // URL na editaci právě vytvořeného obsahu
         $editUrl = '/admin/content/' . ContentType::slug($bean->type) . '/' . $bean->id . '/edit'; // ← změna
@@ -220,6 +223,7 @@ class ContentController extends AjaxController
                 'body'  => $content->body,
                 'status' => $content->status,
                 'thumbnail_id' => $content->thumbnail_id,
+                'media_ids' => $this->loadMediaIdsForContent((int) $content->id),
             ],
             'errors' => [],
             'heading' => 'Upravit obsah',
@@ -293,6 +297,7 @@ class ContentController extends AjaxController
         R::store($content);
 
         $this->syncTerms((int) $content->id, $data['terms']);
+        $this->syncMediaAttachments((int) $content->id, $data['media_ids'], $data['thumbnail_id'] ?: null);
 
         // URL na editaci právě uloženého obsahu
         $editUrl = '/admin/content/' . ContentType::slug($content->type) . '/' . $content->id . '/edit'; // ← změna
@@ -327,6 +332,7 @@ class ContentController extends AjaxController
         }
 
         R::exec('DELETE FROM content_term WHERE content_id = ?', [(int) $content->id]);
+        R::exec('DELETE FROM content_media WHERE content_id = ?', [(int) $content->id]);
         R::trash($content);
 
         if ($this->wantsJson()) {
@@ -418,8 +424,26 @@ class ContentController extends AjaxController
             'status' => trim($_POST['status'] ?? 'draft'),
             'body'  => trim($_POST['body'] ?? ''),
             'thumbnail_id' => (int) ($_POST['thumbnail_id'] ?? 0),
+            'media_ids' => $this->filterIds($_POST['media_ids'] ?? []),
             'terms' => $this->extractTermIds($_POST['terms'] ?? []),
         ];
+    }
+
+    private function filterIds($input): array
+    {
+        if (!is_array($input)) {
+            return [];
+        }
+
+        $ids = [];
+        foreach ($input as $value) {
+            $id = (int) $value;
+            if ($id > 0) {
+                $ids[] = $id;
+            }
+        }
+
+        return array_values(array_unique($ids));
     }
 
     private function validate(array &$data, int $ignoreId = 0): array
@@ -468,9 +492,46 @@ class ContentController extends AjaxController
         return $item && $item->id ? $item : null;
     }
 
+    private function loadMediaIdsForContent(int $contentId): array
+    {
+        return array_map('intval', R::getCol(
+            'SELECT media_id FROM content_media WHERE content_id = ? AND relation = ? ORDER BY id DESC',
+            [$contentId, 'body']
+        ));
+    }
+
     private function mediaList(): array
     {
         return R::findAll('media', ' ORDER BY created_at DESC LIMIT 100 ');
+    }
+
+    private function syncMediaAttachments(int $contentId, array $mediaIds, ?int $thumbnailId = null): void
+    {
+        $normalizedBodyIds = [];
+        foreach ($mediaIds as $id) {
+            $intId = (int) $id;
+            if ($intId > 0 && $intId !== (int) $thumbnailId) {
+                $normalizedBodyIds[] = $intId;
+            }
+        }
+
+        $uniqueBodyIds = array_values(array_unique($normalizedBodyIds));
+
+        R::exec('DELETE FROM content_media WHERE content_id = ? AND relation = ?', [$contentId, 'body']);
+        foreach ($uniqueBodyIds as $id) {
+            R::exec(
+                'INSERT IGNORE INTO content_media (content_id, media_id, relation, created_at) VALUES (?, ?, ?, ?)',
+                [$contentId, $id, 'body', date('Y-m-d H:i:s')]
+            );
+        }
+
+        R::exec('DELETE FROM content_media WHERE content_id = ? AND relation = ?', [$contentId, 'thumbnail']);
+        if ($thumbnailId) {
+            R::exec(
+                'INSERT IGNORE INTO content_media (content_id, media_id, relation, created_at) VALUES (?, ?, ?, ?)',
+                [$contentId, (int) $thumbnailId, 'thumbnail', date('Y-m-d H:i:s')]
+            );
+        }
     }
 
     private function handleThumbnailUpload(array $data): array

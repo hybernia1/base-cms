@@ -171,6 +171,7 @@ class MediaController extends AjaxController
         }
 
         R::exec('UPDATE content SET thumbnail_id = NULL WHERE thumbnail_id = ?', [$media->id]);
+        R::exec('DELETE FROM content_media WHERE media_id = ?', [$media->id]);
         R::trash($media);
 
         if ($this->wantsJson()) {

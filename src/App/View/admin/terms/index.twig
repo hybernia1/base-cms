@@ -1,6 +1,5 @@
 {% extends 'admin/layout.twig' %}
 
-{% set current_menu = current_menu|default('terms') %}
 {% import 'admin/partials/components.twig' as ui %}
 
 {% block title %}Termy | Administrace{% endblock %}
@@ -8,15 +7,12 @@
 {% block body %}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h1 class="h3 mb-0">Termy{% if current_term_type %} – {{ current_term_type.label|default(current_term_type.key) }}{% endif %}</h1>
-            {% if current_term_type %}
-                <div class="text-muted small">Filtrované podle typu {{ current_term_type.label|default(current_term_type.key) }}.</div>
-            {% endif %}
+            <h1 class="h3 mb-0">Termy – {{ current_term_type.label|default(current_term_type.key) }}</h1>
         </div>
-        <a href="/admin/terms/create{% if current_term_type %}?type={{ current_term_type.key }}{% endif %}" class="btn btn-primary">Nový term</a>
+        <a href="/admin/terms/create?type={{ current_term_type.key }}" class="btn btn-primary">Nový term</a>
     </div>
 
-    <div class="ajax-block" data-ajax-container data-endpoint="{{ current_term_type ? '/admin/terms/type/' ~ current_term_type.key : '/admin/terms' }}" data-current-url="{{ pagination.current_url }}">
+    <div class="ajax-block" data-ajax-container data-endpoint="/admin/terms/type/{{ current_term_type.key }}" data-current-url="{{ pagination.current_url }}">
         {% include 'admin/terms/_list.twig' with {
             items: items,
             types: types,

@@ -12,7 +12,17 @@ class TermController extends AjaxController
 {
     public function index()
     {
-        $this->renderIndex();
+        $definitions = TermType::definitions();
+        $firstType = array_key_first($definitions);
+
+        if ($firstType === null) {
+            Flash::addError('Nebyl nalezen žádný typ termů.');
+            header('Location: /admin');
+            exit;
+        }
+
+        header('Location: /admin/terms/type/' . $firstType);
+        exit;
     }
 
     public function indexByType($typeKey)
@@ -189,7 +199,7 @@ class TermController extends AjaxController
         exit;
     }
 
-    private function renderIndex(?string $typeFilter = null): void
+    private function renderIndex(string $typeKey): void
     {
         Auth::requireRole(['admin', 'editor']);
 
@@ -198,10 +208,8 @@ class TermController extends AjaxController
         $query = ' 1 = 1 ';
         $params = [];
 
-        if ($typeFilter !== null) {
-            $query .= ' AND type = ? ';
-            $params[] = $typeFilter;
-        }
+        $query .= ' AND type = ? ';
+        $params[] = $typeKey;
 
         $total = R::count('term', $query, $params);
         $pagination = $this->buildPagination((int) $total, 15);
@@ -218,7 +226,7 @@ class TermController extends AjaxController
         if ($this->respondAjax('admin/terms/_list.twig', $this->prepareTermsAjaxPayload($items, [
             'types' => TermType::all(),
             'content_types' => $contentTypeDefinitions,
-            'current_term_type' => $typeFilter ? ($termTypeDefinitions[$typeFilter] ?? null) : null,
+            'current_term_type' => $termTypeDefinitions[$typeKey] ?? null,
             'pagination' => $pagination,
         ]), $pagination['current_url'])) {
             return;
@@ -228,17 +236,14 @@ class TermController extends AjaxController
             'items' => $items,
             'types' => TermType::all(),
             'content_types' => $contentTypeDefinitions,
-            'current_menu' => $typeFilter ? 'terms:' . $typeFilter : 'terms',
-            'current_term_type' => $typeFilter ? ($termTypeDefinitions[$typeFilter] ?? null) : null,
+            'current_menu' => 'terms:' . $typeKey,
+            'current_term_type' => $termTypeDefinitions[$typeKey] ?? null,
             'pagination' => $pagination,
         ]);
     }
 
     private function prepareTermsAjaxPayload(array $items, array $context): array
     {
-        $settings = $this->baseContext(false)['settings'];
-        $format = ($settings['date_format'] ?? 'd/m/Y') . ' ' . ($settings['time_format'] ?? 'H:i');
-
         $serializedItems = [];
         foreach ($items as $item) {
             $serializedItems[] = [
@@ -247,8 +252,6 @@ class TermController extends AjaxController
                 'slug' => $item->slug,
                 'type' => $item->type,
                 'allowed_for' => $item->allowed_for ?? [],
-                'updated_at' => $item->updated_at,
-                'updated_at_formatted' => $item->updated_at ? date($format, strtotime($item->updated_at)) : null,
             ];
         }
 

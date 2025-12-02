@@ -208,11 +208,6 @@
                     </button>
                     <div class="collapse {% if termsActive %}show{% endif %}" id="{{ termsMenuId }}">
                         <ul class="nav flex-column ms-3 mt-1 small">
-                            <li class="nav-item">
-                                <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'terms' %}active{% endif %}" href="/admin/terms">
-                                    <i class="bi bi-list-ul me-2"></i> Přehled
-                                </a>
-                            </li>
                             {% if term_type_menu is defined %}
                                 {% for termKey, termDef in term_type_menu %}
                                     {% set termIsActive = current_menu is defined and current_menu == 'terms:' ~ termKey %}
@@ -220,6 +215,10 @@
                                         <a class="nav-link d-flex align-items-center {% if termIsActive %}active{% endif %}" href="/admin/terms/type/{{ termKey }}">
                                             <i class="bi bi-collection me-2"></i> {{ termDef.label|default(termKey) }}
                                         </a>
+                                    </li>
+                                {% else %}
+                                    <li class="nav-item">
+                                        <span class="nav-link text-muted">Žádné typy termů.</span>
                                     </li>
                                 {% endfor %}
                             {% endif %}
@@ -339,11 +338,6 @@
                     </button>
                     <div class="collapse {% if termsActive %}show{% endif %}" id="{{ termsMenuId }}">
                         <ul class="nav flex-column ms-3 mt-1 small">
-                            <li class="nav-item">
-                                <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'terms' %}active{% endif %}" href="/admin/terms">
-                                    <i class="bi bi-list-ul me-2"></i> Přehled
-                                </a>
-                            </li>
                             {% if term_type_menu is defined %}
                                 {% for termKey, termDef in term_type_menu %}
                                     {% set termIsActive = current_menu is defined and current_menu == 'terms:' ~ termKey %}
@@ -351,6 +345,10 @@
                                         <a class="nav-link d-flex align-items-center {% if termIsActive %}active{% endif %}" href="/admin/terms/type/{{ termKey }}">
                                             <i class="bi bi-collection me-2"></i> {{ termDef.label|default(termKey) }}
                                         </a>
+                                    </li>
+                                {% else %}
+                                    <li class="nav-item">
+                                        <span class="nav-link text-muted">Žádné typy termů.</span>
                                     </li>
                                 {% endfor %}
                             {% endif %}

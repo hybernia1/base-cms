@@ -27,102 +27,16 @@
         <form id="emptyCommentsTrash" action="/admin/comments/trash/empty" method="post"></form>
     {% endif %}
 
-    {% set tabs = {
-        'all': 'Vše',
-        'pending': 'Čeká na schválení',
-        'approved': 'Schválené',
-        'trash': 'Koš'
-    } %}
-
-    <ul class="nav nav-pills mb-3">
-        {% for key, label in tabs %}
-            <li class="nav-item">
-                <a href="/admin/comments?status={{ key }}" class="nav-link {% if status == key %}active{% endif %}">
-                    {{ label }}
-                    <span class="badge text-bg-light ms-1">{{ counts[key]|default(0) }}</span>
-                </a>
-            </li>
-        {% endfor %}
-    </ul>
-
-    {% if comments is empty %}
-        <div class="alert alert-info">Žádné komentáře pro zvolený filtr.</div>
-    {% else %}
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>Autor</th>
-                        <th>Text</th>
-                        <th>Vazba</th>
-                        <th>Obsah</th>
-                        <th>Stav</th>
-                        <th class="text-end">Akce</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for comment in comments %}
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">{{ comment.author_name ?: 'Anonym' }}</div>
-                                <div class="text-muted small">{{ comment.author_email }}</div>
-                                <div class="text-muted small">{{ comment.created_at|date('j. n. Y H:i') }}</div>
-                            </td>
-                            <td>{{ comment.body|slice(0, 180) }}{% if comment.body|length > 180 %}…{% endif %}</td>
-                            <td class="text-muted small">
-                                {% if comment.parent_id %}
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="badge bg-secondary-subtle text-secondary">Odpověď</span>
-                                        <span>#{{ comment.parent_id }}</span>
-                                    </div>
-                                    {% set parent = parent_map[comment.parent_id]|default(null) %}
-                                    {% if parent %}
-                                        <div class="text-truncate mt-1" title="{{ parent.body }}">{{ parent.body|slice(0, 90) }}{% if parent.body|length > 90 %}…{% endif %}</div>
-                                    {% endif %}
-                                {% else %}
-                                    <span class="badge bg-primary-subtle text-primary">Rodič</span>
-                                {% endif %}
-                                {% set replyCount = child_counts[comment.id]|default(0) %}
-                                {% if replyCount > 0 %}
-                                    <div class="mt-1">{{ replyCount }} reakce</div>
-                                {% endif %}
-                            </td>
-                            <td class="text-muted small">
-                                {% set content = content_map[comment.content_id]|default(null) %}
-                                {% if content %}
-                                    <div class="fw-semibold">{{ content.title }}</div>
-                                    <div>{{ content.type }}</div>
-                                {% else %}
-                                    <em>Nenalezeno</em>
-                                {% endif %}
-                            </td>
-                            <td>
-                                {% if status == 'trash' %}
-                                    <span class="badge bg-secondary-subtle text-secondary">V koši</span>
-                                {% elseif comment.status == 'approved' %}
-                                    <span class="badge bg-success-subtle text-success">Schváleno</span>
-                                {% else %}
-                                    <span class="badge bg-warning-subtle text-warning">Čeká</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-end">
-                                <a href="/admin/comments/{{ comment.id }}/edit" class="btn btn-sm btn-outline-secondary">Detail</a>
-                                {% if comment.status != 'approved' and status != 'trash' %}
-                                    <form method="post" action="/admin/comments/{{ comment.id }}/approve" class="d-inline ms-2">
-                                        <button type="submit" class="btn btn-sm btn-success">Schválit</button>
-                                    </form>
-                                {% endif %}
-                                <form method="post" action="/admin/comments/{{ comment.id }}/delete" class="d-inline ms-2" data-confirm="{{ status == 'trash' ? 'Opravdu nenávratně smazat tento komentář?' : 'Přesunout komentář do koše?' }}" data-confirm-title="{{ status == 'trash' ? 'Trvalé smazání' : 'Přesun do koše' }}">
-                                    <button type="submit" class="btn btn-sm {% if status == 'trash' %}btn-outline-danger{% else %}btn-outline-warning{% endif %}">
-                                        {% if status == 'trash' %}Smazat navždy{% else %}Do koše{% endif %}
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% endif %}
+    <div class="ajax-block" data-ajax-container data-endpoint="/admin/comments" data-current-url="{{ pagination.current_url }}">
+        {% include 'admin/comments/_list.twig' with {
+            comments: comments,
+            status: status,
+            counts: counts,
+            content_map: content_map,
+            parent_map: parent_map,
+            child_counts: child_counts,
+            pagination: pagination
+        } only %}
+    </div>
 {% endblock %}
 

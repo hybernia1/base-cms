@@ -41,7 +41,12 @@
             {% endif %}
 
             <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
-
+                {% if bar.is_debug %}
+                    <span class="badge bg-warning text-dark d-inline-flex align-items-center gap-1">
+                        <i class="bi bi-bug-fill"></i>
+                        <span class="text-uppercase small">Debug</span>
+                    </span>
+                {% endif %}
 
                 {% if bar.user_label %}
                     <div class="dropdown">

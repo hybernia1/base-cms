@@ -33,50 +33,11 @@ class ExtraController extends BaseAdminController
 
         $config = $GLOBALS['app']['config'] ?? [];
         $dbConfig = $config['db'] ?? [];
-        $currentEnv = $config['env'] ?? 'prod';
         $dsn = $dbConfig['dsn'] ?? '';
         $dbName = $this->parseDsnValue($dsn, 'dbname');
         $host = $this->parseDsnValue($dsn, 'host') ?: 'localhost';
         $port = $this->parseDsnValue($dsn, 'port');
         $canDownload = $dbName && ($dbConfig !== []);
-        $configPath = dirname(__DIR__, 2) . '/Config/config.php';
-
-        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['toggle_debug'])) {
-            if (!is_file($configPath)) {
-                Flash::addError('Konfigurační soubor nebyl nalezen.');
-                header('Location: /admin/extra/backup');
-                exit;
-            }
-
-            $configData = require $configPath;
-
-            if (!is_array($configData)) {
-                Flash::addError('Konfiguraci se nepodařilo načíst.');
-                header('Location: /admin/extra/backup');
-                exit;
-            }
-
-            $newEnv = ($configData['env'] ?? 'prod') === 'prod' ? 'dev' : 'prod';
-            $configData['env'] = $newEnv;
-
-            $configContent = "<?php\nreturn " . var_export($configData, true) . ";\n";
-
-            if (file_put_contents($configPath, $configContent) === false) {
-                Flash::addError('Nepodařilo se uložit konfiguraci.');
-                header('Location: /admin/extra/backup');
-                exit;
-            }
-
-            $GLOBALS['app']['config'] = $configData;
-
-            $message = $newEnv === 'dev'
-                ? 'Debug mód byl zapnut (env=dev).'
-                : 'Debug mód byl vypnut (env=prod).';
-
-            Flash::addSuccess($message);
-            header('Location: /admin/extra/backup');
-            exit;
-        }
 
         if (isset($_GET['download'])) {
             if (!$canDownload) {
@@ -118,6 +79,48 @@ class ExtraController extends BaseAdminController
             'current_menu' => 'extra:backup',
             'database_name' => $dbName ?: 'N/A',
             'can_download' => $canDownload,
+        ]);
+    }
+
+    public function debug(): void
+    {
+        Auth::requireRole(['admin']);
+
+        $configPath = dirname(__DIR__, 2) . '/Config/config.php';
+        $config = $GLOBALS['app']['config'] ?? [];
+        $currentEnv = $config['env'] ?? 'prod';
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['toggle_debug'])) {
+            $configData = $this->loadConfig($configPath);
+
+            if ($configData === null) {
+                Flash::addError('Konfiguraci se nepodařilo načíst.');
+                header('Location: /admin/extra/debug');
+                exit;
+            }
+
+            $newEnv = ($configData['env'] ?? 'prod') === 'prod' ? 'dev' : 'prod';
+            $configData['env'] = $newEnv;
+
+            if (!$this->saveConfig($configPath, $configData)) {
+                Flash::addError('Nepodařilo se uložit konfiguraci.');
+                header('Location: /admin/extra/debug');
+                exit;
+            }
+
+            $GLOBALS['app']['config'] = $configData;
+
+            $message = $newEnv === 'dev'
+                ? 'Debug mód byl zapnut (env=dev).'
+                : 'Debug mód byl vypnut (env=prod).';
+
+            Flash::addSuccess($message);
+            header('Location: /admin/extra/debug');
+            exit;
+        }
+
+        $this->render('admin/extra/debug.twig', [
+            'current_menu' => 'extra:debug',
             'current_env' => $currentEnv,
             'is_debug' => $currentEnv !== 'prod',
         ]);
@@ -167,6 +170,24 @@ class ExtraController extends BaseAdminController
         }
 
         return null;
+    }
+
+    private function loadConfig(string $configPath): ?array
+    {
+        if (!is_file($configPath)) {
+            return null;
+        }
+
+        $configData = require $configPath;
+
+        return is_array($configData) ? $configData : null;
+    }
+
+    private function saveConfig(string $configPath, array $configData): bool
+    {
+        $configContent = "<?php\nreturn " . var_export($configData, true) . ";\n";
+
+        return file_put_contents($configPath, $configContent) !== false;
     }
 
     private function formatBytes(int $bytes): string

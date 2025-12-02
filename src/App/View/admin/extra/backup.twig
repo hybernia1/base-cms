@@ -28,19 +28,12 @@
         <div class="card-body p-4 d-flex flex-wrap gap-3 justify-content-between align-items-start">
             <div>
                 <h2 class="h5 mb-2">Debug mód</h2>
-                <p class="text-muted mb-3">Přepni aplikaci mezi produkčním a vývojovým režimem. Změna přepíše soubor <code>config.php</code>.</p>
-                <div class="d-inline-flex align-items-center gap-2">
-                    <span class="badge {% if is_debug %}bg-warning text-dark{% else %}bg-success{% endif %}">Aktuálně: {{ is_debug ? 'dev' : 'prod' }}</span>
-                    <span class="text-muted small">(režim prostředí)</span>
-                </div>
+                <p class="text-muted mb-3">Spravuj režim aplikace v nové sekci <a href="/admin/extra/debug">Debug mód</a>.</p>
             </div>
-            <form method="post" action="/admin/extra/backup" class="d-flex align-items-center">
-                <input type="hidden" name="toggle_debug" value="1">
-                <button type="submit" class="btn {% if is_debug %}btn-outline-secondary{% else %}btn-outline-warning{% endif %}">
-                    <i class="bi bi-bug me-2"></i>
-                    {{ is_debug ? 'Vypnout debug' : 'Zapnout debug' }}
-                </button>
-            </form>
+            <a href="/admin/extra/debug" class="btn btn-outline-primary d-flex align-items-center gap-2">
+                <i class="bi bi-bug"></i>
+                Otevřít správu debug módu
+            </a>
         </div>
     </div>
 {% endblock %}

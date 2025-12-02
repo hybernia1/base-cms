@@ -11,6 +11,7 @@ class CommentController extends AjaxController
     public function index(): void
     {
         Auth::requireRole(['admin', 'editor']);
+        Comment::ensureSchema();
         $status = $_GET['status'] ?? 'pending';
         $allowedStatuses = array_merge(['all', 'trash'], Comment::statuses());
         if (!in_array($status, $allowedStatuses, true)) {

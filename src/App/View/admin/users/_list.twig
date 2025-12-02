@@ -32,25 +32,13 @@
                         </td>
                         <td class="text-end">
                             <div class="d-flex flex-wrap justify-content-end gap-2 align-items-center">
-                                {{ ui.actions([
-                                    {
-                                        type: 'link',
-                                        href: '/admin/users/' ~ user.id ~ '/edit',
-                                        label: 'Upravit',
-                                        variant: 'primary',
-                                        icon: 'bi-pencil'
-                                    },
-                                      {
-                                          type: 'form',
-                                          action: '/admin/users/' ~ user.id ~ '/delete',
-                                          label: 'Smazat',
-                                          variant: 'danger',
-                                          confirm: 'Opravdu smazat tohoto uživatele?',
-                                          icon: 'bi-trash',
-                                          ajax: true,
-                                          hidden: { redirect: pagination.current_url }
-                                      }
-                                  ]) }}
+                                {{ ui.crud_actions('/admin/users/' ~ user.id, {
+                                    delete: {
+                                        confirm: 'Opravdu smazat tohoto uživatele?',
+                                        ajax: true,
+                                        hidden: { redirect: pagination.current_url }
+                                    }
+                                }) }}
                             </div>
                         </td>
                     </tr>

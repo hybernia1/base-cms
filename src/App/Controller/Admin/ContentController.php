@@ -23,6 +23,8 @@ class ContentController extends AjaxController
         $allowedStatuses = ['published', 'draft', 'trash', 'all'];
         $status = in_array($statusFilter, $allowedStatuses, true) ? $statusFilter : 'all';
 
+        $counts = $this->contentStatusCounts($typeKey);
+
         $query = ' type = ? ';
         $params = [$typeKey];
 
@@ -50,6 +52,7 @@ class ContentController extends AjaxController
             'current_type' => $definition,
             'current_status' => $status ?? 'all',
             'pagination' => $pagination,
+            'counts' => $counts,
         ]), $pagination['current_url'])) {
             return;
         }
@@ -62,6 +65,7 @@ class ContentController extends AjaxController
             'all_type_definitions' => ContentType::definitions(),
             'current_status' => $status,
             'pagination' => $pagination,
+            'counts' => $counts,
         ]);
     }
 
@@ -85,6 +89,19 @@ class ContentController extends AjaxController
         $context['items'] = $serializedItems;
 
         return $context;
+    }
+
+    private function contentStatusCounts(string $typeKey): array
+    {
+        $counts = [
+            'published' => (int) R::count('content', ' type = ? AND status = ? AND deleted_at IS NULL ', [$typeKey, 'published']),
+            'draft' => (int) R::count('content', ' type = ? AND status = ? AND deleted_at IS NULL ', [$typeKey, 'draft']),
+            'trash' => (int) R::count('content', ' type = ? AND deleted_at IS NOT NULL ', [$typeKey]),
+        ];
+
+        $counts['all'] = (int) R::count('content', ' type = ? AND deleted_at IS NULL ', [$typeKey]);
+
+        return $counts;
     }
 
     private function serializeContent($content): array

@@ -51,16 +51,6 @@
                                           hidden: { redirect: pagination.current_url }
                                       }
                                   ]) }}
-                                  {% if user.is_banned %}
-                                      <form method="post" action="/admin/users/{{ user.id }}/unban" class="d-inline">
-                                        <button type="submit" class="btn btn-sm btn-outline-success">Odblokovat</button>
-                                    </form>
-                                {% else %}
-                                    <form method="post" action="/admin/users/{{ user.id }}/ban" class="d-inline d-flex align-items-center gap-2">
-                                        <input type="text" name="reason" class="form-control form-control-sm w-auto" placeholder="Důvod" aria-label="Důvod blokace">
-                                        <button type="submit" class="btn btn-sm btn-outline-warning">Zablokovat</button>
-                                    </form>
-                                {% endif %}
                             </div>
                         </td>
                     </tr>

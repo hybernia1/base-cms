@@ -82,11 +82,15 @@ class ContentController extends AjaxController
 
     private function serializeContent($content): array
     {
+        $author = $this->findAuthor((int) ($content->author_id ?? 0));
+
         return [
             'id' => (int) $content->id,
             'title' => $content->title,
             'slug' => $content->slug,
             'type' => $content->type,
+            'author_id' => $content->author_id ? (int) $content->author_id : null,
+            'author' => $author,
             'status' => $content->status,
             'body' => $content->body,
             'thumbnail_id' => $content->thumbnail_id ? (int) $content->thumbnail_id : null,
@@ -173,6 +177,8 @@ class ContentController extends AjaxController
         $bean->body = $data['body'];
         $bean->thumbnail_id = $data['thumbnail_id'] ?: null;
         $bean->thumbnail_alt = null;
+        $currentUser = Auth::user();
+        $bean->author_id = $currentUser ? (int) $currentUser->id : null;
         $bean->created_at = date('Y-m-d H:i:s');
         $bean->updated_at = date('Y-m-d H:i:s');
         R::store($bean);
@@ -299,6 +305,8 @@ class ContentController extends AjaxController
         $content->body = $data['body'];
         $content->thumbnail_id = $data['thumbnail_id'] ?: null;
         $content->thumbnail_alt = null;
+        $currentUser = Auth::user();
+        $content->author_id = $content->author_id ?: ($currentUser ? (int) $currentUser->id : null);
         $content->updated_at = date('Y-m-d H:i:s');
         R::store($content);
 
@@ -499,6 +507,24 @@ class ContentController extends AjaxController
         return $item && $item->id ? $item : null;
     }
 
+    private function findAuthor(int $userId): ?array
+    {
+        if ($userId <= 0) {
+            return null;
+        }
+
+        $user = R::load('user', $userId);
+        if (!$user || !$user->id) {
+            return null;
+        }
+
+        return [
+            'id' => (int) $user->id,
+            'email' => $user->email,
+            'nickname' => $user->nickname ?: $user->email,
+        ];
+    }
+
     private function loadMediaIdsForContent(int $contentId): array
     {
         return array_map('intval', R::getCol(
@@ -547,7 +573,12 @@ class ContentController extends AjaxController
             return [$data, null];
         }
 
-        [$media, $error] = Upload::handle($_FILES['thumbnail_upload']);
+        $currentUser = Auth::user();
+        [$media, $error] = Upload::handle(
+            $_FILES['thumbnail_upload'],
+            'images',
+            $currentUser ? (int) $currentUser->id : null
+        );
         if ($error) {
             Flash::addError($error);
             return [$data, $error];

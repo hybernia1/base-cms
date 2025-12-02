@@ -34,6 +34,7 @@ class ContentController extends BaseFrontController
         $thumbnail = null;
         $comments = [];
         $commentAllowed = false;
+        $author = null;
         $commentSettings = [
             'allow_replies' => Setting::get('comments_allow_replies', '1') === '1',
             'allow_anonymous' => Setting::get('comments_allow_anonymous', '0') === '1',
@@ -60,6 +61,8 @@ class ContentController extends BaseFrontController
                 $comments = Comment::findByContent((int) $item->id);
             }
 
+            $author = $this->loadAuthor((int) ($item->author_id ?? 0));
+
             if (Auth::hasRole(['admin', 'editor'])) {
                 $adminBarContext['edit_url'] = '/admin/content/' . $typeDef['slug'] . '/' . $item->id . '/edit';
                 $adminBarContext['current_title'] = $item->title;
@@ -79,8 +82,28 @@ class ContentController extends BaseFrontController
             'comment_allowed' => $commentAllowed,
             'comment_settings' => $commentSettings,
             'commenting_enabled' => $commentingEnabled,
+            'author' => $author,
             'admin_bar' => $adminBarContext,
         ]);
+    }
+
+    private function loadAuthor(int $userId): ?array
+    {
+        if ($userId <= 0) {
+            return null;
+        }
+
+        $user = R::load('user', $userId);
+        if (!$user || !$user->id) {
+            return null;
+        }
+
+        return [
+            'id' => (int) $user->id,
+            'email' => $user->email,
+            'nickname' => $user->nickname ?: $user->email,
+            'profile_url' => (int) ($user->is_profile_public ?? 1) === 1 ? '/users/' . $user->id : null,
+        ];
     }
 }
 

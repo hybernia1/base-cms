@@ -15,7 +15,17 @@
                         <img src="/{{ thumbnail.path }}/{{ thumbnail.webp_filename ?: thumbnail.filename }}" class="card-img-top" alt="{{ thumbnail.alt ?: item.title }}">
                     {% endif %}
                     <div class="card-body p-4">
-                        <div class="text-muted mb-2">{{ item.created_at|date('j. n. Y') }} · {{ type.name|default(type.slug|default('Obsah')) }}</div>
+                        <div class="text-muted mb-2">
+                            {{ item.created_at|date('j. n. Y') }} · {{ type.name|default(type.slug|default('Obsah')) }}
+                            {% if author %}
+                                ·
+                                {% if author.profile_url %}
+                                    <a href="{{ author.profile_url }}" class="text-decoration-none">{{ author.nickname }}</a>
+                                {% else %}
+                                    {{ author.nickname }}
+                                {% endif %}
+                            {% endif %}
+                        </div>
                         <h1 class="card-title">{{ item.title }}</h1>
                         {% if terms %}
                             <div class="mb-3 d-flex flex-wrap gap-2">

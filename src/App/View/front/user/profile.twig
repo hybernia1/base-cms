@@ -19,6 +19,15 @@
         {% endif %}
     </div>
 
+    {% if is_banned %}
+        <div class="alert alert-danger mt-3" role="alert">
+            Tento účet je deaktivován.
+            {% if ban_reason %}
+                <div class="small text-muted">Důvod: {{ ban_reason }}</div>
+            {% endif %}
+        </div>
+    {% endif %}
+
     {% if not is_public and not is_owner %}
         <div class="alert alert-info mt-4">Tento profil je skrytý. Uživatel se rozhodl nezveřejňovat své informace.</div>
     {% else %}

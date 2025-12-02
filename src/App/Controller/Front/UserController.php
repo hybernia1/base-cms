@@ -118,6 +118,8 @@ class UserController extends BaseFrontController
             'user' => $user,
             'is_owner' => $isOwner,
             'is_public' => (int) ($user->is_profile_public ?? 1) === 1,
+            'is_banned' => (int) ($user->is_banned ?? 0) === 1,
+            'ban_reason' => $user->ban_reason ?? null,
             'comments' => $this->findUserComments((int) $user->id, $isOwner),
         ]);
     }

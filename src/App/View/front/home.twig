@@ -17,7 +17,17 @@
                 <div class="col">
                     <article class="card h-100 shadow-sm">
                         <div class="card-body">
-                            <div class="text-muted small mb-1">{{ post.created_at|date('j. n. Y') }} · {{ type_def.name }}</div>
+                            <div class="text-muted small mb-1">
+                                {{ post.created_at|date('j. n. Y') }} · {{ type_def.name }}
+                                {% if post.author %}
+                                    ·
+                                    {% if post.author.profile_url %}
+                                        <a href="{{ post.author.profile_url }}" class="text-decoration-none">{{ post.author.nickname }}</a>
+                                    {% else %}
+                                        {{ post.author.nickname }}
+                                    {% endif %}
+                                {% endif %}
+                            </div>
                             <h2 class="h5 card-title">
                                 <a href="/{{ type_def.slug }}/{{ post.slug }}" class="stretched-link text-decoration-none">{{ post.title }}</a>
                             </h2>

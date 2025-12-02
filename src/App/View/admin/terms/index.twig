@@ -5,12 +5,15 @@
 {% block title %}Termy | Administrace{% endblock %}
 
 {% block body %}
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h1 class="h3 mb-0">Termy – {{ current_term_type.label|default(current_term_type.key) }}</h1>
-        </div>
-        <a href="/admin/terms/create?type={{ current_term_type.key }}" class="btn btn-primary">Nový term</a>
-    </div>
+    {{ ui.page_header('Termy – ' ~ (current_term_type.label|default(current_term_type.key)), [
+        {
+            type: 'link',
+            href: '/admin/terms/create?type=' ~ current_term_type.key,
+            label: 'Nový term',
+            variant: 'primary',
+            icon: 'bi-plus'
+        }
+    ]) }}
 
     <div class="ajax-block" data-ajax-container data-endpoint="/admin/terms/type/{{ current_term_type.key }}" data-current-url="{{ pagination.current_url }}">
         {% include 'admin/terms/_list.twig' with {

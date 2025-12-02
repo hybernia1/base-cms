@@ -1,0 +1,53 @@
+/* Shared admin bar styling for front-end toolbar */
+.admin-bar {
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 0.55rem 0;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.25);
+}
+
+.admin-bar a,
+.admin-bar .btn,
+.admin-bar button {
+    color: inherit;
+    text-decoration: none;
+}
+
+.admin-bar .admin-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 999px;
+    background: transparent;
+    border: none;
+    color: inherit;
+    font-weight: 600;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.admin-bar .admin-pill:hover,
+.admin-bar .admin-pill:focus {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+.admin-bar .admin-pill .label { display: none; }
+@media (min-width: 768px) {
+    .admin-bar .admin-pill .label { display: inline; }
+}
+
+.admin-bar .dropdown-menu {
+    border: none;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+}
+
+.admin-bar .user-badge {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+}
+
+body.has-admin-bar header { margin-top: 0.25rem; }

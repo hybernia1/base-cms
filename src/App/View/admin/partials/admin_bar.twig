@@ -1,0 +1,70 @@
+{% macro admin_bar(bar) %}
+    <div class="admin-bar">
+        <div class="{{ bar.container_class|default('container') }} d-flex align-items-center gap-2 flex-wrap">
+            {% if bar.menu_toggle is defined and bar.menu_toggle %}
+                <button class="admin-pill d-lg-none" type="button"
+                        data-bs-toggle="offcanvas" data-bs-target="#{{ bar.menu_toggle.target }}"
+                        aria-controls="{{ bar.menu_toggle.target }}">
+                    <i class="bi bi-list"></i><span class="label">{{ bar.menu_toggle.label|default('Menu') }}</span>
+                </button>
+            {% endif %}
+
+            {% if bar.dashboard_url is defined and bar.dashboard_url %}
+                <a class="admin-pill" href="{{ bar.dashboard_url }}">
+                    <i class="bi bi-speedometer2"></i><span class="label">{{ bar.dashboard_label|default('Administrace') }}</span>
+                </a>
+            {% endif %}
+
+            {% if bar.open_site_url is defined and bar.open_site_url %}
+                <a href="{{ bar.open_site_url }}" class="admin-pill" target="{{ bar.open_site_target|default('_blank') }}" rel="noopener">
+                    <i class="bi bi-box-arrow-up-right"></i><span class="label">{{ bar.open_site_label|default('Otevřít web') }}</span>
+                </a>
+            {% endif %}
+
+            {% if bar.edit_url is defined and bar.edit_url %}
+                <a href="{{ bar.edit_url }}" class="admin-pill">
+                    <i class="bi bi-pencil"></i><span class="label">{{ bar.edit_label|default('Upravit') }}</span>
+                </a>
+            {% endif %}
+
+            {% if bar.create_links|default([]) is not empty %}
+                <div class="dropdown">
+                    <button class="admin-pill dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-plus-circle"></i><span class="label">{{ bar.create_label|default('Nový obsah') }}</span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% for link in bar.create_links %}
+                            <li><a class="dropdown-item" href="{{ link.url }}">{{ link.label }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
+                {% if bar.user_role_label %}
+                    <span class="badge user-badge">{{ bar.user_role_label }}</span>
+                {% endif %}
+
+                {% if bar.user_label %}
+                    <div class="dropdown">
+                        <button class="admin-pill dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle"></i><span class="label">{{ bar.user_label }}</span>
+                        </button>
+                        {% if bar.user_links|default([]) is not empty %}
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                {% for link in bar.user_links %}
+                                    <li>
+                                        <a class="dropdown-item d-flex align-items-center gap-2" href="{{ link.url }}"{% if link.target %} target="{{ link.target }}" rel="noopener"{% endif %}>
+                                            {% if link.icon %}<i class="bi {{ link.icon }}"></i>{% endif %}
+                                            <span>{{ link.label }}</span>
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endmacro %}

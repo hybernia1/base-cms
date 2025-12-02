@@ -6,10 +6,15 @@
 {% block title %}Obsah | Administrace{% endblock %}
 
 {% block body %}
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3 mb-0">{{ current_type.plural_name|default('Obsah') }}</h1>
-        <a href="/admin/content/{{ current_type.slug }}/create" class="btn btn-primary">Nový {{ current_type.name|lower }}</a>
-    </div>
+    {{ ui.page_header(current_type.plural_name|default('Obsah'), [
+        {
+            type: 'link',
+            href: '/admin/content/' ~ current_type.slug ~ '/create',
+            label: 'Nový ' ~ current_type.name|lower,
+            variant: 'primary',
+            icon: 'bi-plus'
+        }
+    ]) }}
 
     <div class="ajax-block" data-ajax-container data-endpoint="/admin/content/{{ current_type.slug }}" data-current-url="{{ pagination.current_url }}">
         {% include 'admin/content/_list.twig' with {

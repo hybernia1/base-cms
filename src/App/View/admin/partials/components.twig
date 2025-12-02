@@ -26,6 +26,33 @@
     {% endif %}
 {% endmacro %}
 
+{% macro page_header(title, actions = [], heading_class = 'h3') %}
+    <div class="page-header">
+        <h1 class="{{ heading_class }} mb-0">{{ title }}</h1>
+        {% if actions is not empty %}
+            <div class="page-header-actions">
+                {% for action in actions %}
+                    {% set tooltip = action.title ?: action.label %}
+                    {% if action.type|default('link') == 'link' %}
+                        <a href="{{ action.href }}"
+                           class="btn btn-{{ action.variant|default('primary') }}"
+                           title="{{ tooltip }}">
+                            {% if action.icon %}<i class="bi {{ action.icon }} me-1"></i>{% endif %}{{ action.label }}
+                        </a>
+                    {% elseif action.type == 'button' %}
+                        <button type="{{ action.button_type|default('button') }}"
+                                class="btn btn-{{ action.variant|default('primary') }}"
+                                {% if action.attributes is defined %}{% for name, value in action.attributes %} {{ name }}="{{ value }}"{% endfor %}{% endif %}
+                                title="{{ tooltip }}">
+                            {% if action.icon %}<i class="bi {{ action.icon }} me-1"></i>{% endif %}{{ action.label }}
+                        </button>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+{% endmacro %}
+
 {% macro actions(actions, size = 'sm') %}
     <div class="btn-{{ size }}" role="group">
         {% for action in actions %}
@@ -62,4 +89,39 @@
             {% endif %}
         {% endfor %}
     </div>
+{% endmacro %}
+
+{% macro crud_actions(base, options = {}) %}
+    {% set actions = [] %}
+
+    {% if options.edit is not same as(false) %}
+        {% set edit = options.edit|default({}) %}
+        {% set actions = actions|merge([{
+            type: 'link',
+            href: edit.href|default(base ~ '/edit'),
+            label: edit.label|default('Upravit'),
+            variant: edit.variant|default('primary'),
+            icon: edit.icon|default('bi-pencil')
+        }]) %}
+    {% endif %}
+
+    {% if options.delete is not same as(false) %}
+        {% set del = options.delete|default({}) %}
+        {% set actions = actions|merge([{
+            type: 'form',
+            action: del.action|default(base ~ '/delete'),
+            label: del.label|default('Smazat'),
+            variant: del.variant|default('danger'),
+            icon: del.icon|default('bi-trash'),
+            confirm: del.confirm|default('Opravdu smazat?'),
+            ajax: del.ajax|default(false),
+            hidden: del.hidden|default({})
+        }]) %}
+    {% endif %}
+
+    {% if options.extra is defined %}
+        {% set actions = actions|merge(options.extra) %}
+    {% endif %}
+
+    {{ _self.actions(actions, options.size|default('sm')) }}
 {% endmacro %}

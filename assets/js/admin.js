@@ -225,15 +225,23 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const appendAjaxParam = (url) => {
-        const parsed = new URL(url, window.location.origin);
-        parsed.searchParams.set('ajax', '1');
-        return parsed.toString();
+        try {
+            const parsed = new URL(url, window.location.origin);
+            parsed.searchParams.set('ajax', '1');
+            return parsed.toString();
+        } catch (error) {
+            return window.location.href;
+        }
     };
 
     const normalizeUrl = (url) => {
-        const parsed = new URL(url, window.location.origin);
-        parsed.searchParams.delete('ajax');
-        return parsed.pathname + (parsed.search || '');
+        try {
+            const parsed = new URL(url, window.location.origin);
+            parsed.searchParams.delete('ajax');
+            return parsed.pathname + (parsed.search || '');
+        } catch (error) {
+            return window.location.pathname + window.location.search;
+        }
     };
 
     const escapeHtml = (value) => {

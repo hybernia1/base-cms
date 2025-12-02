@@ -17,6 +17,7 @@ class SettingController extends AjaxController
         'email' => ['label' => 'E-maily', 'icon' => 'bi-envelope'],
         'content-types' => ['label' => 'Typy obsahu', 'icon' => 'bi-journal-text'],
         'term-types' => ['label' => 'Typy termů', 'icon' => 'bi-tags'],
+        'comments' => ['label' => 'Komentáře', 'icon' => 'bi-chat-dots'],
     ];
 
     public function index($section = 'main')
@@ -57,6 +58,9 @@ class SettingController extends AjaxController
                 break;
             case 'email':
                 $this->updateEmailSettings();
+                break;
+            case 'comments':
+                $this->updateCommentSettings();
                 break;
             case 'content-types':
                 $this->updateContentTypes();
@@ -130,6 +134,25 @@ class SettingController extends AjaxController
         Setting::set('smtp_from_name', $smtpFromName);
 
         Flash::addSuccess('E-mailové nastavení bylo uloženo.');
+    }
+
+    private function updateCommentSettings(): void
+    {
+        $commentsEnabled = isset($_POST['comments_enabled']) ? '1' : '0';
+        $allowReplies = isset($_POST['comments_allow_replies']) ? '1' : '0';
+        $maxDepth = (int) ($_POST['comments_max_depth'] ?? Setting::DEFAULTS['comments_max_depth']);
+        $moderation = isset($_POST['comments_moderation']) ? '1' : '0';
+        $allowAnonymous = isset($_POST['comments_allow_anonymous']) ? '1' : '0';
+
+        $maxDepth = max(0, min(5, $maxDepth));
+
+        Setting::set('comments_enabled', $commentsEnabled);
+        Setting::set('comments_allow_replies', $allowReplies);
+        Setting::set('comments_max_depth', (string) $maxDepth);
+        Setting::set('comments_moderation', $moderation);
+        Setting::set('comments_allow_anonymous', $allowAnonymous);
+
+        Flash::addSuccess('Nastavení komentářů bylo uloženo.');
     }
 
     private function updateContentTypes(): void

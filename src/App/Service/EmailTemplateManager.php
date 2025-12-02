@@ -22,6 +22,21 @@ class EmailTemplateManager
             'body_html' => '<p>Dobrý den,</p><p>váš účet byl zablokován. Důvod: {{reason}}.</p>',
             'body_text' => "Váš účet byl zablokován. Důvod: {{reason}}.",
         ],
+        'comment_approved' => [
+            'subject' => 'Váš komentář byl schválen',
+            'body_html' => '<p>Dobrý den,</p><p>váš komentář byl schválen a je nyní viditelný.</p><blockquote>{{comment_body}}</blockquote>',
+            'body_text' => "Váš komentář byl schválen a je nyní viditelný.\n\n{{comment_body}}",
+        ],
+        'comment_reply' => [
+            'subject' => 'Nová reakce na váš komentář',
+            'body_html' => '<p>Dobrý den,</p><p>na váš komentář byla přidána reakce.</p><blockquote>{{reply_body}}</blockquote>',
+            'body_text' => "Na váš komentář byla přidána reakce.\n\n{{reply_body}}",
+        ],
+        'comment_deleted' => [
+            'subject' => 'Váš komentář byl odstraněn',
+            'body_html' => '<p>Dobrý den,</p><p>váš komentář byl odstraněn moderátorem.</p>',
+            'body_text' => "Váš komentář byl odstraněn moderátorem.",
+        ],
     ];
 
     public static function send(string $event, string $to, array $data = []): void

@@ -169,6 +169,7 @@ class ContentController extends AjaxController
         $bean->slug = $data['slug'];
         $bean->type = $data['type'];
         $bean->status = $data['status'] ?: 'draft';
+        $bean->allow_comments = $data['allow_comments'];
         $bean->body = $data['body'];
         $bean->thumbnail_id = $data['thumbnail_id'] ?: null;
         $bean->thumbnail_alt = null;
@@ -222,6 +223,7 @@ class ContentController extends AjaxController
                 'slug'  => $content->slug,
                 'body'  => $content->body,
                 'status' => $content->status,
+                'allow_comments' => (string) $content->allow_comments,
                 'thumbnail_id' => $content->thumbnail_id,
                 'media_ids' => $this->loadMediaIdsForContent((int) $content->id),
             ],
@@ -290,6 +292,7 @@ class ContentController extends AjaxController
         $content->slug = $data['slug'];
         $content->type = $data['type'];
         $content->status = $data['status'] ?: 'draft';
+        $content->allow_comments = $data['allow_comments'];
         $content->body = $data['body'];
         $content->thumbnail_id = $data['thumbnail_id'] ?: null;
         $content->thumbnail_alt = null;
@@ -426,6 +429,7 @@ class ContentController extends AjaxController
             'thumbnail_id' => (int) ($_POST['thumbnail_id'] ?? 0),
             'media_ids' => $this->filterIds($_POST['media_ids'] ?? []),
             'terms' => $this->extractTermIds($_POST['terms'] ?? []),
+            'allow_comments' => isset($_POST['allow_comments']) ? '1' : '0',
         ];
     }
 

@@ -118,3 +118,8 @@ $router->post('/admin/settings/([\\w-]+)', 'App\\Controller\\Admin\\SettingContr
 $router->get('/admin/email-templates', 'App\\Controller\\Admin\\EmailTemplateController@index');
 $router->get('/admin/email-templates/(.+)', 'App\\Controller\\Admin\\EmailTemplateController@editForm');
 $router->post('/admin/email-templates/(.+)', 'App\\Controller\\Admin\\EmailTemplateController@update');
+$router->get('/admin/comments', 'App\\Controller\\Admin\\CommentController@index');
+$router->post('/admin/comments/(\\d+)/approve', 'App\\Controller\\Admin\\CommentController@approve');
+$router->post('/admin/comments/(\\d+)/delete', 'App\\Controller\\Admin\\CommentController@delete');
+
+$router->post('/comments', 'App\\Controller\\Front\\CommentController@store');

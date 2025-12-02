@@ -137,10 +137,8 @@ $router->post('/admin/comments/(\\d+)/restore', 'App\\Controller\\Admin\\Comment
 $router->post('/admin/comments/(\\d+)/delete', 'App\\Controller\\Admin\\CommentController@delete');
 $router->post('/admin/comments/trash/empty', 'App\\Controller\\Admin\\CommentController@emptyTrash');
 $router->get('/admin/extra/info', 'App\\Controller\\Admin\\ExtraController@info');
-$router->get('/admin/extra/assets', 'App\\Controller\\Admin\\ExtraController@assets');
 $router->get('/admin/extra/debug', 'App\\Controller\\Admin\\ExtraController@debug');
 $router->get('/admin/extra/backup', 'App\\Controller\\Admin\\ExtraController@backup');
-$router->post('/admin/extra/assets', 'App\\Controller\\Admin\\ExtraController@assets');
 $router->post('/admin/extra/debug', 'App\\Controller\\Admin\\ExtraController@debug');
 $router->post('/admin/extra/backup', 'App\\Controller\\Admin\\ExtraController@backup');
 

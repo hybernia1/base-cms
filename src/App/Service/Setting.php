@@ -27,7 +27,6 @@ class Setting
         'time_format' => 'H:i',
         'content_types' => '',
         'term_types' => '',
-        'asset_source' => 'cdn',
     ];
 
     public static function get(string $key, $default = null)
@@ -45,9 +44,6 @@ class Setting
         $bean = R::findOne('setting', ' `key` = ? ', [$key]) ?? R::dispense('setting');
         $bean->key = $key;
         $bean->value = $value;
-        if (!$bean->id && !isset($bean->created_at)) {
-            $bean->created_at = date('Y-m-d H:i:s');
-        }
         $bean->updated_at = date('Y-m-d H:i:s');
         R::store($bean);
     }

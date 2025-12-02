@@ -1,8 +1,5 @@
 {% import 'admin/partials/components.twig' as ui %}
 
-{% set df = app_settings.date_format|default('d.m.Y') %}
-{% set tf = app_settings.time_format|default('H:i') %}
-
 {% if items is empty %}
     <div class="alert alert-info">Zatím zde nejsou žádné termy.</div>
 {% else %}
@@ -12,7 +9,6 @@
             <tr>
                 <th>Název</th>
                 <th>Typy obsahu</th>
-                <th>Upraveno</th>
                 <th class="text-end">Akce</th>
             </tr>
         </thead>
@@ -20,11 +16,6 @@
             {% for item in items %}
                 <tr>
                     <td class="fw-semibold">
-
-                        {# badge s typem #}
-                        <span class="badge text-bg-light text-body border me-2">
-                            {{ types[item.type]|default(item.type) }}
-                        </span>
 
                         {# název #}
                         {{ item.name }}
@@ -45,12 +36,6 @@
                             {% endfor %}
                         {% else %}
                             <span class="text-muted small">Vše</span>
-                        {% endif %}
-                    </td>
-
-                    <td>
-                        {% if item.updated_at is not empty %}
-                            {{ item.updated_at|date(df ~ ' ' ~ tf) }}
                         {% endif %}
                     </td>
 

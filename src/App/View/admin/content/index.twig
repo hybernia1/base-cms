@@ -1,49 +1,16 @@
 {% extends 'admin/layout.twig' %}
 
 {% set current_menu = current_type.slug %}
-{% import 'admin/partials/components.twig' as ui %}
 
 {% block title %}Obsah | Administrace{% endblock %}
 
 {% block body %}
-    {% set header_actions = [] %}
-    {% if current_status == 'trash' %}
-        {% set header_actions = header_actions|merge([{
-            type: 'button',
-            button_type: 'submit',
-            label: 'Vysypat koš',
-            variant: 'danger',
-            icon: 'bi-trash',
-            attributes: {
-                form: 'emptyTrashForm',
-                'data-confirm': 'Opravdu vysypat koš? Tato akce nenávratně smaže všechny položky.',
-                'data-confirm-title': 'Trvalé smazání'
-            }
-        }]) %}
-    {% else %}
-        {% set header_actions = header_actions|merge([{
-            type: 'link',
-            href: '/admin/content/' ~ current_type.slug ~ '/create',
-            label: 'Nový ' ~ current_type.name|lower,
-            variant: 'primary',
-            icon: 'bi-plus'
-        }]) %}
-    {% endif %}
-
-    {{ ui.page_header(current_type.plural_name|default('Obsah'), header_actions) }}
-
-    {% if current_status == 'trash' %}
-        <form id="emptyTrashForm" action="/admin/content/{{ current_type.slug }}/trash/empty" method="post"></form>
-    {% endif %}
-
-    <div class="ajax-block" data-ajax-container data-endpoint="/admin/content/{{ current_type.slug }}" data-current-url="{{ pagination.current_url }}">
-        {% include 'admin/content/_list.twig' with {
-            items: items,
-            types: types,
-            current_type: current_type,
-            current_status: current_status,
-            pagination: pagination,
-            counts: counts
-        } only %}
-    </div>
+    {% include 'admin/content/_container.twig' with {
+        items: items,
+        types: types,
+        current_type: current_type,
+        current_status: current_status,
+        pagination: pagination,
+        counts: counts
+    } only %}
 {% endblock %}

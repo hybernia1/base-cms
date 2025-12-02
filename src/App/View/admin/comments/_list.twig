@@ -101,17 +101,33 @@
                             {% endif %}
                         </td>
                         <td class="text-end">
-                            <a href="/admin/comments/{{ comment.id }}/edit" class="btn btn-sm btn-outline-secondary">Detail</a>
-                            {% if comment.status != 'approved' and status != 'trash' %}
-                                <form method="post" action="/admin/comments/{{ comment.id }}/approve" class="d-inline ms-2">
-                                    <button type="submit" class="btn btn-sm btn-success">Schválit</button>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="/admin/comments/{{ comment.id }}/edit" class="btn btn-outline-secondary btn-icon" title="Detail" aria-label="Detail">
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                </a>
+
+                                {% if comment.status != 'approved' and status != 'trash' %}
+                                    <form method="post" action="/admin/comments/{{ comment.id }}/approve" class="d-inline">
+                                        <button type="submit" class="btn btn-outline-success btn-icon" title="Schválit" aria-label="Schválit">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                                {% if status == 'trash' %}
+                                    <form method="post" action="/admin/comments/{{ comment.id }}/restore" class="d-inline">
+                                        <button type="submit" class="btn btn-outline-success btn-icon" title="Obnovit" aria-label="Obnovit">
+                                            <i class="bi bi-arrow-counterclockwise"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                                <form method="post" action="/admin/comments/{{ comment.id }}/delete" class="d-inline" data-confirm="{{ status == 'trash' ? 'Opravdu nenávratně smazat tento komentář?' : 'Přesunout komentář do koše?' }}" data-confirm-title="{{ status == 'trash' ? 'Trvalé smazání' : 'Přesun do koše' }}">
+                                    <button type="submit" class="btn btn-icon {% if status == 'trash' %}btn-outline-danger{% else %}btn-outline-warning{% endif %}" title="{{ status == 'trash' ? 'Smazat navždy' : 'Do koše' }}" aria-label="{{ status == 'trash' ? 'Smazat navždy' : 'Do koše' }}">
+                                        <i class="bi {{ status == 'trash' ? 'bi-trash3' : 'bi-trash' }}"></i>
+                                    </button>
                                 </form>
-                            {% endif %}
-                            <form method="post" action="/admin/comments/{{ comment.id }}/delete" class="d-inline ms-2" data-confirm="{{ status == 'trash' ? 'Opravdu nenávratně smazat tento komentář?' : 'Přesunout komentář do koše?' }}" data-confirm-title="{{ status == 'trash' ? 'Trvalé smazání' : 'Přesun do koše' }}">
-                                <button type="submit" class="btn btn-sm {% if status == 'trash' %}btn-outline-danger{% else %}btn-outline-warning{% endif %}">
-                                    {% if status == 'trash' %}Smazat navždy{% else %}Do koše{% endif %}
-                                </button>
-                            </form>
+                            </div>
                         </td>
                     </tr>
                 {% endfor %}

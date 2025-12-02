@@ -9,10 +9,7 @@
         <div>
             <h1 class="h3 mb-0">Termy – {{ current_term_type.label|default(current_term_type.key) }}</h1>
         </div>
-        {{ ui.button('add', 'Přidat term', {
-            href: '/admin/terms/create?type=' ~ current_term_type.key,
-            class: 'ms-auto'
-        }) }}
+        <a href="/admin/terms/create?type={{ current_term_type.key }}" class="btn btn-primary">Nový term</a>
     </div>
 
     <div class="ajax-block" data-ajax-container data-endpoint="/admin/terms/type/{{ current_term_type.key }}" data-current-url="{{ pagination.current_url }}">

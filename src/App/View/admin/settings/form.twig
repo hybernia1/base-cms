@@ -150,10 +150,9 @@
                             <p class="mb-0 flex-grow-1">
                                 Definujte typy obsahu podobně jako ve WordPressu. Každý typ musí mít klíč (používá se v databázi) a slug (pro URL v administraci).
                             </p>
-                            {{ ui.button('add', 'Přidat typ', {
-                                class: 'ms-auto',
-                                attrs: { id: 'addContentType' }
-                            }) }}
+                            <button type="button" class="btn btn-outline-primary ms-auto" id="addContentType">
+                                Přidat typ
+                            </button>
                         </div>
 
                         {% set types = content_types is defined and content_types ? content_types : [] %}
@@ -172,9 +171,9 @@
                                             <span class="fw-semibold">
                                                 {{ type.name }} ({{ type.key }})
                                             </span>
-                                            {{ ui.button('remove', 'Smazat', {
-                                                attrs: { class: 'remove-content-type' }
-                                            }) }}
+                                            <button type="button" class="btn btn-outline-danger btn-sm remove-content-type">
+                                                Smazat
+                                            </button>
                                         </div>
                                         <div class="row g-2">
                                             <div class="col-md-4">
@@ -210,10 +209,9 @@
                             <p class="mb-0 flex-grow-1">
                                 Stejně jako u typů obsahu si můžete definovat vlastní typy termů (tagy, kategorie...).
                             </p>
-                            {{ ui.button('add', 'Přidat typ termu', {
-                                class: 'ms-auto',
-                                attrs: { id: 'addTermType' }
-                            }) }}
+                            <button type="button" class="btn btn-outline-primary ms-auto" id="addTermType">
+                                Přidat typ termu
+                            </button>
                         </div>
 
                         {% set termTypes = term_types is defined and term_types ? term_types : [] %}
@@ -232,9 +230,9 @@
                                             <span class="fw-semibold">
                                                 {{ type.label }} ({{ type.key }})
                                             </span>
-                                            {{ ui.button('remove', 'Smazat', {
-                                                attrs: { class: 'remove-term-type' }
-                                            }) }}
+                                            <button type="button" class="btn btn-outline-danger btn-sm remove-term-type">
+                                                Smazat
+                                            </button>
                                         </div>
                                         <div class="row g-2">
                                             <div class="col-md-4">
@@ -278,7 +276,6 @@
             // ---------- Typy obsahu ----------
             const contentTypesList = document.getElementById('contentTypesList');
             const addContentTypeButton = document.getElementById('addContentType');
-            const removeContentTypeButton = `{{ ui.button('remove', 'Smazat', { attrs: { class: 'remove-content-type' } })|e('js') }}`;
 
             if (addContentTypeButton && contentTypesList) {
                 addContentTypeButton.addEventListener('click', function () {
@@ -290,7 +287,9 @@
                                 <span class="fw-semibold">
                                     Nový typ
                                 </span>
-                                ${removeContentTypeButton}
+                                <button type="button" class="btn btn-outline-danger btn-sm remove-content-type">
+                                    Smazat
+                                </button>
                             </div>
                             <div class="row g-2">
                                 <div class="col-md-4">
@@ -335,7 +334,6 @@
             const addTermTypeButton = document.getElementById('addTermType');
             let termTypeIndex = termTypesList ? termTypesList.querySelectorAll('.col-12').length : 0;
             const termTypeContentOptions = `{% for key, contentType in content_types %}<option value="{{ key }}">{{ contentType.name }}</option>{% endfor %}`;
-            const removeTermTypeButton = `{{ ui.button('remove', 'Smazat', { attrs: { class: 'remove-term-type' } })|e('js') }}`;
 
             if (addTermTypeButton && termTypesList) {
                 addTermTypeButton.addEventListener('click', function () {
@@ -348,7 +346,9 @@
                                 <span class="fw-semibold">
                                     Nový term
                                 </span>
-                                ${removeTermTypeButton}
+                                <button type="button" class="btn btn-outline-danger btn-sm remove-term-type">
+                                    Smazat
+                                </button>
                             </div>
                             <div class="row g-2">
                                 <div class="col-md-4">

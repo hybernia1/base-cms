@@ -76,11 +76,21 @@ class HomeController extends BaseFrontController
             ];
         }
 
+        $result = [];
         foreach ($items as $item) {
             $authorId = (int) ($item->author_id ?? 0);
-            $item->author = $map[$authorId] ?? null;
+
+            $result[] = [
+                'id' => (int) ($item->id ?? 0),
+                'title' => $item->title ?? '',
+                'slug' => $item->slug ?? '',
+                'body' => $item->body ?? '',
+                'created_at' => $item->created_at ?? null,
+                'type' => $item->type ?? '',
+                'author' => $map[$authorId] ?? null,
+            ];
         }
 
-        return $items;
+        return $result;
     }
 }

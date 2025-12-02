@@ -11,28 +11,18 @@ class MediaController extends AjaxController
 {
     public function index()
     {
-        Auth::requireRole(['admin', 'editor']);
+        header('Location: /admin/media/gallery');
+        exit;
+    }
 
-        $total = R::count('media');
-        $pagination = $this->buildPagination((int) $total, 18);
+    public function gallery()
+    {
+        $this->renderMediaPage(true, 'admin/media/gallery.twig', 'admin/media/_gallery_list.twig', 'media:gallery');
+    }
 
-        $items = R::findAll(
-            'media',
-            ' ORDER BY created_at DESC LIMIT ? OFFSET ? ',
-            [$pagination['per_page'], $pagination['offset']]
-        );
-
-        if ($this->respondAjax('admin/media/_list.twig', $this->prepareMediaAjaxPayload($items, [
-            'pagination' => $pagination,
-        ]), $pagination['current_url'])) {
-            return;
-        }
-
-        $this->render('admin/media/index.twig', [
-            'items' => $items,
-            'current_menu' => 'media',
-            'pagination' => $pagination,
-        ]);
+    public function files()
+    {
+        $this->renderMediaPage(false, 'admin/media/files.twig', 'admin/media/_files_list.twig', 'media:files');
     }
 
     private function prepareMediaAjaxPayload(array $items, array $context): array
@@ -59,6 +49,33 @@ class MediaController extends AjaxController
         return $context;
     }
 
+    private function renderMediaPage(bool $onlyImages, string $template, string $partial, string $currentMenu): void
+    {
+        Auth::requireRole(['admin', 'editor']);
+
+        $condition = $onlyImages ? ' is_image = 1 ' : ' is_image = 0 ';
+        $total = R::count('media', $condition);
+        $pagination = $this->buildPagination((int) $total, 18);
+
+        $items = R::findAll(
+            'media',
+            $condition . ' ORDER BY created_at DESC LIMIT ? OFFSET ? ',
+            [$pagination['per_page'], $pagination['offset']]
+        );
+
+        $payload = $this->prepareMediaAjaxPayload($items, [
+            'pagination' => $pagination,
+        ]);
+
+        if ($this->respondAjax($partial, $payload, $pagination['current_url'])) {
+            return;
+        }
+
+        $this->render($template, array_merge($payload, [
+            'current_menu' => $currentMenu,
+        ]));
+    }
+
     public function upload()
     {
         Auth::requireRole(['admin', 'editor']);
@@ -70,7 +87,7 @@ class MediaController extends AjaxController
         $currentUser = Auth::user();
         [$media, $error] = Upload::handle(
             $_FILES['file'],
-            'images',
+            'auto',
             $currentUser ? (int) $currentUser->id : null
         );
         if ($error) {
@@ -90,7 +107,8 @@ class MediaController extends AjaxController
         }
 
         Flash::addSuccess('Soubor byl nahrán.');
-        header('Location: /admin/media');
+        $redirectTarget = $media->is_image ? '/admin/media/gallery' : '/admin/media/files';
+        header('Location: ' . $redirectTarget);
         exit;
     }
 
@@ -153,8 +171,7 @@ class MediaController extends AjaxController
             }
 
             Flash::addError('Soubor nebyl nalezen.');
-            header('Location: /admin/media');
-            exit;
+            $this->redirectToMedia();
         }
 
         $absoluteBase = rtrim(Upload::baseUploadPath(), '/');
@@ -184,8 +201,7 @@ class MediaController extends AjaxController
         }
 
         Flash::addSuccess('Soubor byl smazán.');
-        header('Location: /admin/media');
-        exit;
+        $this->redirectToMedia((bool) $media->is_image);
     }
 
     private function createWebpVariant($media): array
@@ -251,6 +267,31 @@ class MediaController extends AjaxController
         return rtrim($absoluteBase . $relative, '/');
     }
 
+    private function redirectToMedia(?bool $isImage = null): void
+    {
+        $referer = $_SERVER['HTTP_REFERER'] ?? '';
+
+        if ($referer) {
+            if (str_contains($referer, '/admin/media/files')) {
+                header('Location: /admin/media/files');
+                exit;
+            }
+
+            if (str_contains($referer, '/admin/media/gallery')) {
+                header('Location: /admin/media/gallery');
+                exit;
+            }
+        }
+
+        if ($isImage === false) {
+            header('Location: /admin/media/files');
+            exit;
+        }
+
+        header('Location: /admin/media/gallery');
+        exit;
+    }
+
     private function handleUploadError(string $message)
     {
         if ($this->wantsJson()) {
@@ -258,8 +299,7 @@ class MediaController extends AjaxController
         }
 
         Flash::addError($message);
-        header('Location: /admin/media');
-        exit;
+        $this->redirectToMedia();
     }
 
 }

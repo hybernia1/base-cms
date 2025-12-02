@@ -1,0 +1,35 @@
+{% extends 'admin/layout.twig' %}
+
+{% set current_menu = 'media:files' %}
+{% import 'admin/partials/components.twig' as ui %}
+
+{% block title %}Soubory | Administrace{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="h4 mb-0">Soubory</h1>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header">Nahrát soubor</div>
+        <div class="card-body">
+            <form method="post" action="/admin/media/upload" enctype="multipart/form-data" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label" for="file">Soubor</label>
+                    <input type="file" name="file" id="file" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="alt">Popis</label>
+                    <input type="text" name="alt" id="alt" class="form-control" placeholder="Volitelný popis">
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary" type="submit">Nahrát</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="ajax-block" data-ajax-container data-endpoint="/admin/media/files" data-current-url="{{ pagination.current_url }}">
+        {% include 'admin/media/_files_list.twig' with { items: items, pagination: pagination } only %}
+    </div>
+{% endblock %}

@@ -20,7 +20,7 @@ class Upload
         'mp3' => ['audio/mpeg'],
     ];
 
-    public static function handle(array $file, string $targetType = 'images', ?int $uploadedBy = null)
+    public static function handle(array $file, string $targetType = 'auto', ?int $uploadedBy = null)
     {
         if (!isset($file['tmp_name']) || $file['error'] !== UPLOAD_ERR_OK) {
             return [null, 'Soubor se nepodařilo nahrát.'];
@@ -47,7 +47,11 @@ class Upload
 
         $year = date('Y');
         $month = date('m');
-        $targetDir = self::baseUploadPath() . "/{$targetType}/{$year}/{$month}/";
+        $targetFolder = $targetType === 'auto'
+            ? ($handler->file_is_image ? 'images' : 'files')
+            : trim($targetType, '/');
+
+        $targetDir = self::baseUploadPath() . "/{$targetFolder}/{$year}/{$month}/";
         if (!is_dir($targetDir)) {
             mkdir($targetDir, 0775, true);
         }

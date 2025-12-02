@@ -42,6 +42,7 @@
     open_site_url: '/',
     user_role_label: (app_user is defined and app_user) ? app_user.role : null,
     user_label: (app_user is defined and app_user) ? app_user.email : null,
+    is_debug: app_is_debug|default(false),
     user_links: [
         { url: '/', icon: 'bi-box-arrow-up-right', label: 'Otevřít web', target: '_blank' },
         { url: '/admin/logout', icon: 'bi-box-arrow-right', label: 'Odhlásit' }
@@ -219,9 +220,16 @@
                         <ul class="nav flex-column ms-3 mt-1 small">
                             {% set extraInfoActive = current_menu is defined and current_menu == 'extra:info' %}
                             {% set extraBackupActive = current_menu is defined and current_menu == 'extra:backup' %}
+                            {% set extraDebugActive = current_menu is defined and current_menu == 'extra:debug' %}
                             <li class="nav-item">
                                 <a class="nav-link d-flex align-items-center {% if extraInfoActive %}active{% endif %}" href="/admin/extra/info">
                                     <i class="bi bi-info-circle me-2"></i> Info o webu
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-flex align-items-center {% if extraDebugActive %}active{% endif %}" href="/admin/extra/debug">
+                                    <i class="bi bi-bug me-2"></i> Debug mód
+                                    {% if app_is_debug|default(false) %}<span class="badge bg-warning text-dark ms-auto">Aktivní</span>{% endif %}
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -394,9 +402,16 @@
                         <ul class="nav flex-column ms-3 mt-1 small">
                             {% set extraInfoActive = current_menu is defined and current_menu == 'extra:info' %}
                             {% set extraBackupActive = current_menu is defined and current_menu == 'extra:backup' %}
+                            {% set extraDebugActive = current_menu is defined and current_menu == 'extra:debug' %}
                             <li class="nav-item">
                                 <a class="nav-link d-flex align-items-center {% if extraInfoActive %}active{% endif %}" href="/admin/extra/info">
                                     <i class="bi bi-info-circle me-2"></i> Info o webu
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-flex align-items-center {% if extraDebugActive %}active{% endif %}" href="/admin/extra/debug">
+                                    <i class="bi bi-bug me-2"></i> Debug mód
+                                    {% if app_is_debug|default(false) %}<span class="badge bg-warning text-dark ms-auto">Aktivní</span>{% endif %}
                                 </a>
                             </li>
                             <li class="nav-item">

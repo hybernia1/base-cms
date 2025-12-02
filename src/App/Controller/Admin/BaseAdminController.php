@@ -29,6 +29,7 @@ abstract class BaseAdminController
         $user   = Auth::user();
         $flash  = $consumeFlash ? Flash::consume() : ['success' => [], 'error' => []];
         $settings = Setting::all();
+        $config = $GLOBALS['app']['config'] ?? [];
 
         return [
             'app_user'          => $user,
@@ -37,6 +38,8 @@ abstract class BaseAdminController
             'content_type_menu' => ContentType::definitions(),
             'term_type_menu'    => TermType::definitions(),
             'settings'          => $settings,
+            'app_env'           => $config['env'] ?? 'prod',
+            'app_is_debug'      => ($config['env'] ?? 'prod') !== 'prod',
         ];
     }
 

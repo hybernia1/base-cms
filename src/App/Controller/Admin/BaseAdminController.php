@@ -6,6 +6,7 @@ use App\Service\Flash;
 use App\Service\Setting;
 use App\Service\ContentType;
 use App\Service\TermType;
+use App\Service\AssetManager;
 
 abstract class BaseAdminController
 {
@@ -40,6 +41,7 @@ abstract class BaseAdminController
             'settings'          => $settings,
             'app_env'           => $config['env'] ?? 'prod',
             'app_is_debug'      => ($config['env'] ?? 'prod') !== 'prod',
+            'asset_urls'        => AssetManager::assetUrls(),
         ];
     }
 

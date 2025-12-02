@@ -24,9 +24,11 @@ class ContentController extends BaseFrontController
         $definitions = ContentType::definitions();
         $typeDef = $definitions[$typeKey] ?? ['name' => $typeSlug, 'slug' => $typeSlug];
 
+        $this->ensureTrashColumn();
+
         $item = R::findOne(
             'content',
-            ' slug = ? AND type = ? AND status = ? ',
+            ' slug = ? AND type = ? AND status = ? AND deleted_at IS NULL ',
             [$contentSlug, $typeKey, 'published']
         );
 
@@ -104,6 +106,11 @@ class ContentController extends BaseFrontController
             'nickname' => $user->nickname ?: $user->email,
             'profile_url' => (int) ($user->is_profile_public ?? 1) === 1 ? '/users/' . $user->id : null,
         ];
+    }
+
+    private function ensureTrashColumn(): void
+    {
+        R::exec('ALTER TABLE `content` ADD COLUMN IF NOT EXISTS `deleted_at` DATETIME DEFAULT NULL');
     }
 }
 

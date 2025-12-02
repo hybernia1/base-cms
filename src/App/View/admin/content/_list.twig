@@ -15,7 +15,12 @@
            data-ajax-link>Koncepty</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link {% if current_status not in ['published','draft'] %}active{% endif %}"
+        <a class="nav-link {% if current_status == 'trash' %}active{% endif %}"
+           href="/admin/content/{{ current_type.slug }}?status=trash"
+           data-ajax-link>Koš</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if current_status not in ['published','draft','trash'] %}active{% endif %}"
            href="/admin/content/{{ current_type.slug }}"
            data-ajax-link>Vše</a>
     </li>
@@ -27,6 +32,8 @@
             Zatím zde není žádný publikovaný obsah.
         {% elseif current_status == 'draft' %}
             Zatím zde nejsou žádné koncepty.
+        {% elseif current_status == 'trash' %}
+            Koš je prázdný.
         {% else %}
             Zatím zde není žádný obsah.
         {% endif %}
@@ -66,15 +73,22 @@
     {% endif %}</td>
 
                         <td class="text-end">
-                            {{ ui.crud_actions('/admin/content/' ~ current_type.slug ~ '/' ~ item.id, {
-                                delete: {
-                                    confirm: 'Opravdu smazat tento obsah?',
-                                    ajax: true,
-                                    hidden: { redirect: pagination.current_url }
-                                }
-                            }) }}
-                        </td>
-                    </tr>
+            {% set deleteConfirm = current_status == 'trash'
+                ? 'Opravdu nenávratně smazat tento obsah?'
+                : 'Přesunout obsah do koše?'
+            %}
+
+            {{ ui.crud_actions('/admin/content/' ~ current_type.slug ~ '/' ~ item.id, {
+                delete: {
+                    confirm: deleteConfirm,
+                    ajax: true,
+                    hidden: { redirect: pagination.current_url },
+                    variant: 'danger',
+                    icon: current_status == 'trash' ? 'bi-trash3' : 'bi-trash'
+                }
+            }) }}
+        </td>
+    </tr>
                 {% endfor %}
             </tbody>
         </table>

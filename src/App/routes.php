@@ -105,6 +105,7 @@ $router->post('/admin/content/([\\w-]+)/terms', 'App\\Controller\\Admin\\Content
 $router->get('/admin/content/([\\w-]+)/(\\d+)/edit', 'App\\Controller\\Admin\\ContentController@editForm');
 $router->post('/admin/content/([\\w-]+)/(\\d+)/edit', 'App\\Controller\\Admin\\ContentController@update');
 $router->post('/admin/content/([\\w-]+)/(\\d+)/delete', 'App\\Controller\\Admin\\ContentController@delete');
+$router->post('/admin/content/([\\w-]+)/trash/empty', 'App\\Controller\\Admin\\ContentController@emptyTrash');
 $router->get('/admin/terms', 'App\\Controller\\Admin\\TermController@index');
 $router->get('/admin/terms/type/([\\w-]+)', 'App\\Controller\\Admin\\TermController@indexByType');
 $router->get('/admin/terms/create', 'App\\Controller\\Admin\\TermController@createForm');
@@ -130,5 +131,6 @@ $router->post('/admin/comments/(\\d+)/approve', 'App\\Controller\\Admin\\Comment
 $router->get('/admin/comments/(\\d+)/edit', 'App\\Controller\\Admin\\CommentController@editForm');
 $router->post('/admin/comments/(\\d+)/edit', 'App\\Controller\\Admin\\CommentController@update');
 $router->post('/admin/comments/(\\d+)/delete', 'App\\Controller\\Admin\\CommentController@delete');
+$router->post('/admin/comments/trash/empty', 'App\\Controller\\Admin\\CommentController@emptyTrash');
 
 $router->post('/comments', 'App\\Controller\\Front\\CommentController@store');

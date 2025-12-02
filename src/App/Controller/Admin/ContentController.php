@@ -15,18 +15,25 @@ class ContentController extends AjaxController
     {
         Auth::requireRole(['admin', 'editor']);
 
+        $this->ensureTrashColumn();
+
         [$typeKey, $definition] = $this->resolveType($slug);
 
-        $statusFilter = trim($_GET['status'] ?? '');
-        $allowedStatuses = ['published', 'draft'];
-        $status = in_array($statusFilter, $allowedStatuses, true) ? $statusFilter : null;
+        $statusFilter = trim($_GET['status'] ?? 'all');
+        $allowedStatuses = ['published', 'draft', 'trash', 'all'];
+        $status = in_array($statusFilter, $allowedStatuses, true) ? $statusFilter : 'all';
 
         $query = ' type = ? ';
         $params = [$typeKey];
 
-        if ($status !== null) {
-            $query .= ' AND status = ? ';
-            $params[] = $status;
+        if ($status === 'trash') {
+            $query .= ' AND deleted_at IS NOT NULL ';
+        } else {
+            $query .= ' AND deleted_at IS NULL ';
+            if (in_array($status, ['published', 'draft'], true)) {
+                $query .= ' AND status = ? ';
+                $params[] = $status;
+            }
         }
 
         $total = R::count('content', $query, $params);
@@ -53,7 +60,7 @@ class ContentController extends AjaxController
             'current_menu' => $definition['slug'],
             'current_type' => $definition,
             'all_type_definitions' => ContentType::definitions(),
-            'current_status' => $status ?? 'all',
+            'current_status' => $status,
             'pagination' => $pagination,
         ]);
     }
@@ -351,7 +358,9 @@ class ContentController extends AjaxController
     {
         Auth::requireRole(['admin', 'editor']);
 
-        $content = $this->findContent($id);
+        $this->ensureTrashColumn();
+
+        $content = $this->findContent($id, true);
         if (!$content) {
             if ($this->wantsJson()) {
                 $this->jsonError('Obsah nebyl nalezen.', 404);
@@ -362,19 +371,43 @@ class ContentController extends AjaxController
             exit;
         }
 
-        R::exec('DELETE FROM content_term WHERE content_id = ?', [(int) $content->id]);
-        R::exec('DELETE FROM content_media WHERE content_id = ?', [(int) $content->id]);
-        R::trash($content);
+        $redirect = $_POST['redirect'] ?? null;
+
+        if ($content->deleted_at !== null) {
+            $this->forceDeleteContent($content);
+            $message = 'Obsah byl nenávratně smazán.';
+        } else {
+            $content->deleted_at = date('Y-m-d H:i:s');
+            R::store($content);
+            $message = 'Obsah byl přesunut do koše.';
+        }
 
         if ($this->wantsJson()) {
-            $this->respondApi([], 'Obsah byl smazán.', 200, [
-                'redirect_to' => $this->redirectToList($content->type, $_POST['redirect'] ?? null),
+            $this->respondApi([], $message, 200, [
+                'redirect_to' => $this->redirectToList($content->type, $redirect),
             ]);
         }
 
-        Flash::addSuccess('Obsah byl smazán.');
-        $redirect = $_POST['redirect'] ?? null;
+        Flash::addSuccess($message);
         header('Location: ' . $this->redirectToList($content->type, $redirect));
+        exit;
+    }
+
+    public function emptyTrash($slug): void
+    {
+        Auth::requireRole(['admin', 'editor']);
+
+        $this->ensureTrashColumn();
+        [$typeKey, $definition] = $this->resolveType($slug);
+
+        $trashed = R::findAll('content', ' type = ? AND deleted_at IS NOT NULL ', [$typeKey]);
+
+        foreach ($trashed as $item) {
+            $this->forceDeleteContent($item);
+        }
+
+        Flash::addSuccess('Koš byl vysypán.');
+        header('Location: /admin/content/' . $definition['slug'] . '?status=trash');
         exit;
     }
 
@@ -518,10 +551,18 @@ class ContentController extends AjaxController
         return $errors;
     }
 
-    private function findContent($id)
+    private function findContent($id, bool $withTrashed = false)
     {
         $item = R::load('content', (int) $id);
-        return $item && $item->id ? $item : null;
+        if (!$item || !$item->id) {
+            return null;
+        }
+
+        if ($withTrashed) {
+            return $item;
+        }
+
+        return $item->deleted_at === null ? $item : null;
     }
 
     private function findAuthor(int $userId): ?array
@@ -781,5 +822,17 @@ class ContentController extends AjaxController
         }
 
         return $default;
+    }
+
+    private function ensureTrashColumn(): void
+    {
+        R::exec('ALTER TABLE `content` ADD COLUMN IF NOT EXISTS `deleted_at` DATETIME DEFAULT NULL');
+    }
+
+    private function forceDeleteContent($content): void
+    {
+        R::exec('DELETE FROM content_term WHERE content_id = ?', [(int) $content->id]);
+        R::exec('DELETE FROM content_media WHERE content_id = ?', [(int) $content->id]);
+        R::trash($content);
     }
 }

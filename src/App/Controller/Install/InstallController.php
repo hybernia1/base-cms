@@ -153,6 +153,7 @@ class InstallController
                 `thumbnail_alt` VARCHAR(255) DEFAULT '',
                 `created_at` DATETIME NOT NULL,
                 `updated_at` DATETIME NOT NULL,
+                `deleted_at` DATETIME DEFAULT NULL,
                 UNIQUE KEY `slug_type` (`slug`, `type`),
                 KEY `idx_author` (`author_id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
@@ -246,6 +247,7 @@ class InstallController
                 `depth` TINYINT UNSIGNED NOT NULL DEFAULT 0,
                 `created_at` DATETIME NOT NULL,
                 `updated_at` DATETIME NOT NULL,
+                `deleted_at` DATETIME DEFAULT NULL,
                 KEY `idx_content` (`content_id`),
                 KEY `idx_parent` (`parent_id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"

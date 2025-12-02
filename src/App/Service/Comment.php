@@ -23,10 +23,13 @@ class Comment
                 `depth` TINYINT UNSIGNED NOT NULL DEFAULT 0,
                 `created_at` DATETIME NOT NULL,
                 `updated_at` DATETIME NOT NULL,
+                `deleted_at` DATETIME DEFAULT NULL,
                 KEY `idx_content` (`content_id`),
                 KEY `idx_parent` (`parent_id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
+
+        R::exec("ALTER TABLE `" . self::TABLE . "` ADD COLUMN IF NOT EXISTS `deleted_at` DATETIME DEFAULT NULL AFTER `updated_at`");
     }
 
     public static function create(array $data)
@@ -53,8 +56,8 @@ class Comment
     public static function approve(int $id): void
     {
         self::ensureSchema();
-        $comment = R::load(self::TABLE, $id);
-        if ($comment && $comment->id) {
+        $comment = self::find($id);
+        if ($comment) {
             $comment->status = 'approved';
             $comment->updated_at = date('Y-m-d H:i:s');
             R::store($comment);
@@ -65,7 +68,7 @@ class Comment
     {
         self::ensureSchema();
         $comment = R::load(self::TABLE, $id);
-        return $comment && $comment->id ? $comment : null;
+        return $comment && $comment->id && $comment->deleted_at === null ? $comment : null;
     }
 
     public static function update(int $id, array $data)
@@ -103,15 +106,27 @@ class Comment
     {
         self::ensureSchema();
         $comment = R::load(self::TABLE, $id);
-        if ($comment && $comment->id) {
-            R::trash($comment);
+        if (!$comment || !$comment->id) {
+            return;
         }
+
+        if ($comment->deleted_at !== null) {
+            R::trash($comment);
+            return;
+        }
+
+        $comment->deleted_at = date('Y-m-d H:i:s');
+        R::store($comment);
     }
 
     public static function findByContent(int $contentId): array
     {
         self::ensureSchema();
-        $items = R::findAll(self::TABLE, ' content_id = ? AND status = ? ORDER BY created_at ASC ', [$contentId, 'approved']);
+        $items = R::findAll(
+            self::TABLE,
+            ' content_id = ? AND status = ? AND deleted_at IS NULL ORDER BY created_at ASC ',
+            [$contentId, 'approved']
+        );
 
         $users = [];
         $result = [];
@@ -155,7 +170,7 @@ class Comment
     public static function allPending(): array
     {
         self::ensureSchema();
-        $items = R::findAll(self::TABLE, ' status = ? ORDER BY created_at DESC ', ['pending']);
+        $items = R::findAll(self::TABLE, ' status = ? AND deleted_at IS NULL ORDER BY created_at DESC ', ['pending']);
         return array_values($items);
     }
 
@@ -163,10 +178,12 @@ class Comment
     {
         self::ensureSchema();
 
-        if ($status && $status !== 'all' && in_array($status, self::STATUSES, true)) {
-            $items = R::findAll(self::TABLE, ' status = ? ORDER BY created_at DESC ', [$status]);
+        if ($status === 'trash') {
+            $items = R::findAll(self::TABLE, ' deleted_at IS NOT NULL ORDER BY created_at DESC ');
+        } elseif ($status && $status !== 'all' && in_array($status, self::STATUSES, true)) {
+            $items = R::findAll(self::TABLE, ' status = ? AND deleted_at IS NULL ORDER BY created_at DESC ', [$status]);
         } else {
-            $items = R::findAll(self::TABLE, ' ORDER BY created_at DESC ');
+            $items = R::findAll(self::TABLE, ' deleted_at IS NULL ORDER BY created_at DESC ');
         }
 
         return array_values($items);
@@ -177,10 +194,11 @@ class Comment
         self::ensureSchema();
         $counts = [];
         foreach (self::STATUSES as $status) {
-            $counts[$status] = (int) R::count(self::TABLE, ' status = ? ', [$status]);
+            $counts[$status] = (int) R::count(self::TABLE, ' status = ? AND deleted_at IS NULL ', [$status]);
         }
 
-        $counts['all'] = array_sum($counts);
+        $counts['trash'] = (int) R::count(self::TABLE, ' deleted_at IS NOT NULL ');
+        $counts['all'] = array_sum($counts) - $counts['trash'];
 
         return $counts;
     }
@@ -188,5 +206,14 @@ class Comment
     public static function statuses(): array
     {
         return self::STATUSES;
+    }
+
+    public static function emptyTrash(): void
+    {
+        self::ensureSchema();
+        $trashed = R::findAll(self::TABLE, ' deleted_at IS NOT NULL ');
+        if ($trashed) {
+            R::trashAll($trashed);
+        }
     }
 }

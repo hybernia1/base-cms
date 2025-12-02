@@ -12,7 +12,7 @@ class CommentController extends AjaxController
     {
         Auth::requireRole(['admin', 'editor']);
         $status = $_GET['status'] ?? 'pending';
-        $allowedStatuses = array_merge(['all'], Comment::statuses());
+        $allowedStatuses = array_merge(['all', 'trash'], Comment::statuses());
         if (!in_array($status, $allowedStatuses, true)) {
             $status = 'pending';
         }
@@ -148,8 +148,17 @@ class CommentController extends AjaxController
     {
         Auth::requireRole(['admin', 'editor']);
         Comment::delete((int) $id);
-        Flash::addSuccess('Komentář byl smazán.');
+        Flash::addSuccess('Komentář byl přesunut do koše nebo nenávratně odstraněn.');
         header('Location: /admin/comments');
+        exit;
+    }
+
+    public function emptyTrash(): void
+    {
+        Auth::requireRole(['admin', 'editor']);
+        Comment::emptyTrash();
+        Flash::addSuccess('Koš komentářů byl vysypán.');
+        header('Location: /admin/comments?status=trash');
         exit;
     }
 }

@@ -7,22 +7,34 @@
     <li class="nav-item">
         <a class="nav-link {% if current_status == 'published' %}active{% endif %}"
            href="/admin/content/{{ current_type.slug }}?status=published"
-           data-ajax-link>Publikované</a>
+           data-ajax-link>
+            Publikované
+            <span class="badge text-bg-light ms-1">{{ counts.published|default(0) }}</span>
+        </a>
     </li>
     <li class="nav-item">
         <a class="nav-link {% if current_status == 'draft' %}active{% endif %}"
            href="/admin/content/{{ current_type.slug }}?status=draft"
-           data-ajax-link>Koncepty</a>
+           data-ajax-link>
+            Koncepty
+            <span class="badge text-bg-light ms-1">{{ counts.draft|default(0) }}</span>
+        </a>
     </li>
     <li class="nav-item">
         <a class="nav-link {% if current_status == 'trash' %}active{% endif %}"
            href="/admin/content/{{ current_type.slug }}?status=trash"
-           data-ajax-link>Koš</a>
+           data-ajax-link>
+            Koš
+            <span class="badge text-bg-light ms-1">{{ counts.trash|default(0) }}</span>
+        </a>
     </li>
     <li class="nav-item">
         <a class="nav-link {% if current_status not in ['published','draft','trash'] %}active{% endif %}"
            href="/admin/content/{{ current_type.slug }}"
-           data-ajax-link>Vše</a>
+           data-ajax-link>
+            Vše
+            <span class="badge text-bg-light ms-1">{{ counts.all|default(0) }}</span>
+        </a>
     </li>
 </ul>
 

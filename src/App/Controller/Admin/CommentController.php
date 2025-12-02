@@ -17,12 +17,32 @@ class CommentController extends AjaxController
             $status = 'pending';
         }
 
-        $comments = Comment::all($status === 'all' ? null : $status);
+        $query = '';
+        $params = [];
+        if ($status === 'trash') {
+            $query = ' deleted_at IS NOT NULL ';
+        } elseif ($status && $status !== 'all') {
+            $query = ' status = ? AND deleted_at IS NULL ';
+            $params[] = $status;
+        } else {
+            $query = ' deleted_at IS NULL ';
+        }
+
+        $total = R::count('comment', $query, $params);
+        $pagination = $this->buildPagination((int) $total, 15);
+
+        $comments = R::findAll(
+            'comment',
+            $query . ' ORDER BY created_at DESC LIMIT ? OFFSET ? ',
+            array_merge($params, [$pagination['per_page'], $pagination['offset']])
+        );
+
         $counts = Comment::statusCounts();
 
         $contentMap = [];
         $parentIds = [];
         $childCounts = [];
+        $commentIds = [];
         if ($comments) {
             $ids = array_unique(array_map(fn($c) => (int) $c->content_id, $comments));
             if ($ids) {
@@ -34,9 +54,9 @@ class CommentController extends AjaxController
             }
 
             foreach ($comments as $comment) {
+                $commentIds[] = (int) $comment->id;
                 if ($comment->parent_id) {
                     $parentIds[] = (int) $comment->parent_id;
-                    $childCounts[(int) $comment->parent_id] = ($childCounts[(int) $comment->parent_id] ?? 0) + 1;
                 }
             }
         }
@@ -51,6 +71,42 @@ class CommentController extends AjaxController
             }
         }
 
+        if ($commentIds) {
+            $placeholders = implode(',', array_fill(0, count($commentIds), '?'));
+            $childParams = $commentIds;
+            $childQuery = ' parent_id IN (' . $placeholders . ') ';
+
+            if ($status === 'trash') {
+                $childQuery .= ' AND deleted_at IS NOT NULL ';
+            } elseif ($status && $status !== 'all') {
+                $childQuery .= ' AND status = ? AND deleted_at IS NULL ';
+                $childParams[] = $status;
+            } else {
+                $childQuery .= ' AND deleted_at IS NULL ';
+            }
+
+            $childRows = R::getAll(
+                'SELECT parent_id, COUNT(*) AS total FROM comment WHERE ' . $childQuery . ' GROUP BY parent_id',
+                $childParams
+            );
+
+            foreach ($childRows as $row) {
+                $childCounts[(int) $row['parent_id']] = (int) $row['total'];
+            }
+        }
+
+        if ($this->respondAjax('admin/comments/_list.twig', $this->prepareCommentsAjaxPayload($comments, [
+            'comments' => $comments,
+            'status' => $status,
+            'counts' => $counts,
+            'content_map' => $contentMap,
+            'parent_map' => $parentComments,
+            'child_counts' => $childCounts,
+            'pagination' => $pagination,
+        ]), $pagination['current_url'])) {
+            return;
+        }
+
         $this->render('admin/comments/index.twig', [
             'comments' => $comments,
             'status' => $status,
@@ -58,8 +114,53 @@ class CommentController extends AjaxController
             'content_map' => $contentMap,
             'parent_map' => $parentComments,
             'child_counts' => $childCounts,
+            'pagination' => $pagination,
             'current_menu' => 'comments',
         ]);
+    }
+
+    private function prepareCommentsAjaxPayload(array $comments, array $context): array
+    {
+        $settings = $this->baseContext(false)['settings'];
+        $format = ($settings['date_format'] ?? 'd/m/Y') . ' ' . ($settings['time_format'] ?? 'H:i');
+
+        $serializedComments = [];
+        foreach ($comments as $comment) {
+            $serializedComments[] = [
+                'id' => (int) $comment->id,
+                'author_name' => (string) ($comment->author_name ?: 'Anonym'),
+                'author_email' => (string) $comment->author_email,
+                'body' => (string) $comment->body,
+                'status' => $comment->status,
+                'content_id' => (int) $comment->content_id,
+                'parent_id' => $comment->parent_id ? (int) $comment->parent_id : null,
+                'created_at' => $comment->created_at,
+                'created_at_formatted' => $comment->created_at ? date($format, strtotime($comment->created_at)) : null,
+            ];
+        }
+
+        $contentMap = [];
+        foreach (($context['content_map'] ?? []) as $id => $content) {
+            $contentMap[(int) $id] = [
+                'id' => (int) $content->id,
+                'title' => $content->title,
+                'type' => $content->type,
+            ];
+        }
+
+        $parentMap = [];
+        foreach (($context['parent_map'] ?? []) as $id => $parent) {
+            $parentMap[(int) $id] = [
+                'id' => (int) $parent->id,
+                'body' => $parent->body,
+            ];
+        }
+
+        $context['comments'] = $serializedComments;
+        $context['content_map'] = $contentMap;
+        $context['parent_map'] = $parentMap;
+
+        return $context;
     }
 
     public function approve($id): void

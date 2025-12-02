@@ -146,7 +146,9 @@
                     </div>
                 </li>
 
-                {% if app_user is defined and app_user and app_user.role == 'admin' %}
+                {% set isAdmin = app_user is defined and app_user and app_user.role == 'admin' %}
+                {% set isEditor = app_user is defined and app_user and app_user.role in ['admin', 'editor'] %}
+                {% if isAdmin %}
                     <li class="nav-item mb-1">
                         <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'users' %}active{% endif %}"
                            href="/admin/users">
@@ -159,14 +161,18 @@
                             <i class="bi bi-envelope-paper me-2"></i> E-mailové šablony
                         </a>
                     </li>
+                {% endif %}
+                {% if isEditor %}
                     <li class="nav-item mb-1">
                         <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'comments' %}active{% endif %}"
                            href="/admin/comments">
                             <i class="bi bi-chat-dots me-2"></i> Komentáře
                         </a>
                     </li>
-                    {% set settingsActive = current_menu is defined and current_menu starts with 'settings' %}
-                    {% set settingsMenuId = 'settings-menu-desktop' %}
+                {% endif %}
+                {% set settingsActive = current_menu is defined and current_menu starts with 'settings' %}
+                {% set settingsMenuId = 'settings-menu-desktop' %}
+                {% if isAdmin %}
                     <li class="nav-item mb-1">
                         <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle"
                                 type="button"
@@ -280,7 +286,9 @@
                         </ul>
                     </div>
                 </li>
-                {% if app_user is defined and app_user and app_user.role == 'admin' %}
+                {% set isAdmin = app_user is defined and app_user and app_user.role == 'admin' %}
+                {% set isEditor = app_user is defined and app_user and app_user.role in ['admin', 'editor'] %}
+                {% if isAdmin %}
                     <li class="nav-item mb-1">
                         <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'users' %}active{% endif %}"
                            href="/admin/users">
@@ -293,8 +301,18 @@
                             <i class="bi bi-envelope-paper me-2"></i> E-mailové šablony
                         </a>
                     </li>
-                    {% set settingsActive = current_menu is defined and current_menu starts with 'settings' %}
-                    {% set settingsMenuId = 'settings-menu-mobile' %}
+                {% endif %}
+                {% if isEditor %}
+                    <li class="nav-item mb-1">
+                        <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'comments' %}active{% endif %}"
+                           href="/admin/comments">
+                            <i class="bi bi-chat-dots me-2"></i> Komentáře
+                        </a>
+                    </li>
+                {% endif %}
+                {% set settingsActive = current_menu is defined and current_menu starts with 'settings' %}
+                {% set settingsMenuId = 'settings-menu-mobile' %}
+                {% if isAdmin %}
                     <li class="nav-item mb-1">
                         <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle"
                                 type="button"

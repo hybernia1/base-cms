@@ -225,15 +225,23 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const appendAjaxParam = (url) => {
-        const parsed = new URL(url, window.location.origin);
-        parsed.searchParams.set('ajax', '1');
-        return parsed.toString();
+        try {
+            const parsed = new URL(url, window.location.origin);
+            parsed.searchParams.set('ajax', '1');
+            return parsed.toString();
+        } catch (error) {
+            return window.location.href;
+        }
     };
 
     const normalizeUrl = (url) => {
-        const parsed = new URL(url, window.location.origin);
-        parsed.searchParams.delete('ajax');
-        return parsed.pathname + (parsed.search || '');
+        try {
+            const parsed = new URL(url, window.location.origin);
+            parsed.searchParams.delete('ajax');
+            return parsed.pathname + (parsed.search || '');
+        } catch (error) {
+            return window.location.pathname + window.location.search;
+        }
     };
 
     const escapeHtml = (value) => {
@@ -386,9 +394,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${renderPagination(context.pagination)}`;
         },
         'admin/content/_list.twig': (context = {}) => {
+            const counts = context.counts || {};
             const statuses = [
                 {key: 'published', label: 'Publikované'},
                 {key: 'draft', label: 'Koncepty'},
+                {key: 'trash', label: 'Koš'},
                 {key: 'all', label: 'Vše'},
             ];
             const currentStatus = context.current_status || 'all';
@@ -396,13 +406,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 <li class="nav-item">
                     <a class="nav-link ${currentStatus === status.key ? 'active' : ''}"
                        href="/admin/content/${context.current_type?.slug || ''}${status.key !== 'all' ? `?status=${status.key}` : ''}"
-                       data-ajax-link>${escapeHtml(status.label)}</a>
+                       data-ajax-link>
+                        ${escapeHtml(status.label)}
+                        <span class="badge text-bg-light ms-1">${counts[status.key] ?? 0}</span>
+                    </a>
                 </li>`).join('');
 
             if (!context.items || context.items.length === 0) {
                 let emptyMessage = 'Zatím zde není žádný obsah.';
                 if (currentStatus === 'published') emptyMessage = 'Zatím zde není žádný publikovaný obsah.';
                 if (currentStatus === 'draft') emptyMessage = 'Zatím zde nejsou žádné koncepty.';
+                if (currentStatus === 'trash') emptyMessage = 'Koš je prázdný.';
 
                 return `<ul class="nav nav-pills mb-3">${statusTabs}</ul><div class="alert alert-info">${escapeHtml(emptyMessage)}</div>`;
             }
@@ -448,6 +462,97 @@ document.addEventListener('DOMContentLoaded', () => {
                     <table class="table align-middle">
                         <thead>
                             <tr><th>Název</th><th>Upraveno</th><th class="text-end">Akce</th></tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+                ${renderPagination(context.pagination)}`;
+        },
+        'admin/comments/_list.twig': (context = {}) => {
+            const counts = context.counts || {};
+            const statuses = [
+                {key: 'all', label: 'Vše'},
+                {key: 'pending', label: 'Čeká na schválení'},
+                {key: 'approved', label: 'Schválené'},
+                {key: 'trash', label: 'Koš'},
+            ];
+
+            const currentStatus = context.status || 'pending';
+            const statusTabs = statuses.map((status) => `
+                <li class="nav-item">
+                    <a href="/admin/comments?status=${status.key}" class="nav-link ${currentStatus === status.key ? 'active' : ''}" data-ajax-link>
+                        ${escapeHtml(status.label)}
+                        <span class="badge text-bg-light ms-1">${counts[status.key] ?? 0}</span>
+                    </a>
+                </li>`).join('');
+
+            if (!context.comments || context.comments.length === 0) {
+                return `<ul class="nav nav-pills mb-3">${statusTabs}</ul><div class="alert alert-info">Žádné komentáře pro zvolený filtr.</div>`;
+            }
+
+            const contentMap = context.content_map || {};
+            const parentMap = context.parent_map || {};
+            const childCounts = context.child_counts || {};
+
+            const rows = context.comments.map((comment) => {
+                const parent = comment.parent_id ? parentMap[comment.parent_id] : null;
+                const replyCount = childCounts[comment.id] || 0;
+                const content = contentMap[comment.content_id];
+                const statusBadge = currentStatus === 'trash'
+                    ? '<span class="badge bg-secondary-subtle text-secondary">V koši</span>'
+                    : (comment.status === 'approved'
+                        ? '<span class="badge bg-success-subtle text-success">Schváleno</span>'
+                        : '<span class="badge bg-warning-subtle text-warning">Čeká</span>');
+
+                const approveForm = comment.status !== 'approved' && currentStatus !== 'trash'
+                    ? `<form method="post" action="/admin/comments/${comment.id}/approve" class="d-inline ms-2"><button type="submit" class="btn btn-sm btn-success">Schválit</button></form>`
+                    : '';
+
+                const deleteConfirm = currentStatus === 'trash'
+                    ? 'Opravdu nenávratně smazat tento komentář?'
+                    : 'Přesunout komentář do koše?';
+
+                const parentInfo = comment.parent_id
+                    ? `<div class="d-flex align-items-center gap-2"><span class="badge bg-secondary-subtle text-secondary">Odpověď</span><span>#${comment.parent_id}</span></div>${parent ? `<div class="text-truncate mt-1" title="${escapeHtml(parent.body)}">${escapeHtml(parent.body.slice(0, 90))}${parent.body.length > 90 ? '…' : ''}</div>` : ''}`
+                    : '<span class="badge bg-primary-subtle text-primary">Rodič</span>';
+
+                const repliesInfo = replyCount > 0 ? `<div class="mt-1">${replyCount} reakce</div>` : '';
+
+                const contentInfo = content
+                    ? `<div class="fw-semibold">${escapeHtml(content.title)}</div><div>${escapeHtml(content.type)}</div>`
+                    : '<em>Nenalezeno</em>';
+
+                const bodyPreview = comment.body.length > 180
+                    ? `${escapeHtml(comment.body.slice(0, 180))}…`
+                    : escapeHtml(comment.body);
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">${escapeHtml(comment.author_name || 'Anonym')}</div>
+                            <div class="text-muted small">${escapeHtml(comment.author_email || '')}</div>
+                            <div class="text-muted small">${escapeHtml(comment.created_at_formatted || '')}</div>
+                        </td>
+                        <td>${bodyPreview}</td>
+                        <td class="text-muted small">${parentInfo}${repliesInfo}</td>
+                        <td class="text-muted small">${contentInfo}</td>
+                        <td>${statusBadge}</td>
+                        <td class="text-end">
+                            <a href="/admin/comments/${comment.id}/edit" class="btn btn-sm btn-outline-secondary">Detail</a>
+                            ${approveForm}
+                            <form method="post" action="/admin/comments/${comment.id}/delete" class="d-inline ms-2" data-confirm="${deleteConfirm}" data-confirm-title="${currentStatus === 'trash' ? 'Trvalé smazání' : 'Přesun do koše'}">
+                                <button type="submit" class="btn btn-sm ${currentStatus === 'trash' ? 'btn-outline-danger' : 'btn-outline-warning'}">${currentStatus === 'trash' ? 'Smazat navždy' : 'Do koše'}</button>
+                            </form>
+                        </td>
+                    </tr>`;
+            }).join('');
+
+            return `
+                <ul class="nav nav-pills mb-3">${statusTabs}</ul>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr><th>Autor</th><th>Text</th><th>Vazba</th><th>Obsah</th><th>Stav</th><th class="text-end">Akce</th></tr>
                         </thead>
                         <tbody>${rows}</tbody>
                     </table>

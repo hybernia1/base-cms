@@ -61,8 +61,6 @@ class UserController extends BaseFrontController
             exit;
         }
 
-        UserProfile::ensureColumns();
-
         $this->render('front/user/edit.twig', [
             'values' => [
                 'email' => $user->email,
@@ -81,8 +79,6 @@ class UserController extends BaseFrontController
             header('Location: /login');
             exit;
         }
-
-        UserProfile::ensureColumns();
 
         $data = $this->sanitizeProfile();
         $errors = $this->validateProfile($data);
@@ -112,8 +108,6 @@ class UserController extends BaseFrontController
 
     private function renderProfile($user, bool $isOwner): void
     {
-        UserProfile::ensureColumns();
-
         $this->render('front/user/profile.twig', [
             'user' => $user,
             'is_owner' => $isOwner,

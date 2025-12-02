@@ -81,8 +81,6 @@ class UserController extends AjaxController
     public function create()
     {
         Auth::requireRole('admin');
-        $this->ensureUserColumns();
-
         $data = $this->sanitizeInput();
         $errors = $this->validateUser($data);
 
@@ -120,8 +118,6 @@ class UserController extends AjaxController
     public function editForm($id)
     {
         Auth::requireRole('admin');
-        $this->ensureUserColumns();
-
         $user = $this->findUser($id);
         if (!$user) {
             Flash::addError('Uživatel nenalezen.');
@@ -149,8 +145,6 @@ class UserController extends AjaxController
     public function update($id)
     {
         Auth::requireRole('admin');
-        $this->ensureUserColumns();
-
         $user = $this->findUser($id);
         if (!$user) {
             Flash::addError('Uživatel nenalezen.');
@@ -201,8 +195,6 @@ class UserController extends AjaxController
     public function ban($id)
     {
         Auth::requireRole('admin');
-        $this->ensureUserColumns();
-
         $user = $this->findUser($id);
         if (!$user) {
             Flash::addError('Uživatel nenalezen.');
@@ -356,22 +348,4 @@ class UserController extends AjaxController
         return $user && $user->id ? $user : null;
     }
 
-    private function ensureUserColumns(): void
-    {
-        $columns = R::inspect('user');
-
-        UserProfile::ensureColumns();
-
-        if (!isset($columns['is_banned'])) {
-            R::exec("ALTER TABLE `user` ADD COLUMN `is_banned` TINYINT(1) NOT NULL DEFAULT 0 AFTER `role`");
-        }
-
-        if (!isset($columns['ban_reason'])) {
-            R::exec("ALTER TABLE `user` ADD COLUMN `ban_reason` TEXT DEFAULT NULL AFTER `is_banned`");
-        }
-
-        if (!isset($columns['banned_at'])) {
-            R::exec("ALTER TABLE `user` ADD COLUMN `banned_at` DATETIME DEFAULT NULL AFTER `ban_reason`");
-        }
-    }
 }

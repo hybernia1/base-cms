@@ -10,33 +10,7 @@ class Comment
 
     public static function ensureSchema(): void
     {
-        R::exec(
-            "CREATE TABLE IF NOT EXISTS `" . self::TABLE . "` (
-                `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                `content_id` INT UNSIGNED NOT NULL,
-                `parent_id` INT UNSIGNED DEFAULT NULL,
-                `user_id` INT UNSIGNED DEFAULT NULL,
-                `author_name` VARCHAR(191) DEFAULT '',
-                `author_email` VARCHAR(191) DEFAULT '',
-                `body` TEXT NOT NULL,
-                `status` VARCHAR(20) NOT NULL DEFAULT 'pending',
-                `depth` TINYINT UNSIGNED NOT NULL DEFAULT 0,
-                `created_at` DATETIME NOT NULL,
-                `updated_at` DATETIME NOT NULL,
-                `deleted_at` DATETIME DEFAULT NULL,
-                KEY `idx_content` (`content_id`),
-                KEY `idx_parent` (`parent_id`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-        );
-
-        $hasColumn = R::getCell(
-            'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ? AND TABLE_SCHEMA = DATABASE()',
-            [self::TABLE, 'deleted_at']
-        );
-
-        if ((int) $hasColumn === 0) {
-            R::exec("ALTER TABLE `" . self::TABLE . "` ADD COLUMN `deleted_at` DATETIME DEFAULT NULL AFTER `updated_at`");
-        }
+        // Schéma je kompletně spravováno instalační logikou.
     }
 
     public static function create(array $data)

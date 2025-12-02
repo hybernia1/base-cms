@@ -34,8 +34,6 @@ class AuthController extends BaseFrontController
             exit;
         }
 
-        UserProfile::ensureColumns();
-
         $data = $this->sanitize();
         $errors = $this->validate($data);
 

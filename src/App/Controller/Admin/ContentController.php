@@ -15,8 +15,6 @@ class ContentController extends AjaxController
     {
         Auth::requireRole(['admin', 'editor']);
 
-        $this->ensureTrashColumn();
-
         [$typeKey, $definition] = $this->resolveType($slug);
 
         $statusFilter = trim($_GET['status'] ?? 'all');
@@ -388,8 +386,6 @@ class ContentController extends AjaxController
     {
         Auth::requireRole(['admin', 'editor']);
 
-        $this->ensureTrashColumn();
-
         $content = $this->findContent($id, true);
         if (!$content) {
             if ($this->wantsJson()) {
@@ -427,7 +423,6 @@ class ContentController extends AjaxController
     {
         Auth::requireRole(['admin', 'editor']);
 
-        $this->ensureTrashColumn();
         [$typeKey, $definition] = $this->resolveType($slug);
 
         $content = $this->findContent($id, true);
@@ -461,7 +456,6 @@ class ContentController extends AjaxController
     {
         Auth::requireRole(['admin', 'editor']);
 
-        $this->ensureTrashColumn();
         [$typeKey, $definition] = $this->resolveType($slug);
 
         $trashed = R::findAll('content', ' type = ? AND deleted_at IS NOT NULL ', [$typeKey]);
@@ -886,18 +880,6 @@ class ContentController extends AjaxController
         }
 
         return $default;
-    }
-
-    private function ensureTrashColumn(): void
-    {
-        $hasColumn = R::getCell(
-            'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ? AND TABLE_SCHEMA = DATABASE()',
-            ['content', 'deleted_at']
-        );
-
-        if ((int) $hasColumn === 0) {
-            R::exec('ALTER TABLE `content` ADD COLUMN `deleted_at` DATETIME DEFAULT NULL');
-        }
     }
 
     private function forceDeleteContent($content): void

@@ -98,8 +98,6 @@ class InstallController
         // admin user
         $user = R::dispense('user');
         $user->email = $values['admin_email'];
-        UserProfile::ensureColumns();
-
         $user->password = password_hash($values['admin_pass'], PASSWORD_DEFAULT);
         $user->role = 'admin';
         $user->nickname = UserProfile::generateNickname($values['admin_email']);

@@ -6,6 +6,7 @@ use RedBeanPHP\R as R;
 class Comment
 {
     private const TABLE = 'comment';
+    private const STATUSES = ['pending', 'approved'];
 
     public static function ensureSchema(): void
     {
@@ -60,6 +61,44 @@ class Comment
         }
     }
 
+    public static function find(int $id)
+    {
+        self::ensureSchema();
+        $comment = R::load(self::TABLE, $id);
+        return $comment && $comment->id ? $comment : null;
+    }
+
+    public static function update(int $id, array $data)
+    {
+        self::ensureSchema();
+
+        $comment = self::find($id);
+        if (!$comment) {
+            return null;
+        }
+
+        if (isset($data['author_name'])) {
+            $comment->author_name = trim($data['author_name']);
+        }
+
+        if (isset($data['author_email'])) {
+            $comment->author_email = trim($data['author_email']);
+        }
+
+        if (isset($data['body'])) {
+            $comment->body = trim($data['body']);
+        }
+
+        if (isset($data['status']) && in_array($data['status'], self::STATUSES, true)) {
+            $comment->status = $data['status'];
+        }
+
+        $comment->updated_at = date('Y-m-d H:i:s');
+        R::store($comment);
+
+        return $comment;
+    }
+
     public static function delete(int $id): void
     {
         self::ensureSchema();
@@ -81,5 +120,36 @@ class Comment
         self::ensureSchema();
         $items = R::findAll(self::TABLE, ' status = ? ORDER BY created_at DESC ', ['pending']);
         return array_values($items);
+    }
+
+    public static function all(?string $status = null): array
+    {
+        self::ensureSchema();
+
+        if ($status && $status !== 'all' && in_array($status, self::STATUSES, true)) {
+            $items = R::findAll(self::TABLE, ' status = ? ORDER BY created_at DESC ', [$status]);
+        } else {
+            $items = R::findAll(self::TABLE, ' ORDER BY created_at DESC ');
+        }
+
+        return array_values($items);
+    }
+
+    public static function statusCounts(): array
+    {
+        self::ensureSchema();
+        $counts = [];
+        foreach (self::STATUSES as $status) {
+            $counts[$status] = (int) R::count(self::TABLE, ' status = ? ', [$status]);
+        }
+
+        $counts['all'] = array_sum($counts);
+
+        return $counts;
+    }
+
+    public static function statuses(): array
+    {
+        return self::STATUSES;
     }
 }

@@ -4,6 +4,7 @@ namespace App\Controller\Front;
 use App\Service\ContentType;
 use App\Service\Comment;
 use App\Service\Setting;
+use App\Service\Auth;
 use RedBeanPHP\R as R;
 
 class ContentController extends BaseFrontController
@@ -33,6 +34,13 @@ class ContentController extends BaseFrontController
         $thumbnail = null;
         $comments = [];
         $commentAllowed = false;
+        $commentSettings = [
+            'allow_replies' => Setting::get('comments_allow_replies', '1') === '1',
+            'allow_anonymous' => Setting::get('comments_allow_anonymous', '0') === '1',
+            'max_depth' => (int) Setting::get('comments_max_depth', 0),
+        ];
+        $currentUser = Auth::user();
+        $adminBarContext = [];
         if ($item) {
             $termIds = R::getCol('SELECT term_id FROM content_term WHERE content_id = ?', [$item->id]);
             if ($termIds) {
@@ -51,9 +59,16 @@ class ContentController extends BaseFrontController
             if ($commentAllowed) {
                 $comments = Comment::findByContent((int) $item->id);
             }
+
+            if (Auth::hasRole(['admin', 'editor'])) {
+                $adminBarContext['edit_url'] = '/admin/content/' . $typeDef['slug'] . '/' . $item->id . '/edit';
+                $adminBarContext['current_title'] = $item->title;
+            }
         } else {
             http_response_code(404);
         }
+
+        $commentingEnabled = $commentAllowed && ($commentSettings['allow_anonymous'] || $currentUser);
 
         $this->render('front/content/detail.twig', [
             'item' => $item,
@@ -62,6 +77,9 @@ class ContentController extends BaseFrontController
             'thumbnail' => $thumbnail,
             'comments' => $comments,
             'comment_allowed' => $commentAllowed,
+            'comment_settings' => $commentSettings,
+            'commenting_enabled' => $commentingEnabled,
+            'admin_bar' => $adminBarContext,
         ]);
     }
 }

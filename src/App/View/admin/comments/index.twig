@@ -10,8 +10,24 @@
 
     <div class="card shadow-sm">
         <div class="card-body p-4">
-            {% if pending_comments is empty %}
-                <p class="text-muted mb-0">Zatím zde nejsou žádné komentáře ke schválení.</p>
+            <div class="mb-3">
+                <div class="nav nav-pills gap-2">
+                    {% set tabs = {
+                        'all': 'Vše',
+                        'pending': 'Čeká na schválení',
+                        'approved': 'Schválené'
+                    } %}
+                    {% for key, label in tabs %}
+                        <a href="/admin/comments?status={{ key }}" class="btn btn-sm {% if status == key %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            {{ label }}
+                            <span class="badge text-bg-light ms-1">{{ counts[key]|default(0) }}</span>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            {% if comments is empty %}
+                <p class="text-muted mb-0">Žádné komentáře pro zvolený filtr.</p>
             {% else %}
                 <div class="table-responsive">
                     <table class="table align-middle mb-0">
@@ -20,11 +36,12 @@
                                 <th>Autor</th>
                                 <th>Text</th>
                                 <th>Obsah</th>
+                                <th>Stav</th>
                                 <th class="text-end">Akce</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for comment in pending_comments %}
+                            {% for comment in comments %}
                                 <tr>
                                     <td>
                                         <div class="fw-semibold">{{ comment.author_name ?: 'Anonym' }}</div>
@@ -41,10 +58,20 @@
                                             <em>Nenalezeno</em>
                                         {% endif %}
                                     </td>
+                                    <td>
+                                        {% if comment.status == 'approved' %}
+                                            <span class="badge bg-success-subtle text-success">Schváleno</span>
+                                        {% else %}
+                                            <span class="badge bg-warning-subtle text-warning">Čeká</span>
+                                        {% endif %}
+                                    </td>
                                     <td class="text-end">
-                                        <form method="post" action="/admin/comments/{{ comment.id }}/approve" class="d-inline">
-                                            <button type="submit" class="btn btn-sm btn-success">Schválit</button>
-                                        </form>
+                                        <a href="/admin/comments/{{ comment.id }}/edit" class="btn btn-sm btn-outline-secondary">Detail</a>
+                                        {% if comment.status != 'approved' %}
+                                            <form method="post" action="/admin/comments/{{ comment.id }}/approve" class="d-inline ms-2">
+                                                <button type="submit" class="btn btn-sm btn-success">Schválit</button>
+                                            </form>
+                                        {% endif %}
                                         <form method="post" action="/admin/comments/{{ comment.id }}/delete" class="d-inline ms-2">
                                             <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>
                                         </form>

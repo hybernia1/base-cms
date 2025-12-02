@@ -18,15 +18,17 @@
         /* Layout adminu */
         :root {
             font-size: 15px;
+            --admin-bar-height: 60px;
         }
 
         body {
             min-height: 100vh;
+            background: #f8fafc;
         }
 
         .admin-wrapper {
             display: flex;
-            min-height: calc(100vh - 56px); /* 56px = výška navbaru */
+            min-height: calc(100vh - var(--admin-bar-height));
         }
 
         .admin-sidebar {
@@ -47,6 +49,58 @@
             padding: 0.85rem 1.1rem;
         }
 
+        /* Admin bar (shared look with frontend) */
+        .admin-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1040;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 0.55rem 0;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.25);
+        }
+
+        .admin-bar a,
+        .admin-bar .btn,
+        .admin-bar button {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .admin-bar .admin-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 999px;
+            background: transparent;
+            border: none;
+            color: inherit;
+            font-weight: 600;
+            transition: background-color 0.15s ease, color 0.15s ease;
+        }
+
+        .admin-bar .admin-pill:hover,
+        .admin-bar .admin-pill:focus {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .admin-bar .admin-pill .label { display: none; }
+        @media (min-width: 768px) {
+            .admin-bar .admin-pill .label { display: inline; }
+        }
+
+        .admin-bar .dropdown-menu {
+            border: none;
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+        }
+
+        .admin-bar .user-badge {
+            background: rgba(255, 255, 255, 0.14);
+            color: #fff;
+        }
+
         /* Malé displeje: sidebar je offcanvas */
         @media (max-width: 991.98px) {
             .admin-sidebar {
@@ -55,14 +109,6 @@
 
             .admin-content {
                 padding: 1rem;
-            }
-
-            .navbar .btn {
-                padding: 0.35rem 0.75rem;
-            }
-
-            .navbar-brand {
-                font-size: 1rem;
             }
         }
 
@@ -105,30 +151,50 @@
     </div>
 </div>
 
-{# TOP NAVBAR #}
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container-fluid">
-        <button class="btn btn-outline-light d-lg-none me-2" type="button"
+{# TOP ADMIN BAR #}
+<div class="admin-bar">
+    <div class="container-fluid d-flex align-items-center gap-2 flex-wrap">
+        <button class="admin-pill d-lg-none" type="button"
                 data-bs-toggle="offcanvas" data-bs-target="#adminSidebarOffcanvas"
                 aria-controls="adminSidebarOffcanvas">
-            <span class="navbar-toggler-icon"></span>
+            <i class="bi bi-list"></i><span class="label">Menu</span>
         </button>
 
-        <a class="navbar-brand" href="/admin">Admin</a>
+        <a class="admin-pill" href="/admin">
+            <i class="bi bi-speedometer2"></i><span class="label">Administrace</span>
+        </a>
 
-        <div class="d-flex ms-auto gap-2">
+        <a href="/" class="admin-pill" target="_blank" rel="noopener">
+            <i class="bi bi-box-arrow-up-right"></i><span class="label">Otevřít web</span>
+        </a>
+
+        <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
             {% if app_user is defined and app_user %}
-                <span class="navbar-text me-3 d-none d-sm-inline">
-                    {{ app_user.email }} ({{ app_user.role|default('') }})
-                </span>
+                {% if app_user.role %}
+                    <span class="badge user-badge">{{ app_user.role }}</span>
+                {% endif %}
+                <div class="dropdown">
+                    <button class="admin-pill dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle"></i><span class="label">{{ app_user.email }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-2" href="/" target="_blank" rel="noopener">
+                                <i class="bi bi-box-arrow-up-right"></i> <span>Otevřít web</span>
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center gap-2" href="/admin/logout">
+                                <i class="bi bi-box-arrow-right"></i> <span>Odhlásit</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             {% endif %}
-            <a href="/" class="btn btn-outline-light btn-sm" target="_blank" rel="noopener">Otevřít web</a>
-            <form action="/admin/logout" method="get" class="mb-0">
-                <button class="btn btn-light btn-sm" type="submit">Odhlásit</button>
-            </form>
         </div>
     </div>
-</nav>
+</div>
 
 <div class="admin-wrapper">
 

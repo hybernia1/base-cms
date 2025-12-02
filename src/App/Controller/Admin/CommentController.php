@@ -45,7 +45,7 @@ class CommentController extends AjaxController
         $childCounts = [];
         $commentIds = [];
         if ($comments) {
-            $ids = array_unique(array_map(fn($c) => (int) $c->content_id, $comments));
+            $ids = array_values(array_unique(array_map(fn($c) => (int) $c->content_id, $comments)));
             if ($ids) {
                 $placeholders = implode(',', array_fill(0, count($ids), '?'));
                 $contents = R::findAll('content', ' id IN (' . $placeholders . ') ', $ids);

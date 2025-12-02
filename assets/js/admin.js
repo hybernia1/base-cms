@@ -478,6 +478,21 @@ document.addEventListener('DOMContentLoaded', () => {
             ];
 
             const currentStatus = context.status || 'pending';
+            const isTrash = currentStatus === 'trash';
+
+            const headerActions = isTrash
+                ? `<button type="submit" class="btn btn-danger" form="emptyCommentsTrash" data-confirm="Chcete nenávratně smazat všechny komentáře v koši?" data-confirm-title="Trvalé smazání"><i class="bi bi-trash me-1"></i>Vysypat koš</button>`
+                : '';
+
+            const pageHeader = `
+                <div class="page-header">
+                    <h1 class="h3 mb-0">Komentáře</h1>
+                    ${headerActions ? `<div class="page-header-actions">${headerActions}</div>` : ''}
+                </div>`;
+
+            const emptyTrashForm = isTrash
+                ? '<form id="emptyCommentsTrash" action="/admin/comments/trash/empty" method="post"></form>'
+                : '';
             const statusTabs = statuses.map((status) => `
                 <li class="nav-item">
                     <a href="/admin/comments?status=${status.key}" class="nav-link ${currentStatus === status.key ? 'active' : ''}" data-ajax-link>
@@ -487,7 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </li>`).join('');
 
             if (!context.comments || context.comments.length === 0) {
-                return `<ul class="nav nav-pills mb-3">${statusTabs}</ul><div class="alert alert-info">Žádné komentáře pro zvolený filtr.</div>`;
+                return `${pageHeader}${emptyTrashForm}<ul class="nav nav-pills mb-3">${statusTabs}</ul><div class="alert alert-info">Žádné komentáře pro zvolený filtr.</div>`;
             }
 
             const contentMap = context.content_map || {};
@@ -548,6 +563,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }).join('');
 
             return `
+                ${pageHeader}
+                ${emptyTrashForm}
                 <ul class="nav nav-pills mb-3">${statusTabs}</ul>
                 <div class="table-responsive">
                     <table class="table align-middle mb-0">

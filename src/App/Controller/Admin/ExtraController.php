@@ -3,10 +3,58 @@ namespace App\Controller\Admin;
 
 use App\Service\Auth;
 use App\Service\Flash;
+use App\Service\AssetManager;
 use RedBeanPHP\R as R;
 
 class ExtraController extends BaseAdminController
 {
+    public function assets(): void
+    {
+        Auth::requireRole(['admin']);
+
+        $assetSource = AssetManager::getSource();
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+            $requestedSource = $_POST['asset_source'] ?? $assetSource;
+            $requestedSource = $requestedSource === AssetManager::SOURCE_LOCAL
+                ? AssetManager::SOURCE_LOCAL
+                : AssetManager::SOURCE_CDN;
+
+            if ($requestedSource !== $assetSource) {
+                AssetManager::setSource($requestedSource);
+                $assetSource = $requestedSource;
+                Flash::addSuccess('Způsob načítání knihoven byl uložen.');
+            }
+
+            if (isset($_POST['download_libraries'])) {
+                $download = AssetManager::downloadLibraries();
+
+                foreach ($download['messages'] as $message) {
+                    Flash::addSuccess($message);
+                }
+
+                foreach ($download['errors'] as $error) {
+                    Flash::addError($error);
+                }
+
+                if ($download['success']) {
+                    AssetManager::setSource(AssetManager::SOURCE_LOCAL);
+                    $assetSource = AssetManager::SOURCE_LOCAL;
+                    Flash::addSuccess('Knihovny byly staženy a budou načítány ze serveru.');
+                }
+            }
+
+            header('Location: /admin/extra/assets');
+            exit;
+        }
+
+        $this->render('admin/extra/assets.twig', [
+            'current_menu' => 'extra:assets',
+            'asset_source' => $assetSource,
+            'libraries' => AssetManager::getLibrariesStatus(),
+        ]);
+    }
+
     public function info(): void
     {
         Auth::requireRole(['admin']);

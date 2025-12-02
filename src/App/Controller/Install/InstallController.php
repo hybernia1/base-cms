@@ -217,7 +217,8 @@ class InstallController
                 `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                 `key` VARCHAR(191) NOT NULL UNIQUE,
                 `value` TEXT,
-                `updated_at` DATETIME NOT NULL
+                `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
 
@@ -258,6 +259,17 @@ class InstallController
 
         if (!isset($contentColumns['thumbnail_alt'])) {
             R::exec("ALTER TABLE `content` ADD COLUMN `thumbnail_alt` VARCHAR(255) DEFAULT '' AFTER `thumbnail_id`");
+        }
+
+        $settingColumns = R::inspect('setting');
+        if (!isset($settingColumns['created_at'])) {
+            R::exec("ALTER TABLE `setting` ADD COLUMN `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `value`");
+        }
+
+        if (isset($settingColumns['updated_at'])) {
+            R::exec(
+                "ALTER TABLE `setting` MODIFY COLUMN `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+            );
         }
 
         if (!isset($contentColumns['status'])) {

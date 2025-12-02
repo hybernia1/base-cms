@@ -1,5 +1,27 @@
 {% import 'admin/partials/components.twig' as ui %}
 
+{% set header_actions = [] %}
+{% if status == 'trash' %}
+    {% set header_actions = header_actions|merge([{
+        type: 'button',
+        button_type: 'submit',
+        label: 'Vysypat koš',
+        variant: 'danger',
+        icon: 'bi-trash',
+        attributes: {
+            form: 'emptyCommentsTrash',
+            'data-confirm': 'Chcete nenávratně smazat všechny komentáře v koši?',
+            'data-confirm-title': 'Trvalé smazání'
+        }
+    }]) %}
+{% endif %}
+
+{{ ui.page_header('Komentáře', header_actions) }}
+
+{% if status == 'trash' %}
+    <form id="emptyCommentsTrash" action="/admin/comments/trash/empty" method="post"></form>
+{% endif %}
+
 {% set tabs = {
     'all': 'Vše',
     'pending': 'Čeká na schválení',

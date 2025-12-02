@@ -21,10 +21,19 @@ class ContentController extends AjaxController
         $allowedStatuses = ['published', 'draft', 'trash', 'all'];
         $status = in_array($statusFilter, $allowedStatuses, true) ? $statusFilter : 'all';
 
+        $search = trim($_GET['q'] ?? '');
         $counts = $this->contentStatusCounts($typeKey);
 
         $query = ' type = ? ';
         $params = [$typeKey];
+
+        if ($search !== '') {
+            $query .= ' AND (title LIKE ? OR slug LIKE ? OR body LIKE ?) ';
+            $like = '%' . $search . '%';
+            $params[] = $like;
+            $params[] = $like;
+            $params[] = $like;
+        }
 
         if ($status === 'trash') {
             $query .= ' AND deleted_at IS NOT NULL ';
@@ -52,6 +61,7 @@ class ContentController extends AjaxController
             'current_status' => $status ?? 'all',
             'pagination' => $pagination,
             'counts' => $counts,
+            'search' => $search,
         ];
 
         if ($this->respondAjax(
@@ -77,6 +87,7 @@ class ContentController extends AjaxController
             'current_status' => $viewContext['current_status'],
             'pagination' => $viewContext['pagination'],
             'counts' => $viewContext['counts'],
+            'search' => $viewContext['search'],
         ]);
     }
 
@@ -98,6 +109,7 @@ class ContentController extends AjaxController
         }
 
         $context['items'] = $serializedItems;
+        $context['search'] = $context['search'] ?? '';
 
         return $context;
     }

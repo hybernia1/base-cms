@@ -239,6 +239,12 @@
                             <i class="bi bi-envelope-paper me-2"></i> E-mailové šablony
                         </a>
                     </li>
+                    <li class="nav-item mb-1">
+                        <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'comments' %}active{% endif %}"
+                           href="/admin/comments">
+                            <i class="bi bi-chat-dots me-2"></i> Komentáře
+                        </a>
+                    </li>
                     {% set settingsActive = current_menu is defined and current_menu starts with 'settings' %}
                     {% set settingsMenuId = 'settings-menu-desktop' %}
                     <li class="nav-item mb-1">

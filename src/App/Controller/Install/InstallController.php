@@ -139,6 +139,7 @@ class InstallController
                 `slug` VARCHAR(191) NOT NULL,
                 `type` VARCHAR(50) NOT NULL,
                 `status` VARCHAR(20) NOT NULL DEFAULT 'published',
+                `allow_comments` TINYINT(1) NOT NULL DEFAULT 1,
                 `body` TEXT,
                 `thumbnail_id` INT UNSIGNED DEFAULT NULL,
                 `thumbnail_alt` VARCHAR(255) DEFAULT '',
@@ -221,6 +222,24 @@ class InstallController
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
 
+        R::exec(
+            "CREATE TABLE IF NOT EXISTS `comment` (
+                `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `content_id` INT UNSIGNED NOT NULL,
+                `parent_id` INT UNSIGNED DEFAULT NULL,
+                `user_id` INT UNSIGNED DEFAULT NULL,
+                `author_name` VARCHAR(191) DEFAULT '',
+                `author_email` VARCHAR(191) DEFAULT '',
+                `body` TEXT NOT NULL,
+                `status` VARCHAR(20) NOT NULL DEFAULT 'pending',
+                `depth` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+                `created_at` DATETIME NOT NULL,
+                `updated_at` DATETIME NOT NULL,
+                KEY `idx_content` (`content_id`),
+                KEY `idx_parent` (`parent_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
         $contentColumns = R::inspect('content');
         if (!isset($contentColumns['thumbnail_id'])) {
             R::exec("ALTER TABLE `content` ADD COLUMN `thumbnail_id` INT UNSIGNED DEFAULT NULL AFTER `body`");
@@ -232,6 +251,10 @@ class InstallController
 
         if (!isset($contentColumns['status'])) {
             R::exec("ALTER TABLE `content` ADD COLUMN `status` VARCHAR(20) NOT NULL DEFAULT 'published' AFTER `type`");
+        }
+
+        if (!isset($contentColumns['allow_comments'])) {
+            R::exec("ALTER TABLE `content` ADD COLUMN `allow_comments` TINYINT(1) NOT NULL DEFAULT 1 AFTER `status`");
         }
 
         $contentMediaColumns = R::inspect('content_media');

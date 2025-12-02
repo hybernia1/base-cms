@@ -112,6 +112,35 @@
                             </div>
                         </div>
 
+                    {% elseif active_section == 'comments' %}
+                        <h2 class="h5 mb-3">Komentáře</h2>
+
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" role="switch" id="comments_enabled" name="comments_enabled" value="1" {% if values.comments_enabled == '1' %}checked{% endif %}>
+                            <label class="form-check-label" for="comments_enabled">Povolit komentáře globálně</label>
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" role="switch" id="comments_allow_replies" name="comments_allow_replies" value="1" {% if values.comments_allow_replies == '1' %}checked{% endif %}>
+                            <label class="form-check-label" for="comments_allow_replies">Povolit odpovědi na komentáře</label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="comments_max_depth" class="form-label">Maximální úroveň vláken</label>
+                            <input type="number" class="form-control" id="comments_max_depth" name="comments_max_depth" value="{{ values.comments_max_depth|default(2) }}" min="0" max="5">
+                            <div class="form-text">0 = zakáže odpovědi, 1 = pouze hlavní komentáře, 5 = hlubší vlákna.</div>
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" role="switch" id="comments_moderation" name="comments_moderation" value="1" {% if values.comments_moderation == '1' %}checked{% endif %}>
+                            <label class="form-check-label" for="comments_moderation">Vyžadovat schválení komentářů</label>
+                        </div>
+
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" role="switch" id="comments_allow_anonymous" name="comments_allow_anonymous" value="1" {% if values.comments_allow_anonymous == '1' %}checked{% endif %}>
+                            <label class="form-check-label" for="comments_allow_anonymous">Povolit komentáře anonymním uživatelům</label>
+                        </div>
+
                     {% elseif active_section == 'content-types' %}
                         <h2 class="h5 mb-3">Typy obsahu</h2>
 

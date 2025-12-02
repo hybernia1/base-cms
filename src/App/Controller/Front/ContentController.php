@@ -2,6 +2,8 @@
 namespace App\Controller\Front;
 
 use App\Service\ContentType;
+use App\Service\Comment;
+use App\Service\Setting;
 use RedBeanPHP\R as R;
 
 class ContentController extends BaseFrontController
@@ -29,6 +31,8 @@ class ContentController extends BaseFrontController
 
         $terms = [];
         $thumbnail = null;
+        $comments = [];
+        $commentAllowed = false;
         if ($item) {
             $termIds = R::getCol('SELECT term_id FROM content_term WHERE content_id = ?', [$item->id]);
             if ($termIds) {
@@ -42,6 +46,11 @@ class ContentController extends BaseFrontController
                     $thumbnail = $loaded;
                 }
             }
+
+            $commentAllowed = Setting::get('comments_enabled', '1') === '1' && ((string) ($item->allow_comments ?? '1') !== '0');
+            if ($commentAllowed) {
+                $comments = Comment::findByContent((int) $item->id);
+            }
         } else {
             http_response_code(404);
         }
@@ -51,6 +60,8 @@ class ContentController extends BaseFrontController
             'type' => $typeDef,
             'terms' => $terms,
             'thumbnail' => $thumbnail,
+            'comments' => $comments,
+            'comment_allowed' => $commentAllowed,
         ]);
     }
 }

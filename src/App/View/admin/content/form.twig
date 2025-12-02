@@ -63,10 +63,17 @@
             </div>
 
             <div class="col-lg-4">
+                {% set current_status = values.status ?: 'draft' %}
                 <div class="card shadow-sm mb-3">
-                    <div class="card-header fw-semibold">Publikace</div>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold">Publikace</span>
+                        {% if current_status == 'published' %}
+                            <span class="badge text-bg-success">Publikovaný</span>
+                        {% else %}
+                            <span class="badge text-bg-secondary">Koncept</span>
+                        {% endif %}
+                    </div>
                     <div class="card-body">
-                        {% set current_status = values.status ?: 'draft' %}
 
                         <input
                             type="hidden"
@@ -74,15 +81,6 @@
                             id="statusField"
                             value="{{ current_status }}"
                         >
-
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="text-muted small">Aktuální stav</span>
-                            {% if current_status == 'published' %}
-                                <span class="badge text-bg-success">Publikovaný</span>
-                            {% else %}
-                                <span class="badge text-bg-secondary">Koncept</span>
-                            {% endif %}
-                        </div>
 
                         <div class="d-grid gap-2 mb-3">
                             <button type="submit" class="btn btn-outline-secondary w-100 status-submit" data-status-action="draft">Uložit jako koncept</button>
@@ -118,16 +116,15 @@
                                     {% endif %}
 
                                     {% if content_id is defined %}
-                                        <form
-                                            action="/admin/content/{{ current_type.slug }}/{{ content_id }}/delete"
-                                            method="post"
-                                            class="d-inline"
-                                            data-confirm="Opravdu smazat tento obsah?"
+                                        <button
+                                            type="button"
+                                            class="btn btn-outline-danger btn-icon btn-sm"
+                                            id="deleteContentTrigger"
+                                            data-confirm-message="Opravdu smazat tento obsah?"
+                                            aria-label="Smazat"
                                         >
-                                            <button type="submit" class="btn btn-outline-danger btn-icon btn-sm" aria-label="Smazat">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
+                                            <i class="bi bi-trash"></i>
+                                        </button>
                                     {% endif %}
                                 </div>
                             </div>
@@ -144,7 +141,7 @@
                             <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#mediaLibraryModal" data-media-action="thumbnail">
                                 Otevřít knihovnu médií
                             </button>
-                            <button class="btn btn-outline-danger" type="button" id="removeThumbnailBtn">Odebrat náhled</button>
+                            <button class="btn btn-outline-danger {% if not values.thumbnail_id %}d-none{% endif %}" type="button" id="removeThumbnailBtn">Odebrat náhled</button>
                         </div>
 
                         <div id="thumbnailPreview" class="border rounded p-2 bg-light" style="max-width: 320px;{% if not values.thumbnail_id %} display:none;{% endif %}">
@@ -200,6 +197,15 @@
             {# tlačítka pro uložení jsou v boxu Publikace #}
         </div>
     </form>
+
+    {% if content_id is defined %}
+        <form
+            id="deleteContentForm"
+            action="/admin/content/{{ current_type.slug }}/{{ content_id }}/delete"
+            method="post"
+            class="d-none"
+        ></form>
+    {% endif %}
 
     <div class="modal fade" id="mediaLibraryModal" tabindex="-1" aria-labelledby="mediaLibraryLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -274,6 +280,8 @@
         const mediaModalEl = document.getElementById('mediaLibraryModal');
         const mediaEmptyAlert = document.getElementById('mediaLibraryEmpty');
         const removeThumbnailBtn = document.getElementById('removeThumbnailBtn');
+        const deleteContentTrigger = document.getElementById('deleteContentTrigger');
+        const deleteContentForm = document.getElementById('deleteContentForm');
         const bodyMediaInputs = document.getElementById('bodyMediaInputs');
         const initialBodyMediaIds = {{ values.media_ids|json_encode|raw }};
         const bodyMediaSet = new Set((Array.isArray(initialBodyMediaIds) ? initialBodyMediaIds : [])
@@ -344,8 +352,12 @@
 
         function setSelectedThumbnail(id, url, label) {
             if (!thumbnailInput) return;
+            const hasThumbnail = Boolean(id && url);
             thumbnailInput.value = id || '';
-            updatePreview(url, label);
+            updatePreview(hasThumbnail ? url : '', label);
+            if (removeThumbnailBtn) {
+                removeThumbnailBtn.classList.toggle('d-none', !hasThumbnail);
+            }
         }
 
         function openMediaModalFor(action) {
@@ -426,6 +438,22 @@
         if (removeThumbnailBtn) {
             removeThumbnailBtn.addEventListener('click', function () {
                 setSelectedThumbnail('', '', '');
+            });
+        }
+
+        if (deleteContentTrigger && deleteContentForm) {
+            deleteContentTrigger.addEventListener('click', async function () {
+                const message = deleteContentTrigger.dataset.confirmMessage || 'Opravdu smazat tento obsah?';
+                const confirmFn = (typeof adminDialog !== 'undefined' && typeof adminDialog.confirm === 'function')
+                    ? adminDialog.confirm
+                    : (typeof adminNotify !== 'undefined' && typeof adminNotify.confirm === 'function'
+                        ? adminNotify.confirm
+                        : (msg) => Promise.resolve(window.confirm(msg)));
+
+                const confirmed = await confirmFn(message, {variant: 'danger'});
+                if (confirmed) {
+                    deleteContentForm.submit();
+                }
             });
         }
 

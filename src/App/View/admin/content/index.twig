@@ -8,7 +8,10 @@
 {% block body %}
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h3 mb-0">{{ current_type.plural_name|default('Obsah') }}</h1>
-        <a href="/admin/content/{{ current_type.slug }}/create" class="btn btn-primary">Nový {{ current_type.name|lower }}</a>
+        {{ ui.button('add', 'Přidat ' ~ current_type.name|lower, {
+            href: '/admin/content/' ~ current_type.slug ~ '/create',
+            class: 'ms-auto'
+        }) }}
     </div>
 
     <div class="ajax-block" data-ajax-container data-endpoint="/admin/content/{{ current_type.slug }}" data-current-url="{{ pagination.current_url }}">

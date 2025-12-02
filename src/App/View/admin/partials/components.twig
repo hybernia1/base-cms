@@ -26,6 +26,38 @@
     {% endif %}
 {% endmacro %}
 
+{% macro button(kind, label = null, options = {}) %}
+    {% set presets = {
+        add: { class: 'btn btn-primary', icon: 'bi-plus-lg', default_label: 'Přidat' },
+        upload: { class: 'btn btn-primary', icon: 'bi-cloud-arrow-up', default_label: 'Nahrát' },
+        remove: { class: 'btn btn-outline-danger btn-sm', icon: 'bi-trash', default_label: 'Smazat' }
+    } %}
+
+    {% set preset = presets[kind] ?? presets.add %}
+    {% set text = label ?: preset.default_label %}
+
+    {% set baseAttrs = options.attrs ?? {} %}
+    {% set mergedClass = (preset.class ~ ' ' ~ (options.class ?? '') ~ ' ' ~ (baseAttrs.class ?? ''))|trim %}
+    {% set baseAttrs = baseAttrs|merge({ 'class': mergedClass }) %}
+
+    {% if options.href is defined %}
+        {% set tag = 'a' %}
+        {% set baseAttrs = baseAttrs|merge({ 'href': options.href }) %}
+    {% else %}
+        {% set tag = 'button' %}
+        {% set baseAttrs = baseAttrs|merge({ 'type': options.type|default('button') }) %}
+    {% endif %}
+
+    <{{ tag }}
+        {% for name, value in baseAttrs %}
+            {{ name }}="{{ value }}"
+        {% endfor %}
+    >
+        {% if preset.icon %}<i class="bi {{ preset.icon }}"></i>{% endif %}
+        <span class="ms-1">{{ text }}</span>
+    </{{ tag }}>
+{% endmacro %}
+
 {% macro actions(actions, size = 'sm') %}
     <div class="btn-{{ size }}" role="group">
         {% for action in actions %}

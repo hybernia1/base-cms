@@ -15,15 +15,28 @@
     <script src="https://cdn.jsdelivr.net/npm/@yaireo/tagify"></script>
 
     <style>
-        /* Layout adminu */
+        /* Zjednodušený, tlumený layout administrace */
         :root {
             font-size: 15px;
             --admin-bar-height: 60px;
+            --admin-bg: #f5f7fb;
+            --admin-surface: #ffffff;
+            --admin-border: #e5e7eb;
+            --admin-muted: #64748b;
+            --admin-accent: #2563eb;
+            --admin-accent-soft: #e0e7ff;
+            --admin-radius: 14px;
         }
 
         body {
             min-height: 100vh;
-            background: #f8fafc;
+            background: var(--admin-bg);
+            color: #0f172a;
+            font-family: "Inter", system-ui, -apple-system, sans-serif;
+        }
+
+        a {
+            color: inherit;
         }
 
         .admin-wrapper {
@@ -32,32 +45,45 @@
         }
 
         .admin-sidebar {
-            width: 240px;
+            width: 250px;
             flex-shrink: 0;
+            background: var(--admin-surface);
+            border-right: 1px solid var(--admin-border);
+            padding: 1.25rem;
         }
 
         .admin-content {
             flex: 1;
-            padding: 1.25rem;
+            padding: 1.5rem;
+        }
+
+        .card {
+            border: 1px solid var(--admin-border);
+            border-radius: var(--admin-radius);
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
+            background: var(--admin-surface);
         }
 
         .card-body {
-            padding: 1.1rem;
+            padding: 1.15rem 1.2rem;
         }
 
         .card-header {
-            padding: 0.85rem 1.1rem;
+            padding: 0.9rem 1.2rem;
+            background: transparent;
+            border-color: var(--admin-border);
         }
 
-        /* Admin bar (shared look with frontend) */
+        /* Admin bar */
         .admin-bar {
             position: sticky;
             top: 0;
             z-index: 1040;
             background: #0f172a;
             color: #e2e8f0;
-            padding: 0.55rem 0;
-            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.25);
+            padding: 0.65rem 0;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.28);
         }
 
         .admin-bar a,
@@ -71,19 +97,20 @@
             display: inline-flex;
             align-items: center;
             gap: 0.45rem;
-            padding: 0.35rem 0.85rem;
+            padding: 0.45rem 0.95rem;
             border-radius: 999px;
-            background: transparent;
-            border: none;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             color: inherit;
             font-weight: 600;
-            transition: background-color 0.15s ease, color 0.15s ease;
+            transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
         }
 
         .admin-bar .admin-pill:hover,
         .admin-bar .admin-pill:focus {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.12);
             color: #fff;
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .admin-bar .admin-pill .label { display: none; }
@@ -101,7 +128,137 @@
             color: #fff;
         }
 
-        /* Malé displeje: sidebar je offcanvas */
+        /* Sidebar menu */
+        .admin-sidebar .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            border-radius: 12px;
+            color: #0f172a;
+            font-weight: 600;
+            padding: 0.6rem 0.75rem;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
+        }
+
+        .admin-sidebar .nav-link:hover,
+        .admin-sidebar .nav-link:focus {
+            background: #f1f5f9;
+            border-color: var(--admin-border);
+        }
+
+        .admin-sidebar .nav-link.active {
+            background: var(--admin-accent-soft);
+            color: #1d4ed8;
+            border-color: transparent;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .admin-sidebar .nav-pills .nav-link { border-radius: 12px; }
+
+        /* Formuláře */
+        .form-label {
+            font-weight: 600;
+            color: var(--admin-muted);
+        }
+
+        .form-control,
+        .form-select,
+        .form-check-input {
+            border-color: var(--admin-border);
+            border-radius: 12px;
+            background-color: #fbfcff;
+        }
+
+        .form-control:focus,
+        .form-select:focus,
+        .form-check-input:focus {
+            border-color: var(--admin-accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .btn {
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .btn-icon {
+            width: 2.25rem;
+            height: 2.25rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.35rem;
+        }
+
+        .btn-outline-secondary,
+        .btn-outline-light,
+        .btn-outline-primary,
+        .btn-outline-danger {
+            background: #fff;
+            border-color: var(--admin-border);
+        }
+
+        .btn-outline-secondary:hover,
+        .btn-outline-light:hover,
+        .btn-outline-primary:hover,
+        .btn-outline-danger:hover {
+            background: var(--admin-accent-soft);
+            color: #1d4ed8;
+        }
+
+        /* Tabulky a seznamy */
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            font-size: 0.85rem;
+            color: var(--admin-muted);
+            border-color: var(--admin-border);
+        }
+
+        .table tbody td {
+            vertical-align: middle;
+            border-color: var(--admin-border);
+        }
+
+        .table-striped > tbody > tr:nth-of-type(odd) > * {
+            background: #f8fafc;
+        }
+
+        /* Navigace v listech a paginace */
+        .nav-pills .nav-link {
+            border-radius: 999px;
+            padding: 0.45rem 0.95rem;
+            font-weight: 600;
+        }
+
+        .nav-pills .nav-link.active {
+            background: var(--admin-accent);
+        }
+
+        .pagination-soft .page-link {
+            border-radius: 10px;
+            border-color: var(--admin-border);
+            color: #0f172a;
+            background: #fff;
+            box-shadow: none;
+        }
+
+        .pagination-soft .page-item.active .page-link {
+            background: var(--admin-accent);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.16);
+        }
+
+        .pagination-soft .page-link:hover {
+            background: var(--admin-accent-soft);
+            color: #1d4ed8;
+        }
+
+        /* Offcanvas / mobilní zobrazení */
         @media (max-width: 991.98px) {
             .admin-sidebar {
                 display: none;
@@ -110,11 +267,6 @@
             .admin-content {
                 padding: 1rem;
             }
-        }
-
-        /* Optional: aktivní link */
-        .nav-link.active {
-            font-weight: 600;
         }
 
         .menu-toggle {
@@ -199,11 +351,10 @@
 <div class="admin-wrapper">
 
     {# SIDEBAR na desktopu #}
-    <aside class="admin-sidebar bg-light border-end d-none d-lg-block">
-        <div class="p-3">
-            <div class="fw-bold mb-3 text-uppercase small text-muted">
-                Navigace
-            </div>
+    <aside class="admin-sidebar d-none d-lg-block">
+        <div class="fw-bold mb-3 text-uppercase small text-muted">
+            Navigace
+        </div>
             {% set settings_sections = settings_sections|default({
                 'main': {'label': 'Základní', 'icon': 'bi-gear', 'url': '/admin/settings/main'},
                 'uploads': {'label': 'Uploady', 'icon': 'bi-upload', 'url': '/admin/settings/uploads'},
@@ -340,7 +491,6 @@
                 {% endif %}
                 {# další odkazy... #}
             </ul>
-        </div>
     </aside>
 
     {# SIDEBAR jako offcanvas na mobilech #}

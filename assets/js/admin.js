@@ -254,8 +254,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (action.type === 'link') {
                 return `
                     <a href="${escapeHtml(action.href)}"
-                       class="btn btn-outline-${escapeHtml(action.variant || 'secondary')}"
-                       title="${escapeHtml(tooltip)}">
+                       class="btn btn-outline-${escapeHtml(action.variant || 'secondary')} btn-icon"
+                       title="${escapeHtml(tooltip)}"
+                       aria-label="${escapeHtml(tooltip)}">
                         ${action.icon ? `<i class="bi ${escapeHtml(action.icon)}"></i>` : ''}
                     </a>`;
             }
@@ -274,8 +275,9 @@ document.addEventListener('DOMContentLoaded', () => {
                           ${action.confirm ? `data-confirm="${escapeHtml(action.confirm)}"` : ''}>
                         ${hiddenInputs}
                         <button type="submit"
-                                class="btn btn-outline-${escapeHtml(action.variant || 'secondary')}"
-                                title="${escapeHtml(tooltip)}">
+                                class="btn btn-outline-${escapeHtml(action.variant || 'secondary')} btn-icon"
+                                title="${escapeHtml(tooltip)}"
+                                aria-label="${escapeHtml(tooltip)}">
                             ${action.icon ? `<i class="bi ${escapeHtml(action.icon)}"></i>` : ''}
                         </button>
                     </form>`;
@@ -293,18 +295,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const pageLinks = (pagination.page_numbers || []).map((page) => {
             const active = page === pagination.page ? 'active' : '';
             const url = pagination.page_urls?.[page] || '#';
-            return `<li class="page-item ${active}"><a class="page-link" href="${escapeHtml(url)}">${escapeHtml(page)}</a></li>`;
+            return `<li class="page-item ${active}"><a class="page-link fw-semibold" href="${escapeHtml(url)}">${escapeHtml(page)}</a></li>`;
         }).join('');
 
         return `
             <nav aria-label="Stránkování" class="mt-3">
-                <ul class="pagination justify-content-center">
+                <ul class="pagination pagination-sm justify-content-center pagination-soft">
                     <li class="page-item ${pagination.has_prev ? '' : 'disabled'}">
-                        <a class="page-link" href="${escapeHtml(pagination.prev_url || '#')}" aria-label="Předchozí">&laquo;</a>
+                        <a class="page-link d-flex align-items-center gap-2" href="${escapeHtml(pagination.prev_url || '#')}" aria-label="Předchozí">
+                            <i class="bi bi-chevron-left"></i>
+                            <span class="d-none d-md-inline">Předchozí</span>
+                        </a>
                     </li>
                     ${pageLinks}
                     <li class="page-item ${pagination.has_next ? '' : 'disabled'}">
-                        <a class="page-link" href="${escapeHtml(pagination.next_url || '#')}" aria-label="Další">&raquo;</a>
+                        <a class="page-link d-flex align-items-center gap-2" href="${escapeHtml(pagination.next_url || '#')}" aria-label="Další">
+                            <span class="d-none d-md-inline">Další</span>
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
                     </li>
                 </ul>
             </nav>`;

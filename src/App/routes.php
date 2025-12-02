@@ -137,4 +137,6 @@ $router->post('/admin/comments/(\\d+)/restore', 'App\\Controller\\Admin\\Comment
 $router->post('/admin/comments/(\\d+)/delete', 'App\\Controller\\Admin\\CommentController@delete');
 $router->post('/admin/comments/trash/empty', 'App\\Controller\\Admin\\CommentController@emptyTrash');
 
+$router->get('/admin/search', 'App\\Controller\\Admin\\SearchController@index');
+
 $router->post('/comments', 'App\\Controller\\Front\\CommentController@store');

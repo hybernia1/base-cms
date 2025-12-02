@@ -29,6 +29,14 @@
         </div>
     </div>
 
+    <form method="get" action="/admin/media/files" class="mb-3" data-ajax-form>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" name="q" value="{{ search|default('') }}" class="form-control" placeholder="Hledat podle názvu nebo souboru">
+            <button class="btn btn-outline-secondary" type="submit">Vyhledat</button>
+        </div>
+    </form>
+
     <div class="ajax-block" data-ajax-container data-endpoint="/admin/media/files" data-current-url="{{ pagination.current_url }}">
         {% include 'admin/media/_files_list.twig' with { items: items, pagination: pagination } only %}
     </div>

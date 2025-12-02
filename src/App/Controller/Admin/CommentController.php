@@ -18,6 +18,7 @@ class CommentController extends AjaxController
             $status = 'pending';
         }
 
+        $search = trim($_GET['q'] ?? '');
         $query = '';
         $params = [];
         if ($status === 'trash') {
@@ -27,6 +28,14 @@ class CommentController extends AjaxController
             $params[] = $status;
         } else {
             $query = ' deleted_at IS NULL ';
+        }
+
+        if ($search !== '') {
+            $query .= ' AND (body LIKE ? OR author_name LIKE ? OR author_email LIKE ?) ';
+            $like = '%' . $search . '%';
+            $params[] = $like;
+            $params[] = $like;
+            $params[] = $like;
         }
 
         $total = R::count('comment', $query, $params);
@@ -104,6 +113,7 @@ class CommentController extends AjaxController
             'parent_map' => $parentComments,
             'child_counts' => $childCounts,
             'pagination' => $pagination,
+            'search' => $search,
         ];
 
         if ($this->respondAjax(
@@ -172,6 +182,7 @@ class CommentController extends AjaxController
         $context['comments'] = $serializedComments;
         $context['content_map'] = $contentMap;
         $context['parent_map'] = $parentMap;
+        $context['search'] = $context['search'] ?? '';
 
         return $context;
     }

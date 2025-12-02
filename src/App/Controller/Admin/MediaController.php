@@ -45,6 +45,7 @@ class MediaController extends AjaxController
         }
 
         $context['items'] = $serializedItems;
+        $context['search'] = $context['search'] ?? '';
 
         return $context;
     }
@@ -54,17 +55,28 @@ class MediaController extends AjaxController
         Auth::requireRole(['admin', 'editor']);
 
         $condition = $onlyImages ? ' is_image = 1 ' : ' is_image = 0 ';
-        $total = R::count('media', $condition);
+        $search = trim($_GET['q'] ?? '');
+
+        $params = [];
+        if ($search !== '') {
+            $condition .= ' AND (original_name LIKE ? OR filename LIKE ?) ';
+            $like = '%' . $search . '%';
+            $params[] = $like;
+            $params[] = $like;
+        }
+
+        $total = R::count('media', $condition, $params);
         $pagination = $this->buildPagination((int) $total, 18);
 
         $items = R::findAll(
             'media',
             $condition . ' ORDER BY created_at DESC LIMIT ? OFFSET ? ',
-            [$pagination['per_page'], $pagination['offset']]
+            array_merge($params, [$pagination['per_page'], $pagination['offset']])
         );
 
         $payload = $this->prepareMediaAjaxPayload($items, [
             'pagination' => $pagination,
+            'search' => $search,
         ]);
 
         if ($this->respondAjax($partial, $payload, $pagination['current_url'])) {

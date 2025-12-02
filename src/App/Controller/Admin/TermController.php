@@ -205,11 +205,19 @@ class TermController extends AjaxController
 
         $termTypeDefinitions = TermType::definitions();
         $contentTypeDefinitions = ContentType::definitions();
+        $search = trim($_GET['q'] ?? '');
         $query = ' 1 = 1 ';
         $params = [];
 
         $query .= ' AND type = ? ';
         $params[] = $typeKey;
+
+        if ($search !== '') {
+            $query .= ' AND (name LIKE ? OR slug LIKE ?) ';
+            $like = '%' . $search . '%';
+            $params[] = $like;
+            $params[] = $like;
+        }
 
         $total = R::count('term', $query, $params);
         $pagination = $this->buildPagination((int) $total, 15);
@@ -228,6 +236,7 @@ class TermController extends AjaxController
             'content_types' => $contentTypeDefinitions,
             'current_term_type' => $termTypeDefinitions[$typeKey] ?? null,
             'pagination' => $pagination,
+            'search' => $search,
         ]), $pagination['current_url'])) {
             return;
         }
@@ -239,6 +248,7 @@ class TermController extends AjaxController
             'current_menu' => 'terms:' . $typeKey,
             'current_term_type' => $termTypeDefinitions[$typeKey] ?? null,
             'pagination' => $pagination,
+            'search' => $search,
         ]);
     }
 
@@ -256,6 +266,7 @@ class TermController extends AjaxController
         }
 
         $context['items'] = $serializedItems;
+        $context['search'] = $context['search'] ?? '';
 
         return $context;
     }

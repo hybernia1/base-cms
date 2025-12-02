@@ -740,6 +740,33 @@ document.addEventListener('DOMContentLoaded', () => {
         },
     };
 
+    ajaxRenderers['admin/content/_container.twig'] = (context = {}) => {
+        const type = context.current_type || {};
+        const isTrash = context.current_status === 'trash';
+        const title = type.plural_name || 'Obsah';
+        const slug = type.slug || '';
+        const actionLabel = `Nový ${(type.name || 'obsah').toLowerCase()}`;
+
+        const headerActions = isTrash
+            ? `<button type="submit" class="btn btn-danger" form="emptyContentTrash" data-confirm="Opravdu vysypat koš? Tato akce nenávratně smaže všechny položky." data-confirm-title="Trvalé smazání"><i class="bi bi-trash me-1"></i>Vysypat koš</button>`
+            : `<a href="/admin/content/${slug}/create" class="btn btn-primary"><i class="bi bi-plus me-1"></i>${escapeHtml(actionLabel)}</a>`;
+
+        const pageHeader = `
+            <div class="page-header">
+                <h1 class="h3 mb-0">${escapeHtml(title)}</h1>
+                <div class="page-header-actions">${headerActions}</div>
+            </div>`;
+
+        const emptyTrashForm = isTrash
+            ? `<form id="emptyContentTrash" action="/admin/content/${slug}/trash/empty" method="post"></form>`
+            : '';
+
+        const listRenderer = ajaxRenderers['admin/content/_list.twig'];
+        const listHtml = typeof listRenderer === 'function' ? listRenderer(context) : '';
+
+        return `${pageHeader}${emptyTrashForm}${listHtml}`;
+    };
+
     const loadAjaxContainer = async (container, targetUrl, options = {}) => {
         if (!targetUrl || !container) return;
 

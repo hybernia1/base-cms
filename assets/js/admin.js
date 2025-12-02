@@ -793,12 +793,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(data.error || data.message || 'Načtení selhalo.');
             }
 
-            const renderer = ajaxRenderers[data.view?.template];
-            if (!renderer) {
-                throw new Error('Chybí renderer pro AJAX odpověď.');
-            }
+            const viewHtml = data.view?.html
+                ? data.view.html
+                : (() => {
+                    const renderer = ajaxRenderers[data.view?.template];
+                    if (!renderer) {
+                        throw new Error('Chybí renderer pro AJAX odpověď.');
+                    }
 
-            const viewHtml = renderer(data.view?.context || {});
+                    return renderer(data.view?.context || {});
+                })();
             container.innerHTML = viewHtml;
             const stateUrl = data.state_url ? normalizeUrl(data.state_url) : normalizeUrl(targetUrl);
             if (stateUrl) {

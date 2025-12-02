@@ -96,7 +96,7 @@ class CommentController extends AjaxController
             }
         }
 
-        if ($this->respondAjax('admin/comments/_list.twig', $this->prepareCommentsAjaxPayload($comments, [
+        $viewContext = [
             'comments' => $comments,
             'status' => $status,
             'counts' => $counts,
@@ -104,18 +104,30 @@ class CommentController extends AjaxController
             'parent_map' => $parentComments,
             'child_counts' => $childCounts,
             'pagination' => $pagination,
-        ]), $pagination['current_url'])) {
+        ];
+
+        if ($this->respondAjax(
+            'admin/comments/_list.twig',
+            $this->prepareCommentsAjaxPayload($comments, $viewContext),
+            $pagination['current_url'],
+            [
+                'html' => $this->twig->render(
+                    'admin/comments/_list.twig',
+                    array_merge($this->baseContext(false), $viewContext)
+                ),
+            ]
+        )) {
             return;
         }
 
         $this->render('admin/comments/index.twig', [
-            'comments' => $comments,
-            'status' => $status,
-            'counts' => $counts,
-            'content_map' => $contentMap,
-            'parent_map' => $parentComments,
-            'child_counts' => $childCounts,
-            'pagination' => $pagination,
+            'comments' => $viewContext['comments'],
+            'status' => $viewContext['status'],
+            'counts' => $viewContext['counts'],
+            'content_map' => $viewContext['content_map'],
+            'parent_map' => $viewContext['parent_map'],
+            'child_counts' => $viewContext['child_counts'],
+            'pagination' => $viewContext['pagination'],
             'current_menu' => 'comments',
         ]);
     }

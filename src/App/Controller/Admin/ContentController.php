@@ -47,25 +47,38 @@ class ContentController extends AjaxController
             array_merge($params, [$pagination['per_page'], $pagination['offset']])
         );
 
-        if ($this->respondAjax('admin/content/_container.twig', $this->prepareContentAjaxPayload($items, [
+        $viewContext = [
+            'items' => $items,
             'types' => ContentType::all(),
             'current_type' => $definition,
             'current_status' => $status ?? 'all',
             'pagination' => $pagination,
             'counts' => $counts,
-        ]), $pagination['current_url'])) {
+        ];
+
+        if ($this->respondAjax(
+            'admin/content/_container.twig',
+            $this->prepareContentAjaxPayload($items, $viewContext),
+            $pagination['current_url'],
+            [
+                'html' => $this->twig->render(
+                    'admin/content/_container.twig',
+                    array_merge($this->baseContext(false), $viewContext)
+                ),
+            ]
+        )) {
             return;
         }
 
         $this->render('admin/content/index.twig', [
-            'items' => $items,
-            'types' => ContentType::all(),
+            'items' => $viewContext['items'],
+            'types' => $viewContext['types'],
             'current_menu' => $definition['slug'],
-            'current_type' => $definition,
+            'current_type' => $viewContext['current_type'],
             'all_type_definitions' => ContentType::definitions(),
-            'current_status' => $status,
-            'pagination' => $pagination,
-            'counts' => $counts,
+            'current_status' => $viewContext['current_status'],
+            'pagination' => $viewContext['pagination'],
+            'counts' => $viewContext['counts'],
         ]);
     }
 

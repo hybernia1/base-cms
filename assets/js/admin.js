@@ -520,7 +520,21 @@ document.addEventListener('DOMContentLoaded', () => {
                         : '<span class="badge bg-warning-subtle text-warning">Čeká</span>');
 
                 const approveForm = comment.status !== 'approved' && currentStatus !== 'trash'
-                    ? `<form method="post" action="/admin/comments/${comment.id}/approve" class="d-inline ms-2"><button type="submit" class="btn btn-sm btn-success">Schválit</button></form>`
+                    ? `
+                        <form method="post" action="/admin/comments/${comment.id}/approve" class="d-inline ms-2">
+                            <button type="submit" class="btn btn-sm btn-outline-success btn-icon" title="Schválit" aria-label="Schválit">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
+                        </form>`
+                    : '';
+
+                const restoreForm = currentStatus === 'trash'
+                    ? `
+                        <form method="post" action="/admin/comments/${comment.id}/restore" class="d-inline ms-2">
+                            <button type="submit" class="btn btn-sm btn-outline-success btn-icon" title="Obnovit" aria-label="Obnovit">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                        </form>`
                     : '';
 
                 const deleteConfirm = currentStatus === 'trash'
@@ -553,10 +567,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         <td class="text-muted small">${contentInfo}</td>
                         <td>${statusBadge}</td>
                         <td class="text-end">
-                            <a href="/admin/comments/${comment.id}/edit" class="btn btn-sm btn-outline-secondary">Detail</a>
+                            <a href="/admin/comments/${comment.id}/edit" class="btn btn-sm btn-outline-secondary btn-icon" title="Detail" aria-label="Detail">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
                             ${approveForm}
+                            ${restoreForm}
                             <form method="post" action="/admin/comments/${comment.id}/delete" class="d-inline ms-2" data-confirm="${deleteConfirm}" data-confirm-title="${currentStatus === 'trash' ? 'Trvalé smazání' : 'Přesun do koše'}">
-                                <button type="submit" class="btn btn-sm ${currentStatus === 'trash' ? 'btn-outline-danger' : 'btn-outline-warning'}">${currentStatus === 'trash' ? 'Smazat navždy' : 'Do koše'}</button>
+                                <button type="submit" class="btn btn-sm btn-icon ${currentStatus === 'trash' ? 'btn-outline-danger' : 'btn-outline-warning'}" title="${currentStatus === 'trash' ? 'Smazat navždy' : 'Do koše'}" aria-label="${currentStatus === 'trash' ? 'Smazat navždy' : 'Do koše'}">
+                                    <i class="bi ${currentStatus === 'trash' ? 'bi-trash3' : 'bi-trash'}"></i>
+                                </button>
                             </form>
                         </td>
                     </tr>`;

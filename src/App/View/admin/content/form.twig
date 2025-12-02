@@ -1,4 +1,5 @@
 {% extends 'admin/layout.twig' %}
+{% import 'admin/partials/components.twig' as components %}
 
 {% set current_menu = current_type.slug %}
 
@@ -74,54 +75,51 @@
                             value="{{ current_status }}"
                         >
 
-                        <div class="mb-3">
-                            <label class="form-label small text-muted">Stav příspěvku</label>
-                            <div class="btn-group w-100" role="group" aria-label="Přepnutí stavu">
-                                <input
-                                    type="radio"
-                                    class="btn-check"
-                                    name="statusToggle"
-                                    id="statusPublished"
-                                    value="published"
-                                    {% if current_status == 'published' %}checked{% endif %}
-                                >
-                                <label class="btn btn-outline-success" for="statusPublished">
-                                    <div class="fw-semibold">Publikovaný</div>
-                                    <div class="small mb-0 text-muted">Zobrazí se na webu</div>
-                                </label>
+                        <div class="btn-group w-100 mb-3" role="group" aria-label="Přepnutí stavu">
+                            <input
+                                type="radio"
+                                class="btn-check"
+                                name="statusToggle"
+                                id="statusPublished"
+                                value="published"
+                                {% if current_status == 'published' %}checked{% endif %}
+                            >
+                            <label class="btn btn-outline-success" for="statusPublished">
+                                <div class="fw-semibold">Publikovaný</div>
+                                <div class="small mb-0 text-muted">Zobrazí se na webu</div>
+                            </label>
 
-                                <input
-                                    type="radio"
-                                    class="btn-check"
-                                    name="statusToggle"
-                                    id="statusDraft"
-                                    value="draft"
-                                    {% if current_status != 'published' %}checked{% endif %}
-                                >
-                                <label class="btn btn-outline-secondary" for="statusDraft">
-                                    <div class="fw-semibold">Koncept</div>
-                                    <div class="small mb-0 text-muted">Zůstane v administraci</div>
-                                </label>
-                            </div>
+                            <input
+                                type="radio"
+                                class="btn-check"
+                                name="statusToggle"
+                                id="statusDraft"
+                                value="draft"
+                                {% if current_status != 'published' %}checked{% endif %}
+                            >
+                            <label class="btn btn-outline-secondary" for="statusDraft">
+                                <div class="fw-semibold">Koncept</div>
+                                <div class="small mb-0 text-muted">Zůstane v administraci</div>
+                            </label>
                         </div>
 
                         {% if view_url is defined and view_url %}
                             <div class="d-grid gap-2 mb-3">
-                                <a
-                                    href="{{ view_url }}"
-                                    target="_blank"
-                                    class="btn btn-outline-primary {% if values.status != 'published' %}disabled{% endif %}"
-                                >
-                                    Zobrazit na webu
-                                </a>
+                                {{ components.view_button(view_url, {
+                                    disabled: values.status != 'published',
+                                    target: '_blank',
+                                    block: true,
+                                    label: 'Zobrazit na webu'
+                                }) }}
                                 {% if values.status != 'published' %}
                                     <div class="small text-muted">Aktivuje se po publikování příspěvku.</div>
                                 {% endif %}
                             </div>
                         {% endif %}
 
-                        <div class="mb-3">
-                            <button type="submit" class="btn btn-primary w-100">Uložit změny</button>
+                        <div class="d-grid gap-2 mb-3">
+                            <button type="submit" class="btn btn-outline-secondary w-100 status-submit" data-status-action="draft">Uložit jako koncept</button>
+                            <button type="submit" class="btn btn-success w-100 status-submit" data-status-action="published">Publikovat</button>
                         </div>
 
                         {% if errors.status %}
@@ -702,19 +700,37 @@
 
         Object.keys(termTypeLabels).forEach((typeKey) => initTermPicker(typeKey));
 
-        // přepínání stavu přes přepínač
+        // přepínání stavu a ukládání přes tlačítka
         (function () {
             const statusInput = document.getElementById('statusField');
             if (!statusInput) return;
 
             const toggles = document.querySelectorAll('input[name="statusToggle"]');
+            const statusButtons = document.querySelectorAll('.status-submit');
+
+            const setStatus = (status) => {
+                statusInput.value = status || 'draft';
+
+                const matchingToggle = Array.from(toggles).find((toggle) => toggle.value === status);
+                if (matchingToggle) {
+                    matchingToggle.checked = true;
+                }
+            };
+
             const updateStatus = () => {
                 const selected = Array.from(toggles).find((toggle) => toggle.checked);
-                statusInput.value = selected ? selected.value : 'draft';
+                setStatus(selected ? selected.value : 'draft');
             };
 
             toggles.forEach((toggle) => {
                 toggle.addEventListener('change', updateStatus);
+            });
+
+            statusButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    const desiredStatus = button.getAttribute('data-status-action') || 'draft';
+                    setStatus(desiredStatus);
+                });
             });
 
             updateStatus();

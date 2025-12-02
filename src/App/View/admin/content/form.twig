@@ -74,32 +74,39 @@
                             value="{{ current_status }}"
                         >
 
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="small text-muted">Aktuální stav:</span>
-                            {% if current_status == 'published' %}
-                                <span id="statusBadge" class="badge bg-success">Publikováno</span>
-                            {% else %}
-                                <span id="statusBadge" class="badge bg-secondary">Koncept</span>
-                            {% endif %}
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">Stav příspěvku</label>
+                            <div class="btn-group w-100" role="group" aria-label="Přepnutí stavu">
+                                <input
+                                    type="radio"
+                                    class="btn-check"
+                                    name="statusToggle"
+                                    id="statusPublished"
+                                    value="published"
+                                    {% if current_status == 'published' %}checked{% endif %}
+                                >
+                                <label class="btn btn-outline-success" for="statusPublished">
+                                    <div class="fw-semibold">Publikovaný</div>
+                                    <div class="small mb-0 text-muted">Zobrazí se na webu</div>
+                                </label>
+
+                                <input
+                                    type="radio"
+                                    class="btn-check"
+                                    name="statusToggle"
+                                    id="statusDraft"
+                                    value="draft"
+                                    {% if current_status != 'published' %}checked{% endif %}
+                                >
+                                <label class="btn btn-outline-secondary" for="statusDraft">
+                                    <div class="fw-semibold">Koncept</div>
+                                    <div class="small mb-0 text-muted">Zůstane v administraci</div>
+                                </label>
+                            </div>
                         </div>
 
-                        <div class="mb-2">
-                            <div class="btn-group w-100" role="group">
-                                <button
-                                    type="submit"
-                                    class="btn btn-primary"
-                                    data-status-action="published"
-                                >
-                                    Publikovat
-                                </button>
-                                <button
-                                    type="submit"
-                                    class="btn btn-outline-secondary"
-                                    data-status-action="draft"
-                                >
-                                    Uložit jako koncept
-                                </button>
-                            </div>
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-primary w-100">Uložit změny</button>
                         </div>
 
                         {% if errors.status %}
@@ -675,31 +682,22 @@
 
         Object.keys(termTypeLabels).forEach((typeKey) => initTermPicker(typeKey));
 
-        // přepínání stavu přes tlačítka + aktualizace badge
+        // přepínání stavu přes přepínač
         (function () {
             const statusInput = document.getElementById('statusField');
-            const statusBadge = document.getElementById('statusBadge');
             if (!statusInput) return;
 
-            const buttons = document.querySelectorAll('[data-status-action]');
-            buttons.forEach((btn) => {
-                btn.addEventListener('click', function () {
-                    const value = this.getAttribute('data-status-action') || 'draft';
-                    statusInput.value = value;
+            const toggles = document.querySelectorAll('input[name="statusToggle"]');
+            const updateStatus = () => {
+                const selected = Array.from(toggles).find((toggle) => toggle.checked);
+                statusInput.value = selected ? selected.value : 'draft';
+            };
 
-                    if (statusBadge) {
-                        if (value === 'published') {
-                            statusBadge.textContent = 'Publikováno';
-                            statusBadge.classList.remove('bg-secondary');
-                            statusBadge.classList.add('bg-success');
-                        } else {
-                            statusBadge.textContent = 'Koncept';
-                            statusBadge.classList.remove('bg-success');
-                            statusBadge.classList.add('bg-secondary');
-                        }
-                    }
-                });
+            toggles.forEach((toggle) => {
+                toggle.addEventListener('change', updateStatus);
             });
+
+            updateStatus();
         })();
 
         // mazání obsahu z tlačítka v boxu Publikace

@@ -51,10 +51,12 @@ class TermController extends AjaxController
             $preferredType = array_key_first($definitions) ?: 'tag';
         }
 
+        $typeLabel = $definitions[$preferredType]['label'] ?? $preferredType;
+
         $this->render('admin/terms/form.twig', [
             'types' => TermType::all(),
             'type_locked' => $typeLocked,
-            'type_label' => $definitions[$preferredType]['label'] ?? $preferredType,
+            'type_label' => $typeLabel,
             'values' => [
                 'name' => '',
                 'slug' => '',
@@ -62,7 +64,7 @@ class TermController extends AjaxController
                 'description' => '',
             ],
             'errors' => [],
-            'heading' => 'Nový term',
+            'heading' => 'Nový ' . $typeLabel,
             'form_action' => '/admin/terms/create',
             'current_menu' => 'terms:' . $preferredType,
         ]);
@@ -75,12 +77,15 @@ class TermController extends AjaxController
         $data = $this->sanitizeInput();
         $errors = $this->validate($data);
 
+        $definitions = TermType::definitions();
+        $typeLabel = $definitions[$data['type']]['label'] ?? $data['type'];
+
         if ($errors) {
             $this->render('admin/terms/form.twig', [
                 'types' => TermType::all(),
                 'values' => $data,
                 'errors' => $errors,
-                'heading' => 'Nový term',
+                'heading' => 'Nový ' . $typeLabel,
                 'form_action' => '/admin/terms/create',
                 'current_menu' => 'terms:' . $data['type'],
             ]);
@@ -114,11 +119,12 @@ class TermController extends AjaxController
         }
 
         $definitions = TermType::definitions();
+        $typeLabel = $definitions[$term->type]['label'] ?? $term->type;
 
         $this->render('admin/terms/form.twig', [
             'types' => TermType::all(),
             'type_locked' => true,
-            'type_label' => $definitions[$term->type]['label'] ?? $term->type,
+            'type_label' => $typeLabel,
             'values' => [
                 'name' => $term->name,
                 'slug' => $term->slug,
@@ -126,7 +132,7 @@ class TermController extends AjaxController
                 'description' => $term->description,
             ],
             'errors' => [],
-            'heading' => 'Upravit term',
+            'heading' => 'Upravit ' . $typeLabel,
             'form_action' => "/admin/terms/{$term->id}/edit",
             'current_menu' => 'terms:' . $term->type,
             'term_id' => $term->id,
@@ -147,12 +153,15 @@ class TermController extends AjaxController
         $data = $this->sanitizeInput($term->type);
         $errors = $this->validate($data, (int) $term->id);
 
+        $definitions = TermType::definitions();
+        $typeLabel = $definitions[$term->type]['label'] ?? $term->type;
+
         if ($errors) {
             $this->render('admin/terms/form.twig', [
                 'types' => TermType::all(),
                 'values' => $data,
                 'errors' => $errors,
-                'heading' => 'Upravit term',
+                'heading' => 'Upravit ' . $typeLabel,
                 'form_action' => "/admin/terms/{$term->id}/edit",
                 'current_menu' => 'terms:' . $term->type,
                 'term_id' => $term->id,

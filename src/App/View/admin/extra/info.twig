@@ -1,0 +1,28 @@
+{% extends 'admin/layout.twig' %}
+
+{% block title %}Info o webu | Administrace{% endblock %}
+
+{% block body %}
+    <h1 class="h3 mb-4">Info o webu</h1>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <dl class="row mb-0">
+                <dt class="col-sm-4 col-md-3 text-muted">PHP verze</dt>
+                <dd class="col-sm-8 col-md-9">{{ info.php_version }}</dd>
+
+                <dt class="col-sm-4 col-md-3 text-muted">MySQL verze</dt>
+                <dd class="col-sm-8 col-md-9">{{ info.mysql_version }}</dd>
+
+                <dt class="col-sm-4 col-md-3 text-muted">Server</dt>
+                <dd class="col-sm-8 col-md-9">{{ info.server }}</dd>
+
+                <dt class="col-sm-4 col-md-3 text-muted">Název databáze</dt>
+                <dd class="col-sm-8 col-md-9">{{ info.db_name }}</dd>
+
+                <dt class="col-sm-4 col-md-3 text-muted">Velikost databáze</dt>
+                <dd class="col-sm-8 col-md-9">{{ info.db_size }}</dd>
+            </dl>
+        </div>
+    </div>
+{% endblock %}

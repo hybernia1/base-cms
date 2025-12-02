@@ -1,0 +1,26 @@
+{% extends 'admin/layout.twig' %}
+
+{% block title %}Záloha databáze | Administrace{% endblock %}
+
+{% block body %}
+    <h1 class="h3 mb-4">Záloha databáze</h1>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <p class="mb-4 text-muted">Stáhni aktuální zálohu databáze pro případ potřeby obnovy.</p>
+            <dl class="row">
+                <dt class="col-sm-4 col-md-3 text-muted">Databáze</dt>
+                <dd class="col-sm-8 col-md-9">{{ database_name }}</dd>
+            </dl>
+
+            <div class="d-flex align-items-center gap-3">
+                <a class="btn btn-primary {% if not can_download %}disabled{% endif %}" href="/admin/extra/backup?download=1">
+                    <i class="bi bi-cloud-download me-2"></i> Stáhnout zálohu
+                </a>
+                {% if not can_download %}
+                    <span class="text-warning small">Zkontroluj prosím nastavení databáze a dostupnost nástroje mysqldump.</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

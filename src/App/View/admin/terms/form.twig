@@ -9,6 +9,8 @@
 
     <form method="post" action="{{ form_action }}" class="card shadow-sm mb-3">
         <div class="card-body p-4">
+            <input type="hidden" name="type" value="{{ values.type }}">
+
             <div class="mb-3">
                 <label for="name" class="form-label">Název</label>
                 <input type="text" name="name" id="name" class="form-control {% if errors.name %}is-invalid{% endif %}" value="{{ values.name }}">
@@ -24,23 +26,6 @@
                     <div class="invalid-feedback">{{ errors.slug }}</div>
                 {% else %}
                     <div class="form-text">Pokud necháš prázdné, vytvoří se automaticky z názvu.</div>
-                {% endif %}
-            </div>
-
-            <div class="mb-3">
-                <label for="type" class="form-label">Typ termu</label>
-                {% if type_locked %}
-                    <div class="form-control-plaintext fw-semibold">{{ type_label|default(types[values.type]) }}</div>
-                    <input type="hidden" name="type" value="{{ values.type }}">
-                {% else %}
-                    <select name="type" id="type" class="form-select {% if errors.type %}is-invalid{% endif %}">
-                        {% for key, label in types %}
-                            <option value="{{ key }}" {% if values.type == key %}selected{% endif %}>{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                {% endif %}
-                {% if errors.type %}
-                    <div class="invalid-feedback">{{ errors.type }}</div>
                 {% endif %}
             </div>
 

@@ -14,6 +14,11 @@
         <div class="card-body">
             <form method="post" action="{{ form_action }}">
                 <div class="mb-3">
+                    <label class="form-label">Přezdívka</label>
+                    <input type="text" name="nickname" class="form-control" value="{{ values.nickname|default('') }}" placeholder="Např. Jan Novák">
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label">E-mail</label>
                     <input type="email" name="email" class="form-control" value="{{ values.email|default('') }}" required>
                     {% if errors.email %}

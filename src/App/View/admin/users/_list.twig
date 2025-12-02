@@ -15,7 +15,12 @@
             {% if users %}
                 {% for user in users %}
                     <tr>
-                        <td>{{ user.email }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ user.email }}</div>
+                            {% if user.nickname %}
+                                <div class="text-muted small">Přezdívka: {{ user.nickname }}</div>
+                            {% endif %}
+                        </td>
                         <td>{{ roles[user.role] ?? user.role }}</td>
                         <td>
                             {% if user.is_banned %}

@@ -50,6 +50,7 @@ class UserController extends AjaxController
             $serializedUsers[] = [
                 'id' => (int) $user->id,
                 'email' => $user->email,
+                'nickname' => $user->nickname,
                 'role' => $user->role,
                 'is_banned' => (bool) $user->is_banned,
                 'ban_reason' => $user->ban_reason,
@@ -71,7 +72,9 @@ class UserController extends AjaxController
             'form_action' => '/admin/users/create',
             'heading' => 'Nový uživatel',
             'errors' => [],
-            'values' => [],
+            'values' => [
+                'nickname' => '',
+            ],
         ]);
     }
 
@@ -103,7 +106,7 @@ class UserController extends AjaxController
         $user->email = $data['email'];
         $user->password = password_hash($data['password'], PASSWORD_DEFAULT);
         $user->role = $data['role'];
-        $user->nickname = UserProfile::generateNickname($data['email']);
+        $user->nickname = $data['nickname'] !== '' ? $data['nickname'] : UserProfile::generateNickname($data['email']);
         $user->is_profile_public = 1;
         $user->is_banned = 0;
         $user->ban_reason = '';
@@ -130,6 +133,7 @@ class UserController extends AjaxController
             'roles' => self::ROLES,
             'values' => [
                 'email' => $user->email,
+                'nickname' => $user->nickname,
                 'role'  => $user->role,
                 'is_banned' => (int) ($user->is_banned ?? 0),
                 'ban_reason' => $user->ban_reason ?? '',
@@ -179,9 +183,11 @@ class UserController extends AjaxController
 
         $user->email = $data['email'];
         $user->role = $data['role'];
-        if ($user->nickname === '' || $user->nickname === null) {
-            $user->nickname = UserProfile::generateNickname($user->email);
-        }
+        $user->nickname = $data['nickname'] !== ''
+            ? $data['nickname']
+            : ($user->nickname !== '' && $user->nickname !== null
+                ? $user->nickname
+                : UserProfile::generateNickname($user->email));
         if ($data['password']) {
             $user->password = password_hash($data['password'], PASSWORD_DEFAULT);
         }
@@ -306,6 +312,7 @@ class UserController extends AjaxController
             'email' => trim($_POST['email'] ?? ''),
             'password' => $_POST['password'] ?? '',
             'role' => trim($_POST['role'] ?? ''),
+            'nickname' => trim($_POST['nickname'] ?? ''),
         ];
     }
 

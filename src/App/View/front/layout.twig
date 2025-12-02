@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <title>{% block title %}Můj web{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
         body { background-color: #f8fafc; }
         header { background: #0d6efd; color: #fff; }
@@ -23,22 +24,61 @@
 {% if admin_bar is defined and admin_bar %}
     <div class="admin-bar">
         <div class="container d-flex align-items-center gap-3 flex-wrap">
-            <a href="/admin" class="fw-semibold text-decoration-none">⚡ Administrace</a>
-            {% if admin_bar.edit_url is defined %}
-                <a href="{{ admin_bar.edit_url }}" class="text-decoration-none">Upravit tento obsah</a>
+            {% if admin_bar.dashboard_url %}
+                <a href="{{ admin_bar.dashboard_url }}" class="fw-semibold text-decoration-none d-flex align-items-center gap-1">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Administrace</span>
+                </a>
             {% endif %}
-            <div class="dropdown">
-                <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    Nový obsah
-                </button>
-                <ul class="dropdown-menu">
-                    {% for link in admin_bar.create_links|default([]) %}
-                        <li><a class="dropdown-item" href="{{ link.url }}">{{ link.label }}</a></li>
-                    {% endfor %}
-                </ul>
+
+            {% if admin_bar.edit_url is defined %}
+                <a href="{{ admin_bar.edit_url }}" class="text-decoration-none d-flex align-items-center gap-1">
+                    <i class="bi bi-pencil"></i>
+                    <span>Upravit tento obsah</span>
+                </a>
+            {% endif %}
+
+            {% if admin_bar.create_links|default([]) is not empty %}
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Nový obsah
+                    </button>
+                    <ul class="dropdown-menu">
+                        {% for link in admin_bar.create_links %}
+                            <li><a class="dropdown-item" href="{{ link.url }}">{{ link.label }}</a></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            {% if admin_bar.dashboard_url %}
+                <a href="{{ admin_bar.dashboard_url }}" class="text-decoration-none d-flex align-items-center gap-1">
+                    <i class="bi bi-grid"></i>
+                    <span>Přehled</span>
+                </a>
+            {% endif %}
+
+            <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
+                {% if admin_bar.user_role_label %}
+                    <span class="badge bg-light text-dark">{{ admin_bar.user_role_label }}</span>
+                {% endif %}
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-light dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-person-circle"></i>
+                        <span>{{ admin_bar.user_label }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        {% for link in admin_bar.user_links|default([]) %}
+                            <li>
+                                <a class="dropdown-item d-flex align-items-center gap-2" href="{{ link.url }}">
+                                    {% if link.icon %}<i class="bi {{ link.icon }}"></i>{% endif %}
+                                    <span>{{ link.label }}</span>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
             </div>
-            <a href="{{ admin_bar.dashboard_url|default('/admin') }}" class="text-decoration-none">Přehled</a>
-            <span class="ms-auto small text-white-50">{{ admin_bar.user_label }}</span>
         </div>
     </div>
 {% endif %}
@@ -49,8 +89,6 @@
             <a href="/">Domů</a>
             <a href="/{{ post_archive_slug }}">Archiv</a>
             {% if current_user %}
-                <a href="/profile">Profil</a>
-                <a href="/profile/edit">Nastavení</a>
                 <a href="/logout">Odhlásit se</a>
             {% else %}
                 <a href="/login">Přihlášení</a>

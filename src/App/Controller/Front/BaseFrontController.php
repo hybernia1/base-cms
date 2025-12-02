@@ -21,21 +21,36 @@ abstract class BaseFrontController
         $currentUser = Auth::user();
         $adminBar = [];
 
-        if (Auth::hasRole(['admin', 'editor'])) {
+        if ($currentUser) {
             $contentTypes = ContentType::definitions();
             $createLinks = [];
 
-            foreach ($contentTypes as $type) {
-                $createLinks[] = [
-                    'label' => $type['menu_label'] ?? ($type['plural_name'] ?? ($type['name'] ?? $type['slug'] ?? 'Obsah')),
-                    'url' => '/admin/content/' . $type['slug'] . '/create',
-                ];
+            if (Auth::hasRole(['admin', 'editor'])) {
+                foreach ($contentTypes as $type) {
+                    $createLinks[] = [
+                        'label' => $type['menu_label'] ?? ($type['plural_name'] ?? ($type['name'] ?? $type['slug'] ?? 'Obsah')),
+                        'url' => '/admin/content/' . $type['slug'] . '/create',
+                    ];
+                }
             }
 
+            $roleLabelMap = [
+                'admin' => 'Administrátor',
+                'editor' => 'Editor',
+                'user' => 'Uživatel',
+            ];
+
             $adminBar = [
-                'dashboard_url' => '/admin',
+                'dashboard_url' => Auth::hasRole(['admin', 'editor']) ? '/admin' : null,
                 'create_links' => $createLinks,
-                'user_label' => $currentUser ? ($currentUser->nickname ?: ($currentUser->email ?? 'Uživatel')) : 'Administrátor',
+                'user_label' => $currentUser->nickname ?: ($currentUser->email ?? 'Uživatel'),
+                'user_role' => $currentUser->role ?? 'user',
+                'user_role_label' => $roleLabelMap[$currentUser->role] ?? ($currentUser->role ?? 'uživatel'),
+                'user_links' => [
+                    ['label' => 'Můj profil', 'url' => '/profile', 'icon' => 'bi-person'],
+                    ['label' => 'Nastavení profilu', 'url' => '/profile/edit', 'icon' => 'bi-gear'],
+                    ['label' => 'Odhlásit se', 'url' => '/logout', 'icon' => 'bi-box-arrow-right'],
+                ],
             ];
         }
 

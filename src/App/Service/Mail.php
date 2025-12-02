@@ -20,7 +20,25 @@ class Mail
             'encryption' => Setting::get('smtp_encryption', $configFile['encryption'] ?? PHPMailer::ENCRYPTION_STARTTLS),
         ];
 
-        if (trim((string) $config['host']) === '' || trim((string) $config['from_email']) === '') {
+        $hasSmtp = trim((string) $config['host']) !== '';
+        $fromEmail = trim((string) $config['from_email']);
+
+        if (!$hasSmtp && $fromEmail !== '') {
+            $headers = [
+                'MIME-Version: 1.0',
+                'Content-type: text/html; charset=UTF-8',
+            ];
+
+            $fromHeader = $config['from_name'] !== ''
+                ? sprintf('%s <%s>', $config['from_name'], $fromEmail)
+                : $fromEmail;
+
+            $headers[] = 'From: ' . $fromHeader;
+
+            return mail($to, $subject, $htmlBody, implode("\r\n", $headers));
+        }
+
+        if (!$hasSmtp || $fromEmail === '') {
             return false;
         }
 

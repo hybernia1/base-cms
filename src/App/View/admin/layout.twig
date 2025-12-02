@@ -25,6 +25,7 @@
             --admin-muted: #64748b;
             --admin-accent: #2563eb;
             --admin-accent-soft: #e0e7ff;
+            --admin-active: #dbeafe;
             --admin-radius: 14px;
         }
 
@@ -148,7 +149,7 @@
         }
 
         .admin-sidebar .nav-link.active {
-            background: var(--admin-accent-soft);
+            background: var(--admin-active);
             color: #1d4ed8;
             border-color: transparent;
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
@@ -183,12 +184,36 @@
         }
 
         .btn-icon {
-            width: 2.25rem;
-            height: 2.25rem;
+            --btn-icon-size: 2.5rem;
+            width: var(--btn-icon-size);
+            height: var(--btn-icon-size);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 0.35rem;
+            padding: 0;
+            border-radius: 999px;
+            background: #fff;
+            border-width: 1px;
+            border-color: currentColor;
+            line-height: 1;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+
+        .btn-group-sm > .btn-icon,
+        .btn-icon.btn-sm {
+            --btn-icon-size: 2.25rem;
+            font-size: 0.95rem;
+        }
+
+        .btn-icon:hover,
+        .btn-icon:focus-visible {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+        }
+
+        .btn-icon i {
+            pointer-events: none;
         }
 
         .btn-outline-secondary,
@@ -378,7 +403,7 @@
                         {% set createPrefix = type.key is defined and type.key == 'page' ? 'Nová' : 'Nový' %}
                         {% set menuId = 'content-menu-' ~ type.slug ~ '-desktop' %}
                         <li class="nav-item mb-1">
-                            <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle {% if isActive %}active{% endif %}"
+                            <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle"
                                     type="button"
                                     data-bs-toggle="collapse"
                                     data-bs-target="#{{ menuId }}"
@@ -415,7 +440,7 @@
                 <li class="nav-item mb-1">
                     {% set termsActive = current_menu is defined and current_menu starts with 'terms' %}
                     {% set termsMenuId = 'terms-menu-desktop' %}
-                    <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle {% if termsActive %}active{% endif %}"
+                    <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle"
                             type="button"
                             data-bs-toggle="collapse"
                             data-bs-target="#{{ termsMenuId }}"
@@ -466,7 +491,7 @@
                     {% set settingsActive = current_menu is defined and current_menu starts with 'settings' %}
                     {% set settingsMenuId = 'settings-menu-desktop' %}
                     <li class="nav-item mb-1">
-                        <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle {% if settingsActive %}active{% endif %}"
+                        <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle"
                                 type="button"
                                 data-bs-toggle="collapse"
                                 data-bs-target="#{{ settingsMenuId }}"
@@ -515,7 +540,7 @@
                         {% set createPrefix = type.key is defined and type.key == 'page' ? 'Nová' : 'Nový' %}
                         {% set menuId = 'content-menu-' ~ type.slug ~ '-mobile' %}
                         <li class="nav-item mb-1">
-                            <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle {% if isActive %}active{% endif %}"
+                            <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle"
                                     type="button"
                                     data-bs-toggle="collapse"
                                     data-bs-target="#{{ menuId }}"
@@ -550,7 +575,7 @@
                 <li class="nav-item mb-1">
                     {% set termsActive = current_menu is defined and current_menu starts with 'terms' %}
                     {% set termsMenuId = 'terms-menu-mobile' %}
-                    <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle {% if termsActive %}active{% endif %}"
+                    <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle"
                             type="button"
                             data-bs-toggle="collapse"
                             data-bs-target="#{{ termsMenuId }}"
@@ -594,7 +619,7 @@
                     {% set settingsActive = current_menu is defined and current_menu starts with 'settings' %}
                     {% set settingsMenuId = 'settings-menu-mobile' %}
                     <li class="nav-item mb-1">
-                        <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle {% if settingsActive %}active{% endif %}"
+                        <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle"
                                 type="button"
                                 data-bs-toggle="collapse"
                                 data-bs-target="#{{ settingsMenuId }}"

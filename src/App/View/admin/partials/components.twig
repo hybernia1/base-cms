@@ -27,7 +27,7 @@
 {% endmacro %}
 
 {% macro actions(actions, size = 'sm') %}
-    <div class="btn-group btn-group-{{ size }}" role="group">
+    <div class="btn-{{ size }}" role="group">
         {% for action in actions %}
             {% set tooltip = action.title ?: action.label %}
 

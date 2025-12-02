@@ -1,9 +1,11 @@
 <?php
 namespace App\Controller\Front;
 
+use App\Service\Auth;
 use App\Service\EmailTemplateManager;
 use App\Service\Flash;
 use App\Service\Setting;
+use App\Service\UserProfile;
 use RedBeanPHP\R as R;
 
 class AuthController extends BaseFrontController
@@ -32,6 +34,8 @@ class AuthController extends BaseFrontController
             exit;
         }
 
+        UserProfile::ensureColumns();
+
         $data = $this->sanitize();
         $errors = $this->validate($data);
 
@@ -51,6 +55,8 @@ class AuthController extends BaseFrontController
         $user->email = $data['email'];
         $user->password = password_hash($data['password'], PASSWORD_DEFAULT);
         $user->role = 'user';
+        $user->nickname = UserProfile::generateNickname($data['email']);
+        $user->is_profile_public = 1;
         $user->is_banned = 0;
         $user->created_at = date('Y-m-d H:i:s');
         $user->updated_at = date('Y-m-d H:i:s');
@@ -65,12 +71,74 @@ class AuthController extends BaseFrontController
         exit;
     }
 
+    public function loginForm()
+    {
+        $this->render('front/login.twig', [
+            'values' => [
+                'email' => '',
+            ],
+            'errors' => [],
+        ]);
+    }
+
+    public function login()
+    {
+        $data = $this->sanitizeLogin();
+        $errors = [];
+
+        if ($data['email'] === '' || !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            $errors['email'] = 'Zadejte platný e-mail.';
+        }
+
+        if ($data['password'] === '') {
+            $errors['password'] = 'Zadejte heslo.';
+        }
+
+        if ($errors) {
+            $this->render('front/login.twig', [
+                'values' => $data,
+                'errors' => $errors,
+            ]);
+            return;
+        }
+
+        $result = Auth::attemptDetailed($data['email'], $data['password']);
+        if (!$result['success']) {
+            Flash::addError($result['message'] ?? 'Přihlášení se nezdařilo.');
+            $this->render('front/login.twig', [
+                'values' => ['email' => $data['email']],
+                'errors' => [],
+            ]);
+            return;
+        }
+
+        Flash::addSuccess('Přihlášení proběhlo úspěšně.');
+        header('Location: /profile');
+        exit;
+    }
+
+    public function logout(): void
+    {
+        unset($_SESSION['user_id']);
+        Flash::addSuccess('Byli jste odhlášeni.');
+        header('Location: /');
+        exit;
+    }
+
     private function sanitize(): array
     {
         return [
             'email' => trim($_POST['email'] ?? ''),
             'password' => $_POST['password'] ?? '',
             'password_confirm' => $_POST['password_confirm'] ?? '',
+        ];
+    }
+
+    private function sanitizeLogin(): array
+    {
+        return [
+            'email' => trim($_POST['email'] ?? ''),
+            'password' => $_POST['password'] ?? '',
         ];
     }
 

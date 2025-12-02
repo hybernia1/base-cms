@@ -4,6 +4,7 @@ namespace App\Controller\Admin;
 use App\Service\Auth;
 use App\Service\EmailTemplateManager;
 use App\Service\Flash;
+use App\Service\UserProfile;
 use RedBeanPHP\R as R;
 
 class UserController extends AjaxController
@@ -102,6 +103,8 @@ class UserController extends AjaxController
         $user->email = $data['email'];
         $user->password = password_hash($data['password'], PASSWORD_DEFAULT);
         $user->role = $data['role'];
+        $user->nickname = UserProfile::generateNickname($data['email']);
+        $user->is_profile_public = 1;
         $user->is_banned = 0;
         $user->ban_reason = '';
         R::store($user);
@@ -176,6 +179,9 @@ class UserController extends AjaxController
 
         $user->email = $data['email'];
         $user->role = $data['role'];
+        if ($user->nickname === '' || $user->nickname === null) {
+            $user->nickname = UserProfile::generateNickname($user->email);
+        }
         if ($data['password']) {
             $user->password = password_hash($data['password'], PASSWORD_DEFAULT);
         }
@@ -346,6 +352,8 @@ class UserController extends AjaxController
     private function ensureUserColumns(): void
     {
         $columns = R::inspect('user');
+
+        UserProfile::ensureColumns();
 
         if (!isset($columns['is_banned'])) {
             R::exec("ALTER TABLE `user` ADD COLUMN `is_banned` TINYINT(1) NOT NULL DEFAULT 0 AFTER `role`");

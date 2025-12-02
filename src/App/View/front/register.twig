@@ -9,6 +9,7 @@
         <div class="mb-3">
             <label class="form-label" for="email">E-mail</label>
             <input type="email" name="email" id="email" class="form-control" value="{{ values.email }}" required>
+            <div class="form-text">Přezdívku vygenerujeme automaticky, později ji lze změnit v profilu.</div>
             {% if errors.email %}
                 <div class="text-danger small mt-1">{{ errors.email }}</div>
             {% endif %}
@@ -31,5 +32,6 @@
         </div>
 
         <button type="submit" class="btn btn-primary">Registrovat</button>
+        <a href="/login" class="btn btn-link">Už máte účet? Přihlaste se</a>
     </form>
 {% endblock %}

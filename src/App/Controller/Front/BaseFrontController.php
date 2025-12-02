@@ -35,7 +35,7 @@ abstract class BaseFrontController
             $adminBar = [
                 'dashboard_url' => '/admin',
                 'create_links' => $createLinks,
-                'user_label' => $currentUser ? ($currentUser->email ?? 'Uživatel') : 'Administrátor',
+                'user_label' => $currentUser ? ($currentUser->nickname ?: ($currentUser->email ?? 'Uživatel')) : 'Administrátor',
             ];
         }
 

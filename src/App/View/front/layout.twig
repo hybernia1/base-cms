@@ -48,7 +48,14 @@
         <nav class="d-flex gap-3">
             <a href="/">Domů</a>
             <a href="/{{ post_archive_slug }}">Archiv</a>
-            <a href="/register">Registrace</a>
+            {% if current_user %}
+                <a href="/profile">Profil</a>
+                <a href="/profile/edit">Nastavení</a>
+                <a href="/logout">Odhlásit se</a>
+            {% else %}
+                <a href="/login">Přihlášení</a>
+                <a href="/register">Registrace</a>
+            {% endif %}
         </nav>
     </div>
 </header>

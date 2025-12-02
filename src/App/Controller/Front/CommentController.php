@@ -1,6 +1,7 @@
 <?php
 namespace App\Controller\Front;
 
+use App\Service\Auth;
 use App\Service\Comment;
 use App\Service\EmailTemplateManager;
 use App\Service\Setting;
@@ -10,11 +11,15 @@ class CommentController extends BaseFrontController
 {
     public function store(): void
     {
+        header('Content-Type: application/json');
+
         $contentId = (int) ($_POST['content_id'] ?? 0);
         $parentId = $_POST['parent_id'] ?? '';
         $body = trim($_POST['body'] ?? '');
         $authorName = trim($_POST['author_name'] ?? '');
         $authorEmail = trim($_POST['author_email'] ?? '');
+        $currentUser = Auth::user();
+        $allowAnonymous = Setting::get('comments_allow_anonymous', '0') === '1';
 
         $content = $contentId ? R::load('content', $contentId) : null;
         if (!$content || !$content->id) {
@@ -29,18 +34,29 @@ class CommentController extends BaseFrontController
             return;
         }
 
+        if (!$currentUser && !$allowAnonymous) {
+            http_response_code(403);
+            echo json_encode(['status' => 'error', 'message' => 'Komentovat mohou pouze přihlášení uživatelé.']);
+            return;
+        }
+
         if ($body === '') {
             http_response_code(400);
             echo json_encode(['status' => 'error', 'message' => 'Text komentáře je povinný.']);
             return;
         }
 
-        if (Setting::get('comments_allow_anonymous', '0') !== '1') {
+        if (!$currentUser && $allowAnonymous) {
             if ($authorName === '' || $authorEmail === '' || !filter_var($authorEmail, FILTER_VALIDATE_EMAIL)) {
                 http_response_code(400);
                 echo json_encode(['status' => 'error', 'message' => 'Zadejte jméno a platný e-mail.']);
                 return;
             }
+        }
+
+        if ($currentUser) {
+            $authorName = $currentUser->nickname ?: ($currentUser->email ?? 'Registrovaný uživatel');
+            $authorEmail = $currentUser->email ?? '';
         }
 
         $maxDepth = (int) Setting::get('comments_max_depth', 0);
@@ -60,11 +76,12 @@ class CommentController extends BaseFrontController
             }
         }
 
-        $status = Setting::get('comments_moderation', '1') === '1' ? 'pending' : 'approved';
+        $moderationEnabled = Setting::get('comments_moderation', '1') === '1' && $allowAnonymous;
+        $status = ($currentUser || !$moderationEnabled) ? 'approved' : 'pending';
         $comment = Comment::create([
             'content_id' => $contentId,
             'parent_id' => $parentId,
-            'user_id' => $_SESSION['user_id'] ?? null,
+            'user_id' => $currentUser->id ?? null,
             'author_name' => $authorName,
             'author_email' => $authorEmail,
             'body' => $body,

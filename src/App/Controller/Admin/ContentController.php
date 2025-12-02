@@ -102,6 +102,23 @@ class ContentController extends AjaxController
         ];
     }
 
+    private function newContentHeading(array $definition): string
+    {
+        return sprintf('Nový %s', $this->typeLabelLowercase($definition));
+    }
+
+    private function editContentHeading(array $definition): string
+    {
+        return sprintf('Upravit %s', $this->typeLabelLowercase($definition));
+    }
+
+    private function typeLabelLowercase(array $definition): string
+    {
+        $label = $definition['name'] ?? $definition['key'] ?? 'obsah';
+
+        return mb_strtolower($label, 'UTF-8');
+    }
+
     public function createForm($slug)
     {
         Auth::requireRole(['admin', 'editor']);
@@ -119,7 +136,7 @@ class ContentController extends AjaxController
                 'media_ids' => [],
             ],
             'errors' => [],
-            'heading' => 'Nový obsah',
+            'heading' => $this->newContentHeading($definition),
             'form_action' => '/admin/content/' . $definition['slug'] . '/create',
             'current_menu' => $definition['slug'],
             'media' => $this->mediaList(),
@@ -155,7 +172,7 @@ class ContentController extends AjaxController
             $this->render('admin/content/form.twig', [
                 'values' => $data,
                 'errors' => $errors,
-                'heading' => 'Nový obsah',
+                'heading' => $this->newContentHeading($definition),
                 'form_action' => '/admin/content/' . $definition['slug'] . '/create',
                 'current_menu' => $definition['slug'],
                 'media' => $this->mediaList(),
@@ -235,7 +252,7 @@ class ContentController extends AjaxController
                 'media_ids' => $this->loadMediaIdsForContent((int) $content->id),
             ],
             'errors' => [],
-            'heading' => 'Upravit obsah',
+            'heading' => $this->editContentHeading($definition),
             'form_action' => "/admin/content/{$menuSlug}/{$content->id}/edit",
             'current_menu' => $menuSlug,
             'content_id' => $content->id,
@@ -282,7 +299,7 @@ class ContentController extends AjaxController
             $this->render('admin/content/form.twig', [
                 'values' => $data,
                 'errors' => $errors,
-                'heading' => 'Upravit obsah',
+                'heading' => $this->editContentHeading($definition),
                 'form_action' => "/admin/content/{$menuSlug}/{$content->id}/edit",
                 'current_menu' => $menuSlug,
                 'content_id' => $content->id,

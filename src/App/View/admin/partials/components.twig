@@ -91,6 +91,35 @@
     </div>
 {% endmacro %}
 
+{% macro view_button(href, options = {}) %}
+    {% set label = options.label|default('Zobrazit') %}
+    {% set variant = options.variant|default('primary') %}
+    {% set icon = options.icon|default('bi-box-arrow-up-right') %}
+    {% set block = options.block|default(false) %}
+    {% set disabled = options.disabled|default(false) %}
+    {% set target = options.target|default('_self') %}
+    {% set extra_classes = options.class|default('') %}
+
+    {% set base_classes = [
+        'btn',
+        'btn-outline-' ~ variant,
+        block ? 'w-100' : 'btn-icon',
+        disabled ? 'disabled' : '',
+        extra_classes
+    ] %}
+
+    <a
+        href="{{ disabled ? '#' : href }}"
+        class="{{ base_classes|join(' ')|trim }}"
+        {% if not disabled %}target="{{ target }}"{% endif %}
+        title="{{ label }}"
+        aria-label="{{ label }}"
+        {% if disabled %}aria-disabled="true"{% endif %}
+    >
+        {% if icon %}<i class="bi {{ icon }}"></i>{% endif %}{% if block %}<span class="ms-2">{{ label }}</span>{% endif %}
+    </a>
+{% endmacro %}
+
 {% macro crud_actions(base, options = {}) %}
     {% set actions = [] %}
 

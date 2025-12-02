@@ -138,6 +138,7 @@ $router->post('/admin/comments/(\\d+)/delete', 'App\\Controller\\Admin\\CommentC
 $router->post('/admin/comments/trash/empty', 'App\\Controller\\Admin\\CommentController@emptyTrash');
 $router->get('/admin/extra/info', 'App\\Controller\\Admin\\ExtraController@info');
 $router->get('/admin/extra/backup', 'App\\Controller\\Admin\\ExtraController@backup');
+$router->post('/admin/extra/backup', 'App\\Controller\\Admin\\ExtraController@backup');
 
 $router->get('/admin/search', 'App\\Controller\\Admin\\SearchController@index');
 

@@ -737,6 +737,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
             });
 
+            const contentType = response.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                const bodyPreview = (await response.text()).slice(0, 2000);
+                console.error('Neočekávaná AJAX odpověď', bodyPreview);
+                throw new Error('Server vrátil neočekávanou odpověď.');
+            }
+
             const data = await response.json();
             if (!response.ok || data.error || data.success === false) {
                 throw new Error(data.error || data.message || 'Načtení selhalo.');

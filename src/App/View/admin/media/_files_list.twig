@@ -1,0 +1,51 @@
+{% import 'admin/partials/components.twig' as ui %}
+
+{% if items is empty %}
+    <div class="alert alert-info">Zatím žádné nahrané soubory.</div>
+{% else %}
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Název</th>
+                    <th>MIME</th>
+                    <th>Velikost</th>
+                    <th>Vytvořeno</th>
+                    <th class="text-end">Akce</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                    <tr>
+                        <td class="fw-semibold">{{ item.original_name ?: item.filename }}</td>
+                        <td>{{ item.mime_type }}</td>
+                        <td>{{ item.size }} B</td>
+                        <td>{{ item.created_at|date('j. n. Y H:i') }}</td>
+                        <td class="text-end">
+                            {{ ui.actions([
+                                {
+                                    type: 'link',
+                                    href: '/' ~ item.path ~ '/' ~ item.filename,
+                                    label: 'Otevřít',
+                                    variant: 'secondary',
+                                    icon: 'bi-box-arrow-up-right'
+                                },
+                                {
+                                    type: 'form',
+                                    action: '/admin/media/' ~ item.id ~ '/delete',
+                                    label: 'Smazat',
+                                    variant: 'danger',
+                                    confirm: 'Opravdu smazat tento soubor?',
+                                    icon: 'bi-trash',
+                                    ajax: true
+                                }
+                            ]) }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+
+{{ ui.pagination(pagination) }}

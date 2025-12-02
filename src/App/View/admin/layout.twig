@@ -108,9 +108,15 @@
                 {% endif %}
 
                 <li class="nav-item mb-1">
-                    <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'media' %}active{% endif %}"
-                       href="/admin/media">
-                        <i class="bi bi-image me-2"></i> Média
+                    <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'media:gallery' %}active{% endif %}"
+                       href="/admin/media/gallery">
+                        <i class="bi bi-images me-2"></i> Galerie
+                    </a>
+                </li>
+                <li class="nav-item mb-1">
+                    <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'media:files' %}active{% endif %}"
+                       href="/admin/media/files">
+                        <i class="bi bi-folder2-open me-2"></i> Soubory
                     </a>
                 </li>
 
@@ -250,9 +256,15 @@
                     {% endfor %}
                 {% endif %}
                 <li class="nav-item mb-1">
-                    <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'media' %}active{% endif %}"
-                       href="/admin/media">
-                        <i class="bi bi-image me-2"></i> Média
+                    <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'media:gallery' %}active{% endif %}"
+                       href="/admin/media/gallery">
+                        <i class="bi bi-images me-2"></i> Galerie
+                    </a>
+                </li>
+                <li class="nav-item mb-1">
+                    <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'media:files' %}active{% endif %}"
+                       href="/admin/media/files">
+                        <i class="bi bi-folder2-open me-2"></i> Soubory
                     </a>
                 </li>
                 <li class="nav-item mb-1">

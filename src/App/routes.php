@@ -115,6 +115,8 @@ $router->get('/admin/terms/(\\d+)/edit', 'App\\Controller\\Admin\\TermController
 $router->post('/admin/terms/(\\d+)/edit', 'App\\Controller\\Admin\\TermController@update');
 $router->post('/admin/terms/(\\d+)/delete', 'App\\Controller\\Admin\\TermController@delete');
 $router->get('/admin/media', 'App\\Controller\\Admin\\MediaController@index');
+$router->get('/admin/media/gallery', 'App\\Controller\\Admin\\MediaController@gallery');
+$router->get('/admin/media/files', 'App\\Controller\\Admin\\MediaController@files');
 $router->post('/admin/media/upload', 'App\\Controller\\Admin\\MediaController@upload');
 $router->post('/admin/media/(\\d+)/update', 'App\\Controller\\Admin\\MediaController@update');
 $router->post('/admin/media/(\\d+)/delete', 'App\\Controller\\Admin\\MediaController@delete');

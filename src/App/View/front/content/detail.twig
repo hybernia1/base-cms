@@ -38,7 +38,7 @@
                             {% if comments %}
                                 <div class="list-group mb-4">
                                     {% for comment in comments %}
-                                        <div class="list-group-item border-0 border-bottom">
+                                        <div class="list-group-item border-0 border-bottom" style="margin-left: {{ comment.depth * 1.5 }}rem;">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <div>
                                                     <div class="fw-semibold">{{ comment.author_name ?: 'Anonym' }}</div>
@@ -49,6 +49,11 @@
                                                 {% endif %}
                                             </div>
                                             <div class="mt-2">{{ comment.body|nl2br }}</div>
+                                            {% if comment_settings.allow_replies and comment_settings.max_depth > comment.depth and commenting_enabled %}
+                                                <button type="button" class="btn btn-sm btn-link text-decoration-none ps-0 reply-button" data-reply-id="{{ comment.id }}" data-reply-author="{{ comment.author_name ?: 'Anonym' }}">
+                                                    Odpovědět
+                                                </button>
+                                            {% endif %}
                                         </div>
                                     {% endfor %}
                                 </div>
@@ -56,24 +61,36 @@
                                 <p class="text-muted">Buďte první, kdo přidá komentář.</p>
                             {% endif %}
 
+                            {% if not commenting_enabled %}
+                                <div class="alert alert-info">Komentáře jsou povoleny pouze pro přihlášené uživatele.</div>
+                            {% endif %}
+
                             <form method="post" action="/comments" class="mt-3" id="commentForm">
                                 <input type="hidden" name="content_id" value="{{ item.id }}">
                                 <input type="hidden" name="parent_id" value="">
+
+                                <div id="replyInfo" class="alert alert-secondary d-none py-2 px-3 mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="small">Odpovídáte na <strong id="replyTarget"></strong></div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="cancelReply">Zrušit</button>
+                                    </div>
+                                </div>
+
                                 <div class="mb-3">
                                     <label for="comment_body" class="form-label">Komentář</label>
-                                    <textarea class="form-control" id="comment_body" name="body" rows="4" required></textarea>
+                                    <textarea class="form-control" id="comment_body" name="body" rows="4" required {% if not commenting_enabled %}disabled{% endif %}></textarea>
                                 </div>
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label for="comment_author" class="form-label">Jméno</label>
-                                        <input type="text" class="form-control" id="comment_author" name="author_name" value="">
+                                        <input type="text" class="form-control" id="comment_author" name="author_name" value="{{ current_user ? current_user.email : '' }}" {% if not comment_settings.allow_anonymous %}required{% endif %} {% if not comment_settings.allow_anonymous and not current_user %}disabled{% endif %}>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="comment_email" class="form-label">E-mail</label>
-                                        <input type="email" class="form-control" id="comment_email" name="author_email" value="">
+                                        <input type="email" class="form-control" id="comment_email" name="author_email" value="{{ current_user ? current_user.email : '' }}" {% if not comment_settings.allow_anonymous %}required{% endif %} {% if not comment_settings.allow_anonymous and not current_user %}disabled{% endif %}>
                                     </div>
                                 </div>
-                                <button type="submit" class="btn btn-primary mt-3">Odeslat</button>
+                                <button type="submit" class="btn btn-primary mt-3" {% if not commenting_enabled %}disabled{% endif %}>Odeslat</button>
                             </form>
                         </div>
                     </section>
@@ -81,5 +98,46 @@
             {% endif %}
         </div>
     </div>
+{% endblock %}
+
+{% block scripts %}
+    {{ parent() }}
+    {% if comment_allowed %}
+        <script>
+            (function() {
+                const form = document.getElementById('commentForm');
+                if (!form) return;
+
+                const parentField = form.querySelector('input[name="parent_id"]');
+                const replyInfo = document.getElementById('replyInfo');
+                const replyTarget = document.getElementById('replyTarget');
+                const cancelReply = document.getElementById('cancelReply');
+
+                const commentBody = document.getElementById('comment_body');
+
+                document.querySelectorAll('.reply-button').forEach((btn) => {
+                    btn.addEventListener('click', () => {
+                        parentField.value = btn.dataset.replyId;
+                        if (replyInfo && replyTarget) {
+                            replyTarget.textContent = btn.dataset.replyAuthor || 'komentář';
+                            replyInfo.classList.remove('d-none');
+                        }
+                        if (commentBody) {
+                            commentBody.focus();
+                        }
+                    });
+                });
+
+                if (cancelReply) {
+                    cancelReply.addEventListener('click', () => {
+                        parentField.value = '';
+                        if (replyInfo) {
+                            replyInfo.classList.add('d-none');
+                        }
+                    });
+                }
+            })();
+        </script>
+    {% endif %}
 {% endblock %}
 

@@ -110,7 +110,14 @@ class ContentController extends BaseFrontController
 
     private function ensureTrashColumn(): void
     {
-        R::exec('ALTER TABLE `content` ADD COLUMN IF NOT EXISTS `deleted_at` DATETIME DEFAULT NULL');
+        $hasColumn = R::getCell(
+            'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ? AND TABLE_SCHEMA = DATABASE()',
+            ['content', 'deleted_at']
+        );
+
+        if ((int) $hasColumn === 0) {
+            R::exec('ALTER TABLE `content` ADD COLUMN `deleted_at` DATETIME DEFAULT NULL');
+        }
     }
 }
 

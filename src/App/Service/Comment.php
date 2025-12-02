@@ -29,7 +29,14 @@ class Comment
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
 
-        R::exec("ALTER TABLE `" . self::TABLE . "` ADD COLUMN IF NOT EXISTS `deleted_at` DATETIME DEFAULT NULL AFTER `updated_at`");
+        $hasColumn = R::getCell(
+            'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ? AND TABLE_SCHEMA = DATABASE()',
+            [self::TABLE, 'deleted_at']
+        );
+
+        if ((int) $hasColumn === 0) {
+            R::exec("ALTER TABLE `" . self::TABLE . "` ADD COLUMN `deleted_at` DATETIME DEFAULT NULL AFTER `updated_at`");
+        }
     }
 
     public static function create(array $data)

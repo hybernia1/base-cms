@@ -3,6 +3,7 @@ namespace App\Controller\Install;
 
 use App\Service\Mail;
 use App\Service\EmailTemplateManager;
+use App\Service\UserProfile;
 use RedBeanPHP\R as R;
 
 class InstallController
@@ -97,8 +98,12 @@ class InstallController
         // admin user
         $user = R::dispense('user');
         $user->email = $values['admin_email'];
+        UserProfile::ensureColumns();
+
         $user->password = password_hash($values['admin_pass'], PASSWORD_DEFAULT);
         $user->role = 'admin';
+        $user->nickname = UserProfile::generateNickname($values['admin_email']);
+        $user->is_profile_public = 1;
         $user->created_at = date('Y-m-d H:i:s');
         $user->updated_at = date('Y-m-d H:i:s');
         R::store($user);
@@ -122,8 +127,10 @@ class InstallController
             "CREATE TABLE IF NOT EXISTS `user` (
                 `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                 `email` VARCHAR(191) NOT NULL UNIQUE,
+                `nickname` VARCHAR(191) NOT NULL DEFAULT '',
                 `password` VARCHAR(255) NOT NULL,
                 `role` VARCHAR(50) NOT NULL DEFAULT 'editor',
+                `is_profile_public` TINYINT(1) NOT NULL DEFAULT 1,
                 `is_banned` TINYINT(1) NOT NULL DEFAULT 0,
                 `ban_reason` TEXT DEFAULT NULL,
                 `banned_at` DATETIME DEFAULT NULL,
@@ -280,8 +287,14 @@ class InstallController
         }
 
         $userColumns = R::inspect('user');
+        if (!isset($userColumns['nickname'])) {
+            R::exec("ALTER TABLE `user` ADD COLUMN `nickname` VARCHAR(191) NOT NULL DEFAULT '' AFTER `email`");
+        }
         if (!isset($userColumns['is_banned'])) {
             R::exec("ALTER TABLE `user` ADD COLUMN `is_banned` TINYINT(1) NOT NULL DEFAULT 0 AFTER `role`");
+        }
+        if (!isset($userColumns['is_profile_public'])) {
+            R::exec("ALTER TABLE `user` ADD COLUMN `is_profile_public` TINYINT(1) NOT NULL DEFAULT 1 AFTER `role`");
         }
         if (!isset($userColumns['ban_reason'])) {
             R::exec("ALTER TABLE `user` ADD COLUMN `ban_reason` TEXT DEFAULT NULL AFTER `is_banned`");

@@ -112,7 +112,44 @@ class Comment
     {
         self::ensureSchema();
         $items = R::findAll(self::TABLE, ' content_id = ? AND status = ? ORDER BY created_at ASC ', [$contentId, 'approved']);
-        return array_values($items);
+
+        $users = [];
+        $result = [];
+
+        foreach ($items as $item) {
+            $displayName = $item->author_name ?: 'Anonym';
+            $profileUrl = null;
+
+            if ($item->user_id) {
+                if (!array_key_exists($item->user_id, $users)) {
+                    $users[$item->user_id] = R::load('user', (int) $item->user_id);
+                }
+
+                $user = $users[$item->user_id];
+                if ($user && $user->id) {
+                    $displayName = $user->nickname ?: ($item->author_name ?: ($user->email ?? 'Uživatel'));
+
+                    if ((int) ($user->is_profile_public ?? 1) === 1) {
+                        $profileUrl = '/users/' . $user->id;
+                    }
+                }
+            }
+
+            $result[] = [
+                'id' => (int) $item->id,
+                'content_id' => (int) $item->content_id,
+                'parent_id' => $item->parent_id,
+                'user_id' => $item->user_id,
+                'author_name' => $displayName,
+                'profile_url' => $profileUrl,
+                'body' => $item->body,
+                'status' => $item->status,
+                'depth' => (int) $item->depth,
+                'created_at' => $item->created_at,
+            ];
+        }
+
+        return $result;
     }
 
     public static function allPending(): array

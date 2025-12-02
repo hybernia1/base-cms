@@ -20,7 +20,7 @@ class Upload
         'mp3' => ['audio/mpeg'],
     ];
 
-    public static function handle(array $file, string $targetType = 'images')
+    public static function handle(array $file, string $targetType = 'images', ?int $uploadedBy = null)
     {
         if (!isset($file['tmp_name']) || $file['error'] !== UPLOAD_ERR_OK) {
             return [null, 'Soubor se nepodařilo nahrát.'];
@@ -83,6 +83,7 @@ class Upload
         $media->size = $handler->file_src_size;
         $media->is_image = $handler->file_is_image ? 1 : 0;
         $media->original_name = $file['name'] ?? '';
+        $media->uploaded_by = $uploadedBy;
         $media->created_at = date('Y-m-d H:i:s');
         R::store($media);
 

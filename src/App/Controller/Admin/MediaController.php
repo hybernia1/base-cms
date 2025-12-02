@@ -67,7 +67,12 @@ class MediaController extends AjaxController
             return $this->handleUploadError('Nebyl vybrán žádný soubor.');
         }
 
-        [$media, $error] = Upload::handle($_FILES['file']);
+        $currentUser = Auth::user();
+        [$media, $error] = Upload::handle(
+            $_FILES['file'],
+            'images',
+            $currentUser ? (int) $currentUser->id : null
+        );
         if ($error) {
             return $this->handleUploadError($error);
         }

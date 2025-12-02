@@ -10,6 +10,7 @@ class HomeController extends BaseFrontController
     public function index()
     {
         $posts = R::findAll('content', ' type = ? AND status = ? ORDER BY created_at DESC ', ['post', 'published']);
+        $posts = $this->attachAuthors($posts);
 
         $this->render('front/home.twig', [
             'posts' => $posts,
@@ -35,6 +36,7 @@ class HomeController extends BaseFrontController
         }
 
         $items = R::findAll('content', ' type = ? AND status = ? ORDER BY created_at DESC ', [$typeKey, 'published']);
+        $items = $this->attachAuthors($items);
         $typeDef = $definitions[$typeKey];
 
         $this->render('front/home.twig', [
@@ -43,5 +45,42 @@ class HomeController extends BaseFrontController
             'heading' => $typeDef['plural_name'] ?? ($typeDef['menu_label'] ?? $typeDef['name'] ?? $slug),
             'empty_message' => 'Pro tento typ zatím nic není publikováno.',
         ]);
+    }
+
+    private function attachAuthors(array $items): array
+    {
+        $authorIds = [];
+
+        foreach ($items as $item) {
+            $authorId = (int) ($item->author_id ?? 0);
+            if ($authorId > 0) {
+                $authorIds[] = $authorId;
+            }
+        }
+
+        $authorIds = array_values(array_unique($authorIds));
+        if (!$authorIds) {
+            return $items;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($authorIds), '?'));
+        $authors = R::findAll('user', ' id IN (' . $placeholders . ') ', $authorIds);
+
+        $map = [];
+        foreach ($authors as $author) {
+            $map[(int) $author->id] = [
+                'id' => (int) $author->id,
+                'email' => $author->email,
+                'nickname' => $author->nickname ?: $author->email,
+                'profile_url' => (int) ($author->is_profile_public ?? 1) === 1 ? '/users/' . $author->id : null,
+            ];
+        }
+
+        foreach ($items as $item) {
+            $authorId = (int) ($item->author_id ?? 0);
+            $item->author = $map[$authorId] ?? null;
+        }
+
+        return $items;
     }
 }

@@ -145,6 +145,7 @@ class InstallController
                 `title` VARCHAR(255) NOT NULL,
                 `slug` VARCHAR(191) NOT NULL,
                 `type` VARCHAR(50) NOT NULL,
+                `author_id` INT UNSIGNED DEFAULT NULL,
                 `status` VARCHAR(20) NOT NULL DEFAULT 'published',
                 `allow_comments` TINYINT(1) NOT NULL DEFAULT 1,
                 `body` TEXT,
@@ -152,7 +153,8 @@ class InstallController
                 `thumbnail_alt` VARCHAR(255) DEFAULT '',
                 `created_at` DATETIME NOT NULL,
                 `updated_at` DATETIME NOT NULL,
-                UNIQUE KEY `slug_type` (`slug`, `type`)
+                UNIQUE KEY `slug_type` (`slug`, `type`),
+                KEY `idx_author` (`author_id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
 
@@ -183,6 +185,7 @@ class InstallController
         R::exec(
             "CREATE TABLE IF NOT EXISTS `media` (
                 `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `uploaded_by` INT UNSIGNED DEFAULT NULL,
                 `path` VARCHAR(255) NOT NULL,
                 `filename` VARCHAR(255) NOT NULL,
                 `webp_filename` VARCHAR(255) DEFAULT NULL,
@@ -192,7 +195,8 @@ class InstallController
                 `original_name` VARCHAR(255) DEFAULT '',
                 `alt` VARCHAR(255) DEFAULT '',
                 `created_at` DATETIME NOT NULL,
-                `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                KEY `idx_uploaded_by` (`uploaded_by`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
 
@@ -264,6 +268,11 @@ class InstallController
             R::exec("ALTER TABLE `content` ADD COLUMN `allow_comments` TINYINT(1) NOT NULL DEFAULT 1 AFTER `status`");
         }
 
+        if (!isset($contentColumns['author_id'])) {
+            R::exec("ALTER TABLE `content` ADD COLUMN `author_id` INT UNSIGNED DEFAULT NULL AFTER `type`");
+            R::exec("CREATE INDEX idx_author ON content (author_id)");
+        }
+
         $contentMediaColumns = R::inspect('content_media');
 
         if (!isset($contentMediaColumns['relation'])) {
@@ -301,6 +310,12 @@ class InstallController
         }
         if (!isset($userColumns['banned_at'])) {
             R::exec("ALTER TABLE `user` ADD COLUMN `banned_at` DATETIME DEFAULT NULL AFTER `ban_reason`");
+        }
+
+        $mediaColumns = R::inspect('media');
+        if (!isset($mediaColumns['uploaded_by'])) {
+            R::exec("ALTER TABLE `media` ADD COLUMN `uploaded_by` INT UNSIGNED DEFAULT NULL AFTER `id`");
+            R::exec("CREATE INDEX idx_uploaded_by ON media (uploaded_by)");
         }
 
         foreach (EmailTemplateManager::defaults() as $event => $template) {

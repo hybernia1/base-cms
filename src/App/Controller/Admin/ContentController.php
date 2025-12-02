@@ -216,6 +216,7 @@ class ContentController extends AjaxController
         $definition = $definitions[$content->type] ?? ['slug' => $slug, 'name' => ContentType::label($content->type)];
         $menuSlug = $definition['slug'] ?? $slug;
         $allowedTermTypes = $this->allowedTermTypes($content->type);
+        $viewUrl = $content->slug ? '/' . ContentType::slug($content->type) . '/' . $content->slug : null;
 
         $this->render('admin/content/form.twig', [
             'values' => [
@@ -238,6 +239,7 @@ class ContentController extends AjaxController
             'term_types' => TermType::definitions(),
             'current_type' => $definition,
             'allowed_term_types' => $allowedTermTypes,
+            'view_url' => $viewUrl,
         ]);
     }
 
@@ -284,6 +286,7 @@ class ContentController extends AjaxController
                 'term_types' => TermType::definitions(),
                 'current_type' => $definition,
                 'allowed_term_types' => $this->allowedTermTypes($content->type),
+                'view_url' => $data['slug'] !== '' ? '/' . ContentType::slug($content->type) . '/' . $data['slug'] : null,
             ]);
             return;
         }

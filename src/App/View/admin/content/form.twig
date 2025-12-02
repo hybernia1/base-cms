@@ -105,6 +105,21 @@
                             </div>
                         </div>
 
+                        {% if view_url is defined and view_url %}
+                            <div class="d-grid gap-2 mb-3">
+                                <a
+                                    href="{{ view_url }}"
+                                    target="_blank"
+                                    class="btn btn-outline-primary {% if values.status != 'published' %}disabled{% endif %}"
+                                >
+                                    Zobrazit na webu
+                                </a>
+                                {% if values.status != 'published' %}
+                                    <div class="small text-muted">Aktivuje se po publikování příspěvku.</div>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+
                         <div class="mb-3">
                             <button type="submit" class="btn btn-primary w-100">Uložit změny</button>
                         </div>

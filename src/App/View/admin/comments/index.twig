@@ -35,6 +35,7 @@
                             <tr>
                                 <th>Autor</th>
                                 <th>Text</th>
+                                <th>Vazba</th>
                                 <th>Obsah</th>
                                 <th>Stav</th>
                                 <th class="text-end">Akce</th>
@@ -49,6 +50,24 @@
                                         <div class="text-muted small">{{ comment.created_at|date('j. n. Y H:i') }}</div>
                                     </td>
                                     <td>{{ comment.body|slice(0, 180) }}{% if comment.body|length > 180 %}…{% endif %}</td>
+                                    <td class="text-muted small">
+                                        {% if comment.parent_id %}
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge bg-secondary-subtle text-secondary">Odpověď</span>
+                                                <span>#{{ comment.parent_id }}</span>
+                                            </div>
+                                            {% set parent = parent_map[comment.parent_id]|default(null) %}
+                                            {% if parent %}
+                                                <div class="text-truncate mt-1" title="{{ parent.body }}">{{ parent.body|slice(0, 90) }}{% if parent.body|length > 90 %}…{% endif %}</div>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-primary-subtle text-primary">Rodič</span>
+                                        {% endif %}
+                                        {% set replyCount = child_counts[comment.id]|default(0) %}
+                                        {% if replyCount > 0 %}
+                                            <div class="mt-1">{{ replyCount }} reakce</div>
+                                        {% endif %}
+                                    </td>
                                     <td class="text-muted small">
                                         {% set content = content_map[comment.content_id]|default(null) %}
                                         {% if content %}

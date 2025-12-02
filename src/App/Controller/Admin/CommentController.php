@@ -21,6 +21,8 @@ class CommentController extends AjaxController
         $counts = Comment::statusCounts();
 
         $contentMap = [];
+        $parentIds = [];
+        $childCounts = [];
         if ($comments) {
             $ids = array_unique(array_map(fn($c) => (int) $c->content_id, $comments));
             if ($ids) {
@@ -30,6 +32,23 @@ class CommentController extends AjaxController
                     $contentMap[$content->id] = $content;
                 }
             }
+
+            foreach ($comments as $comment) {
+                if ($comment->parent_id) {
+                    $parentIds[] = (int) $comment->parent_id;
+                    $childCounts[(int) $comment->parent_id] = ($childCounts[(int) $comment->parent_id] ?? 0) + 1;
+                }
+            }
+        }
+
+        $parentComments = [];
+        if ($parentIds) {
+            $uniqueParentIds = array_values(array_unique($parentIds));
+            $placeholders = implode(',', array_fill(0, count($uniqueParentIds), '?'));
+            $parents = R::findAll('comment', ' id IN (' . $placeholders . ') ', $uniqueParentIds);
+            foreach ($parents as $parent) {
+                $parentComments[(int) $parent->id] = $parent;
+            }
         }
 
         $this->render('admin/comments/index.twig', [
@@ -37,6 +56,8 @@ class CommentController extends AjaxController
             'status' => $status,
             'counts' => $counts,
             'content_map' => $contentMap,
+            'parent_map' => $parentComments,
+            'child_counts' => $childCounts,
             'current_menu' => 'comments',
         ]);
     }
@@ -69,11 +90,16 @@ class CommentController extends AjaxController
             $contentSlug = $definition['slug'] ?? $content->type;
         }
 
+        $parentComment = $comment->parent_id ? Comment::find((int) $comment->parent_id) : null;
+        $childComments = R::findAll('comment', ' parent_id = ? ORDER BY created_at ASC ', [(int) $comment->id]);
+
         $this->render('admin/comments/edit.twig', [
             'comment' => $comment,
             'content' => $content && $content->id ? $content : null,
             'content_slug' => $contentSlug,
             'statuses' => Comment::statuses(),
+            'parent_comment' => $parentComment,
+            'child_comments' => array_values($childComments),
             'current_menu' => 'comments',
         ]);
     }

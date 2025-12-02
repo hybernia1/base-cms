@@ -1,0 +1,23 @@
+<div class="card shadow-sm h-100">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <span class="fw-semibold">Soubory</span>
+        <span class="badge text-bg-light">{{ items|length }}</span>
+    </div>
+    <div class="list-group list-group-flush">
+        {% if items is empty %}
+            <div class="list-group-item text-muted">Žádné výsledky.</div>
+        {% else %}
+            {% for item in items %}
+                <a href="/{{ item.path }}/{{ item.filename }}" class="list-group-item list-group-item-action" target="_blank" rel="noopener">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-fill">
+                            <div class="fw-semibold">{{ item.original_name }}</div>
+                            <div class="small text-muted">{{ item.mime_type }} · {{ item.size }} B</div>
+                        </div>
+                        <i class="bi bi-download text-muted"></i>
+                    </div>
+                </a>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>

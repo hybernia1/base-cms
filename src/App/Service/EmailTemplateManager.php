@@ -152,15 +152,6 @@ class EmailTemplateManager
 
     private static function ensureSchema(): void
     {
-        R::exec(
-            "CREATE TABLE IF NOT EXISTS `" . self::TABLE . "` (
-                `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                `event` VARCHAR(191) NOT NULL UNIQUE,
-                `subject` VARCHAR(255) NOT NULL,
-                `body_html` TEXT NOT NULL,
-                `body_text` TEXT NOT NULL,
-                `updated_at` DATETIME NOT NULL
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-        );
+        // Schéma je kompletně spravováno instalační logikou.
     }
 }

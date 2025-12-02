@@ -255,6 +255,15 @@ class CommentController extends AjaxController
         exit;
     }
 
+    public function restore($id): void
+    {
+        Auth::requireRole(['admin', 'editor']);
+        Comment::restore((int) $id);
+        Flash::addSuccess('Komentář byl obnoven.');
+        header('Location: /admin/comments?status=trash');
+        exit;
+    }
+
     public function emptyTrash(): void
     {
         Auth::requireRole(['admin', 'editor']);

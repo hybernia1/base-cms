@@ -84,11 +84,24 @@
         {{ item.updated_at|date(df ~ ' ' ~ tf) }}
     {% endif %}</td>
 
-                        <td class="text-end">
+        <td class="text-end">
             {% set deleteConfirm = current_status == 'trash'
                 ? 'Opravdu nenávratně smazat tento obsah?'
                 : 'Přesunout obsah do koše?'
             %}
+
+            {% set extraActions = [] %}
+            {% if current_status == 'trash' %}
+                {% set extraActions = extraActions|merge([{
+                    type: 'form',
+                    action: '/admin/content/' ~ current_type.slug ~ '/' ~ item.id ~ '/restore',
+                    variant: 'success',
+                    icon: 'bi-arrow-counterclockwise',
+                    ajax: true,
+                    hidden: { redirect: pagination.current_url },
+                    confirm: 'Obnovit tento obsah?'
+                }]) %}
+            {% endif %}
 
             {{ ui.crud_actions('/admin/content/' ~ current_type.slug ~ '/' ~ item.id, {
                 delete: {
@@ -97,7 +110,8 @@
                     hidden: { redirect: pagination.current_url },
                     variant: 'danger',
                     icon: current_status == 'trash' ? 'bi-trash3' : 'bi-trash'
-                }
+                },
+                extra: extraActions
             }) }}
         </td>
     </tr>

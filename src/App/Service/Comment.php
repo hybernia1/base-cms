@@ -126,6 +126,18 @@ class Comment
         R::store($comment);
     }
 
+    public static function restore(int $id): void
+    {
+        self::ensureSchema();
+        $comment = R::load(self::TABLE, $id);
+        if (!$comment || !$comment->id || $comment->deleted_at === null) {
+            return;
+        }
+
+        $comment->deleted_at = null;
+        R::store($comment);
+    }
+
     public static function findByContent(int $contentId): array
     {
         self::ensureSchema();

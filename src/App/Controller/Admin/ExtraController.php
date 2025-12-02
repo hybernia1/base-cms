@@ -31,12 +31,52 @@ class ExtraController extends BaseAdminController
     {
         Auth::requireRole(['admin']);
 
-        $config = $GLOBALS['app']['config']['db'] ?? [];
-        $dsn = $config['dsn'] ?? '';
+        $config = $GLOBALS['app']['config'] ?? [];
+        $dbConfig = $config['db'] ?? [];
+        $currentEnv = $config['env'] ?? 'prod';
+        $dsn = $dbConfig['dsn'] ?? '';
         $dbName = $this->parseDsnValue($dsn, 'dbname');
         $host = $this->parseDsnValue($dsn, 'host') ?: 'localhost';
         $port = $this->parseDsnValue($dsn, 'port');
-        $canDownload = $dbName && ($config !== []);
+        $canDownload = $dbName && ($dbConfig !== []);
+        $configPath = dirname(__DIR__, 2) . '/Config/config.php';
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['toggle_debug'])) {
+            if (!is_file($configPath)) {
+                Flash::addError('Konfigurační soubor nebyl nalezen.');
+                header('Location: /admin/extra/backup');
+                exit;
+            }
+
+            $configData = require $configPath;
+
+            if (!is_array($configData)) {
+                Flash::addError('Konfiguraci se nepodařilo načíst.');
+                header('Location: /admin/extra/backup');
+                exit;
+            }
+
+            $newEnv = ($configData['env'] ?? 'prod') === 'prod' ? 'dev' : 'prod';
+            $configData['env'] = $newEnv;
+
+            $configContent = "<?php\nreturn " . var_export($configData, true) . ";\n";
+
+            if (file_put_contents($configPath, $configContent) === false) {
+                Flash::addError('Nepodařilo se uložit konfiguraci.');
+                header('Location: /admin/extra/backup');
+                exit;
+            }
+
+            $GLOBALS['app']['config'] = $configData;
+
+            $message = $newEnv === 'dev'
+                ? 'Debug mód byl zapnut (env=dev).'
+                : 'Debug mód byl vypnut (env=prod).';
+
+            Flash::addSuccess($message);
+            header('Location: /admin/extra/backup');
+            exit;
+        }
 
         if (isset($_GET['download'])) {
             if (!$canDownload) {
@@ -48,8 +88,8 @@ class ExtraController extends BaseAdminController
             $filename = sprintf('%s-zaloha-%s.sql', $dbName, date('Ymd-His'));
             $commandParts = [
                 'mysqldump',
-                '--user=' . escapeshellarg($config['user'] ?? ''),
-                '--password=' . escapeshellarg($config['pass'] ?? ''),
+                '--user=' . escapeshellarg($dbConfig['user'] ?? ''),
+                '--password=' . escapeshellarg($dbConfig['pass'] ?? ''),
                 '--host=' . escapeshellarg($host),
             ];
 
@@ -78,6 +118,8 @@ class ExtraController extends BaseAdminController
             'current_menu' => 'extra:backup',
             'database_name' => $dbName ?: 'N/A',
             'can_download' => $canDownload,
+            'current_env' => $currentEnv,
+            'is_debug' => $currentEnv !== 'prod',
         ]);
     }
 

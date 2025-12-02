@@ -1,0 +1,109 @@
+{% extends 'admin/layout.twig' %}
+
+{% block title %}JS/CSS knihovny | Administrace{% endblock %}
+
+{% block body %}
+    <h1 class="h3 mb-4">JS/CSS knihovny</h1>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+            <form method="post" class="row g-4 align-items-start">
+                <div class="col-lg-7">
+                    <h2 class="h5 mb-3">Způsob načítání</h2>
+                    <p class="text-muted">Vyber, zda se mají knihovny načítat z CDN nebo přímo ze serveru. Při volbě CDN se automaticky používají oficiální odkazy. Při volbě serveru musí být soubory stažené lokálně.</p>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="asset_source" id="assetSourceCdn" value="cdn" {% if asset_source == 'cdn' %}checked{% endif %}>
+                        <label class="form-check-label" for="assetSourceCdn">
+                            CDN (jsDelivr)
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="asset_source" id="assetSourceLocal" value="local" {% if asset_source == 'local' %}checked{% endif %}>
+                        <label class="form-check-label" for="assetSourceLocal">
+                            Lokální soubory na serveru
+                        </label>
+                        <div class="form-text">Knihovny se budou načítat z adresáře <code>/assets/vendor</code>. Pokud chybí, stáhni je níže.</div>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <h2 class="h5 mb-3">Správa souborů</h2>
+                    <p class="text-muted small mb-3">Stažené soubory umožňují provoz bez externí CDN. Po stažení se režim automaticky přepne na lokální načítání.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="submit" class="btn btn-primary">Uložit způsob načítání</button>
+                        <button type="submit" name="download_libraries" value="1" class="btn btn-outline-secondary">Stáhnout knihovny na server</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <div>
+                    <h2 class="h5 mb-1">Přehled knihoven</h2>
+                    <div class="text-muted">Aktuální verze a dostupnost souborů. Aktivní režim: <strong>{{ asset_source == 'local' ? 'Lokální soubory' : 'CDN' }}</strong>.</div>
+                </div>
+                {% if asset_source == 'local' %}
+                    <span class="badge bg-success-subtle border border-success text-success">Lokální režim</span>
+                {% else %}
+                    <span class="badge bg-info-subtle border border-info text-info">CDN režim</span>
+                {% endif %}
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="text-nowrap">Knihovna</th>
+                            <th>Odkazy</th>
+                            <th class="text-nowrap">Lokální stav</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for library in libraries %}
+                        <tr>
+                            <td class="align-top">
+                                <div class="fw-semibold">{{ library.label }}</div>
+                                <div class="text-muted small">Verze {{ library.version }}</div>
+                            </td>
+                            <td>
+                                <ul class="list-unstyled small mb-0">
+                                    {% for file in library.files %}
+                                        <li class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="badge bg-light text-dark border">{{ file.type|upper }}</span>
+                                            <div>
+                                                <div class="text-muted">Handle: <code>{{ file.handle }}</code></div>
+                                                <div>
+                                                    <span class="text-muted">CDN:</span>
+                                                    <a href="{{ file.cdn_url }}" target="_blank" rel="noreferrer" class="text-decoration-none">{{ file.cdn_url }}</a>
+                                                </div>
+                                                <div>
+                                                    <span class="text-muted">Lokálně:</span>
+                                                    <code>{{ file.local_url }}</code>
+                                                    {% if file.exists %}
+                                                        <span class="badge bg-success ms-2">{{ file.size ? (file.size / 1024)|round(1) ~ ' kB' : 'Staženo' }}</span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary ms-2">Chybí</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td class="align-top">
+                                {% if library.local_complete %}
+                                    <span class="badge bg-success">Vše staženo</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Chybí soubory</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -47,7 +47,7 @@ class ContentController extends AjaxController
             array_merge($params, [$pagination['per_page'], $pagination['offset']])
         );
 
-        if ($this->respondAjax('admin/content/_list.twig', $this->prepareContentAjaxPayload($items, [
+        if ($this->respondAjax('admin/content/_container.twig', $this->prepareContentAjaxPayload($items, [
             'types' => ContentType::all(),
             'current_type' => $definition,
             'current_status' => $status ?? 'all',
@@ -406,6 +406,40 @@ class ContentController extends AjaxController
         }
 
         Flash::addSuccess($message);
+        header('Location: ' . $this->redirectToList($content->type, $redirect));
+        exit;
+    }
+
+    public function restore($slug, $id)
+    {
+        Auth::requireRole(['admin', 'editor']);
+
+        $this->ensureTrashColumn();
+        [$typeKey, $definition] = $this->resolveType($slug);
+
+        $content = $this->findContent($id, true);
+        if (!$content || $content->type !== $typeKey || $content->deleted_at === null) {
+            if ($this->wantsJson()) {
+                $this->jsonError('Obsah nebyl nalezen nebo není v koši.', 404);
+            }
+
+            Flash::addError('Obsah nebyl nalezen nebo není v koši.');
+            header('Location: /admin/content/' . $definition['slug'] . '?status=trash');
+            exit;
+        }
+
+        $content->deleted_at = null;
+        R::store($content);
+
+        $redirect = $_POST['redirect'] ?? null;
+
+        if ($this->wantsJson()) {
+            $this->respondApi([], 'Obsah byl obnoven.', 200, [
+                'redirect_to' => $this->redirectToList($content->type, $redirect),
+            ]);
+        }
+
+        Flash::addSuccess('Obsah byl obnoven.');
         header('Location: ' . $this->redirectToList($content->type, $redirect));
         exit;
     }

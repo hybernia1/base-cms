@@ -203,6 +203,35 @@
                         </div>
                     </li>
                 {% endif %}
+                {% set extraActive = current_menu is defined and current_menu starts with 'extra' %}
+                {% set extraMenuId = 'extra-menu-desktop' %}
+                <li class="nav-item mb-1">
+                    <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#{{ extraMenuId }}"
+                            aria-controls="{{ extraMenuId }}"
+                            aria-expanded="{{ extraActive ? 'true' : 'false' }}">
+                        <i class="bi bi-stars me-2"></i> Extra
+                        <i class="bi bi-chevron-right ms-auto menu-chevron {% if extraActive %}rotate{% endif %}"></i>
+                    </button>
+                    <div class="collapse {% if extraActive %}show{% endif %}" id="{{ extraMenuId }}">
+                        <ul class="nav flex-column ms-3 mt-1 small">
+                            {% set extraInfoActive = current_menu is defined and current_menu == 'extra:info' %}
+                            {% set extraBackupActive = current_menu is defined and current_menu == 'extra:backup' %}
+                            <li class="nav-item">
+                                <a class="nav-link d-flex align-items-center {% if extraInfoActive %}active{% endif %}" href="/admin/extra/info">
+                                    <i class="bi bi-info-circle me-2"></i> Info o webu
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-flex align-items-center {% if extraBackupActive %}active{% endif %}" href="/admin/extra/backup">
+                                    <i class="bi bi-cloud-download me-2"></i> Záloha databáze
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
                 {# další odkazy... #}
             </ul>
     </aside>
@@ -349,6 +378,35 @@
                         </div>
                     </li>
                 {% endif %}
+                {% set extraActive = current_menu is defined and current_menu starts with 'extra' %}
+                {% set extraMenuId = 'extra-menu-mobile' %}
+                <li class="nav-item mb-1">
+                    <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#{{ extraMenuId }}"
+                            aria-controls="{{ extraMenuId }}"
+                            aria-expanded="{{ extraActive ? 'true' : 'false' }}">
+                        <i class="bi bi-stars me-2"></i> Extra
+                        <i class="bi bi-chevron-right ms-auto menu-chevron {% if extraActive %}rotate{% endif %}"></i>
+                    </button>
+                    <div class="collapse {% if extraActive %}show{% endif %}" id="{{ extraMenuId }}">
+                        <ul class="nav flex-column ms-3 mt-1 small">
+                            {% set extraInfoActive = current_menu is defined and current_menu == 'extra:info' %}
+                            {% set extraBackupActive = current_menu is defined and current_menu == 'extra:backup' %}
+                            <li class="nav-item">
+                                <a class="nav-link d-flex align-items-center {% if extraInfoActive %}active{% endif %}" href="/admin/extra/info">
+                                    <i class="bi bi-info-circle me-2"></i> Info o webu
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-flex align-items-center {% if extraBackupActive %}active{% endif %}" href="/admin/extra/backup">
+                                    <i class="bi bi-cloud-download me-2"></i> Záloha databáze
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
             </ul>
         </div>
     </div>

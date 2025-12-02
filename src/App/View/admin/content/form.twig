@@ -75,47 +75,14 @@
                             value="{{ current_status }}"
                         >
 
-                        <div class="btn-group w-100 mb-3" role="group" aria-label="Přepnutí stavu">
-                            <input
-                                type="radio"
-                                class="btn-check"
-                                name="statusToggle"
-                                id="statusPublished"
-                                value="published"
-                                {% if current_status == 'published' %}checked{% endif %}
-                            >
-                            <label class="btn btn-outline-success" for="statusPublished">
-                                <div class="fw-semibold">Publikovaný</div>
-                                <div class="small mb-0 text-muted">Zobrazí se na webu</div>
-                            </label>
-
-                            <input
-                                type="radio"
-                                class="btn-check"
-                                name="statusToggle"
-                                id="statusDraft"
-                                value="draft"
-                                {% if current_status != 'published' %}checked{% endif %}
-                            >
-                            <label class="btn btn-outline-secondary" for="statusDraft">
-                                <div class="fw-semibold">Koncept</div>
-                                <div class="small mb-0 text-muted">Zůstane v administraci</div>
-                            </label>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted small">Aktuální stav</span>
+                            {% if current_status == 'published' %}
+                                <span class="badge text-bg-success">Publikovaný</span>
+                            {% else %}
+                                <span class="badge text-bg-secondary">Koncept</span>
+                            {% endif %}
                         </div>
-
-                        {% if view_url is defined and view_url %}
-                            <div class="d-grid gap-2 mb-3">
-                                {{ components.view_button(view_url, {
-                                    disabled: values.status != 'published',
-                                    target: '_blank',
-                                    block: true,
-                                    label: 'Zobrazit na webu'
-                                }) }}
-                                {% if values.status != 'published' %}
-                                    <div class="small text-muted">Aktivuje se po publikování příspěvku.</div>
-                                {% endif %}
-                            </div>
-                        {% endif %}
 
                         <div class="d-grid gap-2 mb-3">
                             <button type="submit" class="btn btn-outline-secondary w-100 status-submit" data-status-action="draft">Uložit jako koncept</button>
@@ -134,17 +101,35 @@
                             <label class="form-check-label" for="allow_comments">Povolit komentáře u tohoto příspěvku</label>
                         </div>
 
-                        {% if content_id is defined %}
+                        {% if (view_url is defined and view_url) or content_id is defined %}
                             <hr class="my-3">
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-muted small">Akce s obsahem</span>
-                                <button
-                                    type="button"
-                                    class="btn btn-outline-danger btn-sm"
-                                    id="deleteContentBtn"
-                                >
-                                    Smazat
-                                </button>
+                                <span class="text-muted small">Akce</span>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    {% if view_url is defined and view_url %}
+                                        {{ components.view_button(view_url, {
+                                            disabled: values.status != 'published',
+                                            target: '_blank',
+                                            label: 'Zobrazit na webu',
+                                            icon: 'bi-eye',
+                                            variant: 'secondary',
+                                            class: 'btn-sm'
+                                        }) }}
+                                    {% endif %}
+
+                                    {% if content_id is defined %}
+                                        <form
+                                            action="/admin/content/{{ current_type.slug }}/{{ content_id }}/delete"
+                                            method="post"
+                                            class="d-inline"
+                                            data-confirm="Opravdu smazat tento obsah?"
+                                        >
+                                            <button type="submit" class="btn btn-outline-danger btn-icon btn-sm" aria-label="Smazat">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
                             </div>
                         {% endif %}
                     </div>
@@ -215,11 +200,6 @@
             {# tlačítka pro uložení jsou v boxu Publikace #}
         </div>
     </form>
-
-    {% if content_id is defined %}
-        {# skrytý formulář pro smazání, spouštěný tlačítkem v boxu Publikace #}
-        <form id="deleteContentForm" action="/admin/content/{{ current_type.slug }}/{{ content_id }}/delete" method="post"></form>
-    {% endif %}
 
     <div class="modal fade" id="mediaLibraryModal" tabindex="-1" aria-labelledby="mediaLibraryLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -705,26 +685,11 @@
             const statusInput = document.getElementById('statusField');
             if (!statusInput) return;
 
-            const toggles = document.querySelectorAll('input[name="statusToggle"]');
             const statusButtons = document.querySelectorAll('.status-submit');
 
             const setStatus = (status) => {
                 statusInput.value = status || 'draft';
-
-                const matchingToggle = Array.from(toggles).find((toggle) => toggle.value === status);
-                if (matchingToggle) {
-                    matchingToggle.checked = true;
-                }
             };
-
-            const updateStatus = () => {
-                const selected = Array.from(toggles).find((toggle) => toggle.checked);
-                setStatus(selected ? selected.value : 'draft');
-            };
-
-            toggles.forEach((toggle) => {
-                toggle.addEventListener('change', updateStatus);
-            });
 
             statusButtons.forEach((button) => {
                 button.addEventListener('click', () => {
@@ -733,21 +698,9 @@
                 });
             });
 
-            updateStatus();
-        })();
-
-        // mazání obsahu z tlačítka v boxu Publikace
-        (function () {
-            const deleteBtn = document.getElementById('deleteContentBtn');
-            const deleteForm = document.getElementById('deleteContentForm');
-
-            if (!deleteBtn || !deleteForm) return;
-
-            deleteBtn.addEventListener('click', function () {
-                if (confirm('Opravdu smazat tento obsah?')) {
-                    deleteForm.submit();
-                }
-            });
+            if (!statusInput.value) {
+                setStatus('draft');
+            }
         })();
     </script>
 {% endblock %}

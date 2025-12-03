@@ -65,7 +65,23 @@
                         <tr>
                             <td class="align-top">
                                 <div class="fw-semibold">{{ library.label }}</div>
-                                <div class="text-muted small">Verze {{ library.version }}</div>
+                                <div class="text-muted small">
+                                    {% if library.downloaded_version %}
+                                        Staženo: {{ library.downloaded_version }}
+                                        {% if library.api_version %}
+                                            {% if library.version_mismatch %}
+                                                <span class="badge bg-warning text-dark ms-1">API {{ library.api_version }}</span>
+                                            {% else %}
+                                                <span class="badge bg-success ms-1">Aktuální</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% else %}
+                                        Plánovaná verze: {{ library.version }}
+                                        {% if library.api_version %}
+                                            <span class="badge bg-info text-dark ms-1">API {{ library.api_version }}</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
                             </td>
                             <td>
                                 <ul class="list-unstyled small mb-0">

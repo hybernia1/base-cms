@@ -9,6 +9,7 @@ class AssetManager
     public const SOURCE_LOCAL = 'local';
 
     private const SETTING_KEY = 'asset_source';
+    private const VERSIONS_KEY = 'asset_library_versions';
 
     private const LIBRARIES = [
         'bootstrap' => [
@@ -130,10 +131,13 @@ class AssetManager
 
     public static function getLibrariesStatus(): array
     {
+        $storedVersions = self::getStoredLibraryVersions();
         $libraries = [];
 
         foreach (self::LIBRARIES as $key => $library) {
             $resolvedVersion = self::resolveLibraryVersion($library);
+            $downloadedVersion = $storedVersions[$key] ?? null;
+            $apiVersion = self::fetchPackageVersion($library['package'], null);
             $files = [];
             $allLocal = true;
 
@@ -161,6 +165,9 @@ class AssetManager
                 'key' => $key,
                 'label' => $library['label'],
                 'version' => $resolvedVersion,
+                'downloaded_version' => $downloadedVersion,
+                'api_version' => $apiVersion,
+                'version_mismatch' => $downloadedVersion && $apiVersion && $downloadedVersion !== $apiVersion,
                 'files' => $files,
                 'local_complete' => $allLocal,
             ];
@@ -190,10 +197,13 @@ class AssetManager
     {
         $results = [];
         $errors = [];
+        $downloadedVersions = self::getStoredLibraryVersions();
 
         foreach (self::LIBRARIES as $libraryKey => $library) {
             $resolvedVersion = self::resolveLibraryVersion($library);
             $latestVersion = self::fetchPackageVersion($library['package'], null);
+            $usedVersion = $resolvedVersion;
+            $libraryDownloaded = true;
 
             foreach ($library['files'] as $file) {
                 $cdnUrl = self::buildCdnUrl($library, $file, $resolvedVersion);
@@ -208,18 +218,27 @@ class AssetManager
                         try {
                             self::downloadFile($fallbackUrl, $file['local']);
                             $results[] = sprintf('%s (%s): %s staženo přes fallback.', $library['label'], $latestVersion, $file['handle']);
+                            $usedVersion = $latestVersion;
                             continue;
                         } catch (RuntimeException $fallbackException) {
                             $errors[] = $e->getMessage();
                             $errors[] = $fallbackException->getMessage();
+                            $libraryDownloaded = false;
                             continue;
                         }
                     }
 
                     $errors[] = $e->getMessage();
+                    $libraryDownloaded = false;
                 }
             }
+
+            if ($libraryDownloaded) {
+                $downloadedVersions[$libraryKey] = $usedVersion;
+            }
         }
+
+        self::storeLibraryVersions($downloadedVersions);
 
         return [
             'success' => $errors === [],
@@ -335,5 +354,23 @@ class AssetManager
     private static function normalizeSource(string $source): string
     {
         return $source === self::SOURCE_LOCAL ? self::SOURCE_LOCAL : self::SOURCE_CDN;
+    }
+
+    private static function getStoredLibraryVersions(): array
+    {
+        $raw = Setting::get(self::VERSIONS_KEY, '{}');
+
+        if (is_array($raw)) {
+            return $raw;
+        }
+
+        $decoded = json_decode((string) $raw, true);
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    private static function storeLibraryVersions(array $versions): void
+    {
+        Setting::set(self::VERSIONS_KEY, json_encode($versions));
     }
 }

@@ -25,12 +25,8 @@ class UserController extends BaseFrontController
     {
         $user = $this->loadUser((int) $id);
         if (!$user) {
-            http_response_code(404);
-            $this->render('front/user/profile.twig', [
-                'user' => null,
-                'is_owner' => false,
-                'is_public' => false,
-                'comments' => [],
+            $this->renderNotFound([
+                'message' => 'Profil nebyl nalezen nebo je nedostupný.',
             ]);
             return;
         }

@@ -13,10 +13,8 @@ class ContentController extends BaseFrontController
     {
         $typeKey = ContentType::keyFromSlug($typeSlug);
         if (!$typeKey) {
-            http_response_code(404);
-            $this->render('front/content/detail.twig', [
-                'item' => null,
-                'type' => null,
+            $this->renderNotFound([
+                'message' => 'Zvolený typ obsahu neexistuje.',
             ]);
             return;
         }
@@ -68,7 +66,11 @@ class ContentController extends BaseFrontController
                 $adminBarContext['current_title'] = $item->title;
             }
         } else {
-            http_response_code(404);
+            $this->renderNotFound([
+                'title' => 'Obsah nenalezen',
+                'message' => 'Požadovaný obsah nebyl nalezen nebo již není k dispozici.',
+            ]);
+            return;
         }
 
         $commentingEnabled = $commentAllowed && ($commentSettings['allow_anonymous'] || $currentUser);

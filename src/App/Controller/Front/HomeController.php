@@ -25,12 +25,8 @@ class HomeController extends BaseFrontController
         $typeKey = ContentType::keyFromSlug($slug);
 
         if (!$typeKey || !isset($definitions[$typeKey])) {
-            http_response_code(404);
-            $this->render('front/home.twig', [
-                'posts' => [],
-                'content_types' => $definitions,
-                'heading' => 'Nenalezeno',
-                'empty_message' => 'Zvolený typ obsahu neexistuje.',
+            $this->renderNotFound([
+                'message' => 'Zvolený typ obsahu neexistuje.',
             ]);
             return;
         }

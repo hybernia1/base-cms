@@ -69,6 +69,17 @@ abstract class BaseFrontController
         echo $this->twig->render($template, $templateContext);
     }
 
+    protected function renderNotFound(array $context = []): void
+    {
+        http_response_code(404);
+
+        $this->render('front/404.twig', array_merge([
+            'title' => 'Stránka nenalezena',
+            'message' => 'Omlouváme se, ale požadovanou stránku se nepodařilo najít.',
+            'content_types' => ContentType::definitions(),
+        ], $context));
+    }
+
     protected function attachAuthors(array $items): array
     {
         $authorIds = [];

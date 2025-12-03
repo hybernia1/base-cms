@@ -154,3 +154,5 @@ $router->post('/admin/extra/optimize', 'App\\Controller\\Admin\\ExtraController@
 $router->get('/admin/search', 'App\\Controller\\Admin\\SearchController@index');
 
 $router->post('/comments', 'App\\Controller\\Front\\CommentController@store');
+
+$router->set404('App\\Controller\\Front\\ErrorController@notFound');

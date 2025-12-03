@@ -47,31 +47,17 @@ class ExtraController extends BaseAdminController
             }
 
             $filename = sprintf('%s-zaloha-%s.sql', $dbName, date('Ymd-His'));
-            $commandParts = [
-                'mysqldump',
-                '--user=' . escapeshellarg($dbConfig['user'] ?? ''),
-                '--password=' . escapeshellarg($dbConfig['pass'] ?? ''),
-                '--host=' . escapeshellarg($host),
-            ];
+            $backupContent = $this->exportDatabase($dbConfig, $host, $port, $dbName);
 
-            if ($port) {
-                $commandParts[] = '--port=' . escapeshellarg($port);
-            }
-
-            $commandParts[] = escapeshellarg($dbName);
-            $command = implode(' ', $commandParts) . ' 2>&1';
-
-            exec($command, $output, $exitCode);
-
-            if ($exitCode !== 0 || empty($output)) {
-                Flash::addError('Záloha databáze se nezdařila. Ověř přístupové údaje a dostupnost mysqldump.');
+            if ($backupContent === null) {
+                Flash::addError('Záloha databáze se nezdařila. Ověř přístupové údaje a dostupnost databáze.');
                 header('Location: /admin/extra/backup');
                 exit;
             }
 
             header('Content-Type: application/sql');
             header('Content-Disposition: attachment; filename="' . $filename . '"');
-            echo implode(PHP_EOL, $output);
+            echo $backupContent;
             exit;
         }
 
@@ -155,6 +141,101 @@ class ExtraController extends BaseAdminController
         }
 
         return $this->formatBytes((int) $bytes);
+    }
+
+    private function exportDatabase(array $dbConfig, string $host, ?string $port, string $dbName): ?string
+    {
+        $mysqldumpBackup = $this->runMysqldump($dbConfig, $host, $port, $dbName);
+
+        if ($mysqldumpBackup !== null) {
+            return $mysqldumpBackup;
+        }
+
+        return $this->exportViaPdo($dbName);
+    }
+
+    private function runMysqldump(array $dbConfig, string $host, ?string $port, string $dbName): ?string
+    {
+        $commandParts = [
+            'mysqldump',
+            '--user=' . escapeshellarg($dbConfig['user'] ?? ''),
+            '--password=' . escapeshellarg($dbConfig['pass'] ?? ''),
+            '--host=' . escapeshellarg($host),
+        ];
+
+        if ($port) {
+            $commandParts[] = '--port=' . escapeshellarg($port);
+        }
+
+        $commandParts[] = escapeshellarg($dbName);
+        $command = implode(' ', $commandParts) . ' 2>&1';
+
+        exec($command, $output, $exitCode);
+
+        if ($exitCode === 0 && !empty($output)) {
+            return implode(PHP_EOL, $output);
+        }
+
+        return null;
+    }
+
+    private function exportViaPdo(string $dbName): ?string
+    {
+        try {
+            $pdo = R::getDatabaseAdapter()->getDatabase()->getPDO();
+            $tables = R::getCol('SHOW TABLES');
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        if ($tables === []) {
+            return '-- Databáze neobsahuje žádné tabulky.';
+        }
+
+        $lines = [
+            sprintf('-- Záloha databáze `%s` vytvořená %s', $dbName, date('Y-m-d H:i:s')),
+            'SET FOREIGN_KEY_CHECKS=0;',
+        ];
+
+        foreach ($tables as $table) {
+            try {
+                $safeTable = str_replace('`', '``', $table);
+                $createResult = R::getRow('SHOW CREATE TABLE `' . $safeTable . '`');
+                $createSql = $createResult['Create Table'] ?? array_values($createResult)[1] ?? null;
+                $rows = R::getAll('SELECT * FROM `' . $safeTable . '`');
+            } catch (\Throwable $e) {
+                return null;
+            }
+
+            if ($createSql === null) {
+                return null;
+            }
+
+            $lines[] = 'DROP TABLE IF EXISTS `' . $safeTable . '`;';
+            $lines[] = $createSql . ';';
+
+            foreach ($rows as $row) {
+                $columns = array_map(fn ($column) => '`' . $column . '`', array_keys($row));
+                $values = array_map(function ($value) use ($pdo) {
+                    if ($value === null) {
+                        return 'NULL';
+                    }
+
+                    return $pdo->quote($value);
+                }, array_values($row));
+
+                $lines[] = sprintf(
+                    'INSERT INTO `%s` (%s) VALUES (%s);',
+                    $safeTable,
+                    implode(', ', $columns),
+                    implode(', ', $values)
+                );
+            }
+        }
+
+        $lines[] = 'SET FOREIGN_KEY_CHECKS=1;';
+
+        return implode(PHP_EOL, $lines) . PHP_EOL;
     }
 
     private function parseDsnValue(string $dsn, string $key): ?string

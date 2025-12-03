@@ -1,6 +1,7 @@
 <?php
 namespace App\Controller\Front;
 
+use App\Service\Auth;
 use App\Service\ContentType;
 use App\Service\TermType;
 use RedBeanPHP\R as R;
@@ -31,6 +32,14 @@ class TermController extends BaseFrontController
 
         $content = $this->loadTermContent($term);
 
+        $adminBar = [];
+        if (Auth::hasRole(['admin', 'editor'])) {
+            $adminBar = [
+                'edit_url' => '/admin/terms/' . $term->id . '/edit',
+                'current_title' => $term->name,
+            ];
+        }
+
         $this->render('front/term.twig', [
             'term' => $term,
             'items' => $content,
@@ -38,6 +47,7 @@ class TermController extends BaseFrontController
             'term_type' => $termTypes[$typeKey] ?? null,
             'heading' => $term->name,
             'empty_message' => 'Tento term zatím nemá žádný obsah.',
+            'admin_bar' => $adminBar,
         ]);
     }
 

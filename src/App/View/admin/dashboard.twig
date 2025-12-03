@@ -7,23 +7,84 @@
 {% block body %}
     <h1 class="h3 mb-4">Dashboard</h1>
 
+    {% set date_format = settings.date_format ?? 'd.m.Y' %}
+    {% set time_format = settings.time_format ?? 'H:i' %}
+    {% set date_time_format = date_format ~ ' ' ~ time_format %}
+
     <div class="row g-3">
-        <div class="col-md-4">
-            <div class="card shadow-sm">
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
                 <div class="card-body">
-                    <h2 class="h5 card-title">Stránky</h2>
-                    <p class="card-text">Správa obsahu webu.</p>
-                    <a href="/admin/pages" class="btn btn-sm btn-primary">Otevřít</a>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h5 card-title mb-0">Poslední publikované příspěvky</h2>
+                        <a href="/admin/content/{{ content_type_menu['post'].slug ?? 'post' }}" class="btn btn-sm btn-outline-secondary">Zobrazit vše</a>
+                    </div>
+
+                    <ul class="list-group list-group-flush">
+                        {% for post in latest_posts %}
+                            <li class="list-group-item d-flex justify-content-between align-items-start">
+                                <div class="me-3">
+                                    <div class="fw-semibold">{{ post.title }}</div>
+                                    <div class="text-muted small">{{ post.updated_at ? post.updated_at|date(date_time_format) : '' }}</div>
+                                </div>
+                                <a href="/admin/content/{{ post.type_slug }}/{{ post.id }}/edit" class="btn btn-sm btn-outline-primary">Otevřít</a>
+                            </li>
+                        {% else %}
+                            <li class="list-group-item text-muted">Žádné publikované příspěvky.</li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-4">
-            <div class="card shadow-sm">
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
                 <div class="card-body">
-                    <h2 class="h5 card-title">Uživatelé</h2>
-                    <p class="card-text">Správa administrátorů a rolí.</p>
-                    <a href="/admin/users" class="btn btn-sm btn-primary">Otevřít</a>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h5 card-title mb-0">Komentáře ke schválení</h2>
+                        <a href="/admin/comments" class="btn btn-sm btn-outline-secondary">Spravovat</a>
+                    </div>
+
+                    <ul class="list-group list-group-flush">
+                        {% for comment in pending_comments %}
+                            {% set content = comment_content_map[comment.content_id] ?? null %}
+                            <li class="list-group-item">
+                                <div class="fw-semibold">{{ comment.author_name ?: 'Anonym' }}</div>
+                                <div class="text-muted small mb-1">{{ comment.created_at ? comment.created_at|date(date_time_format) : '' }}</div>
+                                <div class="small mb-2">{{ comment.body|length > 120 ? comment.body[:120] ~ '…' : comment.body }}</div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="text-muted small">{{ content ? content.title : 'Neznámý obsah' }}</div>
+                                    {% if content %}
+                                        <a href="/admin/content/{{ content.type_slug }}/{{ content.id }}/edit" class="btn btn-sm btn-outline-primary">Otevřít</a>
+                                    {% endif %}
+                                </div>
+                            </li>
+                        {% else %}
+                            <li class="list-group-item text-muted">Žádné čekající komentáře.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h5 card-title mb-0">Naposledy přihlášení uživatelé</h2>
+                        <a href="/admin/users" class="btn btn-sm btn-outline-secondary">Uživatelé</a>
+                    </div>
+
+                    <ul class="list-group list-group-flush">
+                        {% for login in recent_logins %}
+                            <li class="list-group-item">
+                                <div class="fw-semibold">{{ login.nickname ?: login.email }}</div>
+                                <div class="text-muted small">{{ login.created_at ? login.created_at|date(date_time_format) : '' }} · {{ login.ip_address }}</div>
+                            </li>
+                        {% else %}
+                            <li class="list-group-item text-muted">Zatím žádné přihlášení.</li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
         </div>

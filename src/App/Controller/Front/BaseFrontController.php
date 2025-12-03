@@ -4,7 +4,6 @@ namespace App\Controller\Front;
 use App\Service\Flash;
 use App\Service\ContentType;
 use App\Service\Auth;
-use App\Service\AssetManager;
 
 abstract class BaseFrontController
 {
@@ -60,7 +59,6 @@ abstract class BaseFrontController
             'flash_error'   => $flash['error'],
             'post_archive_slug' => ContentType::defaultSlug('post'),
             'current_user' => $currentUser,
-            'asset_urls' => AssetManager::assetUrls(),
         ], $context);
 
         if ($adminBar || isset($context['admin_bar'])) {

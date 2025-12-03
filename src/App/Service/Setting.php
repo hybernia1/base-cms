@@ -27,7 +27,6 @@ class Setting
         'time_format' => 'H:i',
         'content_types' => '',
         'term_types' => '',
-        'asset_source' => 'cdn',
     ];
 
     public static function get(string $key, $default = null)

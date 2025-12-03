@@ -7,7 +7,7 @@
 
 {% block styles %}
     {{ parent() }}
-    <link rel="stylesheet" href="{{ asset_urls.summernote_css }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.css">
 {% endblock %}
 
 {% block body %}
@@ -257,8 +257,8 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="{{ asset_urls.jquery_js }}"></script>
-    <script src="{{ asset_urls.summernote_js }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.20/dist/summernote-lite.min.js"></script>
     <script>
         const termOptions = [
             {% for typeKey, typeDef in allowed_term_types %}

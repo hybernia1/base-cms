@@ -27,6 +27,11 @@
                 <textarea name="body_text" class="form-control" rows="4" required>{{ template.body_text }}</textarea>
             </div>
 
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" role="switch" id="enabledSwitch" name="enabled" value="1" {{ template.enabled ? 'checked' }}>
+                <label class="form-check-label" for="enabledSwitch">Odesílat tento e-mail</label>
+            </div>
+
             <div class="alert alert-info">
                 <div class="fw-bold">Dostupné proměnné:</div>
                 <ul class="mb-0">

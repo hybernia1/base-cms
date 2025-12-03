@@ -3,7 +3,7 @@ namespace App\Controller\Front;
 
 use App\Service\Auth;
 use App\Service\Comment;
-use App\Service\EmailTemplateManager;
+use App\Service\CommentNotifier;
 use App\Service\Setting;
 use RedBeanPHP\R as R;
 
@@ -90,10 +90,8 @@ class CommentController extends BaseFrontController
         ]);
 
         if ($status === 'approved') {
-            EmailTemplateManager::send('comment_approved', $authorEmail ?: Setting::get('smtp_from_email', ''), [
-                'comment_body' => $body,
-                'site_name' => Setting::get('site_name', 'Web'),
-            ]);
+            CommentNotifier::sendApprovedNotification($comment);
+            CommentNotifier::sendReplyNotification($comment);
         }
 
         echo json_encode([

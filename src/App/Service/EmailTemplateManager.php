@@ -43,7 +43,7 @@ class EmailTemplateManager
     {
         self::ensureSchema();
         $template = self::getOrCreateTemplate($event);
-        if (!$template) {
+        if (!$template || (isset($template->enabled) && (int) $template->enabled !== 1)) {
             return;
         }
 
@@ -86,9 +86,12 @@ class EmailTemplateManager
             ]);
         }
 
-        $template->subject = $data['subject'];
-        $template->body_html = $data['body_html'];
-        $template->body_text = $data['body_text'];
+        $template->subject = $data['subject'] ?? $template->subject;
+        $template->body_html = $data['body_html'] ?? $template->body_html;
+        $template->body_text = $data['body_text'] ?? $template->body_text;
+        if (array_key_exists('enabled', $data)) {
+            $template->enabled = (int) $data['enabled'] === 1 ? 1 : 0;
+        }
         $template->updated_at = date('Y-m-d H:i:s');
 
         R::store($template);
@@ -144,6 +147,7 @@ class EmailTemplateManager
         $template->subject = $values['subject'] ?? '';
         $template->body_html = $values['body_html'] ?? '';
         $template->body_text = $values['body_text'] ?? '';
+        $template->enabled = $values['enabled'] ?? 1;
         $template->updated_at = date('Y-m-d H:i:s');
         R::store($template);
 

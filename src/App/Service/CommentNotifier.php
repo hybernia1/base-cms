@@ -12,8 +12,12 @@ class CommentNotifier
             return;
         }
 
+        $context = self::buildCommentContext($comment);
+
         EmailTemplateManager::send('comment_approved', $recipient, [
             'comment_body' => $comment->body,
+            'comment_url' => $context['url'],
+            'content_title' => $context['title'],
             'site_name' => Setting::get('site_name', 'Web'),
         ]);
     }
@@ -36,8 +40,12 @@ class CommentNotifier
             return;
         }
 
+        $context = self::buildCommentContext($comment);
+
         EmailTemplateManager::send('comment_reply', $recipient, [
             'reply_body' => $comment->body,
+            'comment_url' => $context['url'],
+            'content_title' => $context['title'],
             'site_name' => Setting::get('site_name', 'Web'),
         ]);
     }
@@ -69,5 +77,36 @@ class CommentNotifier
         }
 
         return '';
+    }
+
+    private static function buildCommentContext($comment): array
+    {
+        $content = $comment->content_id ? R::load('content', (int) $comment->content_id) : null;
+
+        if ($content && $content->id) {
+            $typeSlug = ContentType::slug((string) $content->type);
+            $contentSlug = (string) ($content->slug ?? '');
+            $basePath = $typeSlug && $contentSlug ? $typeSlug . '/' . $contentSlug : '';
+            $pathWithAnchor = $comment->id && $basePath !== '' ? $basePath . '#comment-' . $comment->id : $basePath;
+
+            return [
+                'title' => (string) ($content->title ?? ''),
+                'url' => self::buildAbsoluteUrl($pathWithAnchor),
+            ];
+        }
+
+        return [
+            'title' => 'Obsah',
+            'url' => self::buildAbsoluteUrl($comment->id ? '#comment-' . $comment->id : ''),
+        ];
+    }
+
+    private static function buildAbsoluteUrl(string $path): string
+    {
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $normalizedPath = trim($path) === '' ? '' : '/' . ltrim($path, '/');
+
+        return $scheme . '://' . $host . $normalizedPath;
     }
 }

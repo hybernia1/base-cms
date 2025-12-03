@@ -90,7 +90,6 @@ class CommentController extends BaseFrontController
         ]);
 
         if ($status === 'approved') {
-            CommentNotifier::sendApprovedNotification($comment);
             CommentNotifier::sendReplyNotification($comment);
         }
 

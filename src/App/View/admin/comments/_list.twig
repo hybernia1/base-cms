@@ -43,7 +43,7 @@
 <ul class="nav nav-pills mb-3">
     {% for key, label in tabs %}
         <li class="nav-item">
-            <a href="/admin/comments?status={{ key }}{% if search is not empty %}&amp;q={{ search|url_encode }}{% endif %}" class="nav-link {% if status == key %}active{% endif %}" data-ajax-link>
+            <a href="/admin/comments?status={{ key }}{% if search is not empty %}&amp;q={{ search|url_encode }}{% endif %}" class="nav-link {% if status == key %}active{% endif %}">
                 {{ label }}
                 <span class="badge text-bg-light ms-1">{{ counts[key]|default(0) }}</span>
             </a>

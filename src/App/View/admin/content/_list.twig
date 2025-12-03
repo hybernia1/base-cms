@@ -20,32 +20,28 @@
 <ul class="nav nav-pills mb-3">
     <li class="nav-item">
         <a class="nav-link {% if current_status == 'published' %}active{% endif %}"
-           href="/admin/content/{{ current_type.slug }}?status=published{% if search is not empty %}&amp;q={{ search|url_encode }}{% endif %}"
-           data-ajax-link>
+           href="/admin/content/{{ current_type.slug }}?status=published{% if search is not empty %}&amp;q={{ search|url_encode }}{% endif %}">
             Publikované
             <span class="badge text-bg-light ms-1">{{ counts.published|default(0) }}</span>
         </a>
     </li>
     <li class="nav-item">
         <a class="nav-link {% if current_status == 'draft' %}active{% endif %}"
-           href="/admin/content/{{ current_type.slug }}?status=draft{% if search is not empty %}&amp;q={{ search|url_encode }}{% endif %}"
-           data-ajax-link>
+           href="/admin/content/{{ current_type.slug }}?status=draft{% if search is not empty %}&amp;q={{ search|url_encode }}{% endif %}">
             Koncepty
             <span class="badge text-bg-light ms-1">{{ counts.draft|default(0) }}</span>
         </a>
     </li>
     <li class="nav-item">
         <a class="nav-link {% if current_status == 'trash' %}active{% endif %}"
-           href="/admin/content/{{ current_type.slug }}?status=trash{% if search is not empty %}&amp;q={{ search|url_encode }}{% endif %}"
-           data-ajax-link>
+           href="/admin/content/{{ current_type.slug }}?status=trash{% if search is not empty %}&amp;q={{ search|url_encode }}{% endif %}">
             Koš
             <span class="badge text-bg-light ms-1">{{ counts.trash|default(0) }}</span>
         </a>
     </li>
     <li class="nav-item">
         <a class="nav-link {% if current_status not in ['published','draft','trash'] %}active{% endif %}"
-           href="/admin/content/{{ current_type.slug }}{% if search is not empty %}?q={{ search|url_encode }}{% endif %}"
-           data-ajax-link>
+           href="/admin/content/{{ current_type.slug }}{% if search is not empty %}?q={{ search|url_encode }}{% endif %}">
             Vše
             <span class="badge text-bg-light ms-1">{{ counts.all|default(0) }}</span>
         </a>

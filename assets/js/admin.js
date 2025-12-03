@@ -405,8 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const statusTabs = statuses.map((status) => `
                 <li class="nav-item">
                     <a class="nav-link ${currentStatus === status.key ? 'active' : ''}"
-                       href="/admin/content/${context.current_type?.slug || ''}${status.key !== 'all' ? `?status=${status.key}` : ''}"
-                       data-ajax-link>
+                       href="/admin/content/${context.current_type?.slug || ''}${status.key !== 'all' ? `?status=${status.key}` : ''}">
                         ${escapeHtml(status.label)}
                         <span class="badge text-bg-light ms-1">${counts[status.key] ?? 0}</span>
                     </a>
@@ -495,7 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 : '';
             const statusTabs = statuses.map((status) => `
                 <li class="nav-item">
-                    <a href="/admin/comments?status=${status.key}" class="nav-link ${currentStatus === status.key ? 'active' : ''}" data-ajax-link>
+                    <a href="/admin/comments?status=${status.key}" class="nav-link ${currentStatus === status.key ? 'active' : ''}">
                         ${escapeHtml(status.label)}
                         <span class="badge text-bg-light ms-1">${counts[status.key] ?? 0}</span>
                     </a>

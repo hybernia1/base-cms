@@ -1,0 +1,52 @@
+{% extends 'front/layout.twig' %}
+
+{% block title %}
+    {% if term %}{{ term.name }} | {{ term_type.label|default('Term') }}{% else %}Term nenalezen{% endif %}
+{% endblock %}
+
+{% block body %}
+    <div class="mb-4">
+        <h1 class="display-6 mb-1">{{ heading|default(term.name|default('Term')) }}</h1>
+        {% if term_type %}
+            <p class="text-muted mb-1">{{ term_type.label }} · archiv příspěvků</p>
+        {% endif %}
+        {% if term and term.description %}
+            <p class="text-muted mb-0">{{ term.description|nl2br }}</p>
+        {% endif %}
+    </div>
+
+    {% if not term %}
+        <div class="alert alert-warning">{{ empty_message|default('Term nebyl nalezen.') }}</div>
+    {% elseif items is empty %}
+        <p class="text-muted">{{ empty_message|default('Tento term zatím nemá žádný obsah.') }}</p>
+    {% else %}
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            {% for post in items %}
+                {% set type_def = content_types[post.type]|default({'slug': post.type, 'name': post.type}) %}
+                <div class="col">
+                    <article class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <div class="text-muted small mb-1">
+                                {{ post.created_at|date('j. n. Y') }} · {{ type_def.name }}
+                                {% if post.author %}
+                                    ·
+                                    {% if post.author.profile_url %}
+                                        <a href="{{ post.author.profile_url }}" class="text-decoration-none">{{ post.author.nickname }}</a>
+                                    {% else %}
+                                        {{ post.author.nickname }}
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            <h2 class="h5 card-title">
+                                <a href="/{{ type_def.slug }}/{{ post.slug }}" class="stretched-link text-decoration-none">{{ post.title }}</a>
+                            </h2>
+                            {% if post.body %}
+                                <p class="card-text text-muted">{{ post.body|striptags|slice(0, 180) }}{% if post.body|striptags|length > 180 %}…{% endif %}</p>
+                            {% endif %}
+                        </div>
+                    </article>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

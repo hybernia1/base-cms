@@ -4,6 +4,7 @@ namespace App\Controller\Front;
 use App\Service\Flash;
 use App\Service\ContentType;
 use App\Service\Auth;
+use RedBeanPHP\R as R;
 
 abstract class BaseFrontController
 {
@@ -66,5 +67,52 @@ abstract class BaseFrontController
         }
 
         echo $this->twig->render($template, $templateContext);
+    }
+
+    protected function attachAuthors(array $items): array
+    {
+        $authorIds = [];
+
+        foreach ($items as $item) {
+            $authorId = (int) ($item->author_id ?? 0);
+            if ($authorId > 0) {
+                $authorIds[] = $authorId;
+            }
+        }
+
+        $authorIds = array_values(array_unique($authorIds));
+        if (!$authorIds) {
+            return $items;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($authorIds), '?'));
+        $authors = R::findAll('user', ' id IN (' . $placeholders . ') ', $authorIds);
+
+        $map = [];
+        foreach ($authors as $author) {
+            $map[(int) $author->id] = [
+                'id' => (int) $author->id,
+                'email' => $author->email,
+                'nickname' => $author->nickname ?: $author->email,
+                'profile_url' => (int) ($author->is_profile_public ?? 1) === 1 ? '/users/' . $author->id : null,
+            ];
+        }
+
+        $result = [];
+        foreach ($items as $item) {
+            $authorId = (int) ($item->author_id ?? 0);
+
+            $result[] = [
+                'id' => (int) ($item->id ?? 0),
+                'title' => $item->title ?? '',
+                'slug' => $item->slug ?? '',
+                'body' => $item->body ?? '',
+                'created_at' => $item->created_at ?? null,
+                'type' => $item->type ?? '',
+                'author' => $map[$authorId] ?? null,
+            ];
+        }
+
+        return $result;
     }
 }

@@ -128,6 +128,7 @@ class ExtraController extends BaseAdminController
             'reset_tokens' => (int) R::count('passwordreset', ' used_at IS NOT NULL OR expires_at < NOW() '),
             'content_trash' => (int) R::count('content', ' deleted_at IS NOT NULL '),
             'comment_trash' => (int) R::count('comment', ' deleted_at IS NOT NULL '),
+            'orphan_terms' => $this->countOrphanTerms(),
             'db_size' => $this->formatSize($beforeSizeBytes),
             'db_size_bytes' => $beforeSizeBytes,
         ];
@@ -137,6 +138,7 @@ class ExtraController extends BaseAdminController
             'clean_reset_tokens' => true,
             'clean_content_trash' => true,
             'clean_comment_trash' => true,
+            'clean_orphan_terms' => true,
         ];
 
         $results = null;
@@ -147,6 +149,7 @@ class ExtraController extends BaseAdminController
                 'clean_reset_tokens' => isset($_POST['clean_reset_tokens']),
                 'clean_content_trash' => isset($_POST['clean_content_trash']),
                 'clean_comment_trash' => isset($_POST['clean_comment_trash']),
+                'clean_orphan_terms' => isset($_POST['clean_orphan_terms']),
             ];
 
             if (!array_filter($selectedActions)) {
@@ -176,11 +179,17 @@ class ExtraController extends BaseAdminController
                 Comment::emptyTrash();
             }
 
+            if ($selectedActions['clean_orphan_terms']) {
+                $deleted['orphan_terms'] = $stats['orphan_terms'];
+                $this->deleteOrphanTerms();
+            }
+
             $afterCounts = [
                 'login_logs' => (int) R::count('loginlog'),
                 'reset_tokens' => (int) R::count('passwordreset', ' used_at IS NOT NULL OR expires_at < NOW() '),
                 'content_trash' => (int) R::count('content', ' deleted_at IS NOT NULL '),
                 'comment_trash' => (int) R::count('comment', ' deleted_at IS NOT NULL '),
+                'orphan_terms' => $this->countOrphanTerms(),
             ];
 
             $afterSizeBytes = $this->fetchDatabaseSizeBytes($dbName);
@@ -411,9 +420,22 @@ class ExtraController extends BaseAdminController
         foreach ($trashed as $item) {
             R::exec('DELETE FROM content_term WHERE content_id = ?', [(int) $item->id]);
             R::exec('DELETE FROM content_media WHERE content_id = ?', [(int) $item->id]);
+            Comment::deleteForContent((int) $item->id);
             R::trash($item);
         }
 
         return $count;
+    }
+
+    private function countOrphanTerms(): int
+    {
+        return (int) R::getCell(
+            'SELECT COUNT(*) FROM term t LEFT JOIN content_term ct ON t.id = ct.term_id WHERE ct.term_id IS NULL'
+        );
+    }
+
+    private function deleteOrphanTerms(): void
+    {
+        R::exec('DELETE t FROM term t LEFT JOIN content_term ct ON t.id = ct.term_id WHERE ct.term_id IS NULL');
     }
 }

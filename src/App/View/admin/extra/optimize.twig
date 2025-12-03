@@ -32,6 +32,9 @@
 
                         <dt class="col-8 col-lg-7 text-muted">Komentáře v koši</dt>
                         <dd class="col-4 col-lg-5 text-end">{{ stats.comment_trash }} položek</dd>
+
+                        <dt class="col-8 col-lg-7 text-muted">Osiřelé termy</dt>
+                        <dd class="col-4 col-lg-5 text-end">{{ stats.orphan_terms }} položek</dd>
                     </dl>
                 </div>
             </div>
@@ -98,6 +101,20 @@
                             </label>
                         </div>
 
+                        <div class="form-check p-3 border rounded">
+                            <input class="form-check-input" type="checkbox" value="1" id="clean_orphan_terms" name="clean_orphan_terms"
+                                   {% if selected_actions.clean_orphan_terms %}checked{% endif %}>
+                            <label class="form-check-label w-100" for="clean_orphan_terms">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-semibold">Smazat osiřelé termy</div>
+                                        <div class="text-muted small">Odstraní termy, které nejsou přiřazené k žádnému obsahu.</div>
+                                    </div>
+                                    <span class="badge bg-secondary">{{ stats.orphan_terms }} položek</span>
+                                </div>
+                            </label>
+                        </div>
+
                         <div class="d-flex flex-wrap gap-2">
                             <button type="submit" class="btn btn-primary d-flex align-items-center gap-2">
                                 <i class="bi bi-magic"></i>
@@ -154,6 +171,11 @@
                                 <td>Komentáře v koši</td>
                                 <td class="text-end">{{ results.deleted.comment_trash|default(0) }}</td>
                                 <td class="text-end">{{ results.after_counts.comment_trash }}</td>
+                            </tr>
+                            <tr>
+                                <td>Osiřelé termy</td>
+                                <td class="text-end">{{ results.deleted.orphan_terms|default(0) }}</td>
+                                <td class="text-end">{{ results.after_counts.orphan_terms }}</td>
                             </tr>
                         </tbody>
                     </table>

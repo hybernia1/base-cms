@@ -7,7 +7,6 @@
                 <tr>
                     <th>E-mail</th>
                     <th>Role</th>
-                    <th>Stav</th>
                     <th class="text-end">Akce</th>
                 </tr>
             </thead>
@@ -16,25 +15,18 @@
                 {% for user in users %}
                     <tr>
                         <td>
-                            <div class="fw-semibold">{{ user.email }}</div>
+                            <div class="fw-semibold d-flex align-items-center gap-2">
+                                {% if user.is_banned %}
+                                    <i class="bi bi-slash-circle text-danger" aria-hidden="true"></i>
+                                    <span class="visually-hidden">Zablokovaný uživatel</span>
+                                {% endif %}
+                                <span>{{ user.email }}</span>
+                            </div>
                             {% if user.nickname %}
-                                <div class="text-muted small d-flex align-items-center gap-2">
-                                    {% if user.is_banned %}
-                                        <i class="bi bi-slash-circle text-danger" aria-hidden="true"></i>
-                                        <span class="visually-hidden">Zablokovaný uživatel</span>
-                                    {% endif %}
-                                    <span>Přezdívka: {{ user.nickname }}</span>
-                                </div>
+                                <div class="text-muted small">Přezdívka: {{ user.nickname }}</div>
                             {% endif %}
                         </td>
                         <td>{{ roles[user.role] ?? user.role }}</td>
-                        <td>
-                            {% if user.is_banned %}
-                                <span class="badge bg-danger">Zablokován</span>
-                            {% else %}
-                                <span class="badge bg-success">Aktivní</span>
-                            {% endif %}
-                        </td>
                         <td class="text-end">
                             <div class="d-flex flex-wrap justify-content-end gap-2 align-items-center">
                                 {{ ui.crud_actions('/admin/users/' ~ user.id, {
@@ -50,7 +42,7 @@
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="4" class="text-center p-4 text-muted">Zatím žádní uživatelé.</td>
+                    <td colspan="3" class="text-center p-4 text-muted">Zatím žádní uživatelé.</td>
                 </tr>
             {% endif %}
             </tbody>

@@ -78,6 +78,7 @@ class InstallController
                 'pass' => $values['db_pass'],
             ],
             'mail' => [
+                'transport' => 'mail',
                 'host' => '',
                 'port' => 587,
                 'username' => '',

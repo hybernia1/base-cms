@@ -11,6 +11,7 @@ class Mail
     {
         $configFile = $GLOBALS['app']['config']['mail'] ?? [];
         $config = [
+            'transport' => Setting::get('mail_transport', $configFile['transport'] ?? 'mail'),
             'host' => Setting::get('smtp_host', $configFile['host'] ?? ''),
             'port' => (int) Setting::get('smtp_port', $configFile['port'] ?? 587),
             'username' => Setting::get('smtp_username', $configFile['username'] ?? ''),
@@ -20,10 +21,15 @@ class Mail
             'encryption' => Setting::get('smtp_encryption', $configFile['encryption'] ?? PHPMailer::ENCRYPTION_STARTTLS),
         ];
 
+        $transport = $config['transport'] === 'smtp' ? 'smtp' : 'mail';
         $hasSmtp = trim((string) $config['host']) !== '';
         $fromEmail = trim((string) $config['from_email']);
 
-        if (!$hasSmtp && $fromEmail !== '') {
+        if ($transport === 'mail') {
+            if ($fromEmail === '') {
+                return false;
+            }
+
             $headers = [
                 'MIME-Version: 1.0',
                 'Content-type: text/html; charset=UTF-8',
@@ -38,7 +44,7 @@ class Mail
             return mail($to, $subject, $htmlBody, implode("\r\n", $headers));
         }
 
-        if (!$hasSmtp || $fromEmail === '') {
+        if ($transport !== 'smtp' || !$hasSmtp || $fromEmail === '') {
             return false;
         }
 

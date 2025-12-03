@@ -7,6 +7,7 @@ return [
         'pass' => 'dbpass',
     ],
     'mail' => [
+        'transport' => 'mail',
         'host' => 'smtp.example.com',
         'port' => 587,
         'username' => 'user@example.com',

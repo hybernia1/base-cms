@@ -4,8 +4,6 @@ namespace App\Controller\Install;
 use App\Service\Mail;
 use App\Service\EmailTemplateManager;
 use App\Service\UserProfile;
-use App\Service\Setting;
-use App\Service\ThemeManager;
 use RedBeanPHP\R as R;
 
 class InstallController
@@ -362,12 +360,6 @@ class InstallController
                 EmailTemplateManager::updateTemplate($event, $template);
             }
         }
-
-        $defaultTheme = Setting::DEFAULTS['theme'] ?? ThemeManager::DEFAULT_THEME;
-        R::exec(
-            "INSERT IGNORE INTO setting (`key`, `value`, `created_at`, `updated_at`) VALUES ('theme', ?, NOW(), NOW())",
-            [$defaultTheme]
-        );
 
         R::exec(
             "CREATE TABLE IF NOT EXISTS `passwordreset` (

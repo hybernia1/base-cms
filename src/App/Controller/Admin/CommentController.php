@@ -3,6 +3,7 @@ namespace App\Controller\Admin;
 
 use App\Service\Auth;
 use App\Service\Comment;
+use App\Service\CommentNotifier;
 use App\Service\Flash;
 use RedBeanPHP\R as R;
 
@@ -184,7 +185,16 @@ class CommentController extends AjaxController
     public function approve($id): void
     {
         Auth::requireRole(['admin', 'editor']);
-        Comment::approve((int) $id);
+        $comment = Comment::find((int) $id);
+        if ($comment) {
+            $wasApproved = (string) $comment->status === 'approved';
+            Comment::approve((int) $id);
+
+            if (!$wasApproved) {
+                CommentNotifier::sendApprovedNotification($comment);
+                CommentNotifier::sendReplyNotification($comment);
+            }
+        }
         Flash::addSuccess('Komentář byl schválen.');
         header('Location: /admin/comments');
         exit;
@@ -256,7 +266,13 @@ class CommentController extends AjaxController
             exit;
         }
 
-        Comment::update((int) $id, $data);
+        $previousStatus = (string) $comment->status;
+        $updated = Comment::update((int) $id, $data);
+
+        if ($updated && $previousStatus !== 'approved' && (string) $updated->status === 'approved') {
+            CommentNotifier::sendApprovedNotification($updated);
+            CommentNotifier::sendReplyNotification($updated);
+        }
 
         Flash::addSuccess('Komentář byl aktualizován.');
         header('Location: /admin/comments');
@@ -266,6 +282,11 @@ class CommentController extends AjaxController
     public function delete($id): void
     {
         Auth::requireRole(['admin', 'editor']);
+        $comment = Comment::find((int) $id);
+        if ($comment && $comment->deleted_at === null) {
+            CommentNotifier::sendDeletedNotification($comment);
+        }
+
         Comment::delete((int) $id);
         Flash::addSuccess('Komentář byl přesunut do koše nebo nenávratně odstraněn.');
         header('Location: /admin/comments');

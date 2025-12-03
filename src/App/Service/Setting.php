@@ -28,7 +28,40 @@ class Setting
         'time_format' => 'H:i',
         'content_types' => '',
         'term_types' => '',
+        'site_logo_id' => '',
+        'site_favicon_id' => '',
     ];
+
+    public static function mediaDetails(?int $mediaId): ?array
+    {
+        if (!$mediaId || $mediaId <= 0) {
+            return null;
+        }
+
+        $media = R::findOne('media', ' id = ? ', [$mediaId]);
+        if (!$media || !$media->id) {
+            return null;
+        }
+
+        $filename = $media->webp_filename ?: $media->filename;
+        $path = trim((string) $media->path, '/');
+
+        return [
+            'id' => (int) $media->id,
+            'url' => '/' . ($path ? $path . '/' : '') . $filename,
+            'original_name' => $media->original_name ?: $media->filename,
+            'alt' => $media->alt ?: ($media->original_name ?: $media->filename),
+            'is_image' => (bool) $media->is_image,
+            'mime_type' => $media->mime_type,
+        ];
+    }
+
+    public static function mediaUrl(?int $mediaId): ?string
+    {
+        $details = self::mediaDetails($mediaId);
+
+        return $details['url'] ?? null;
+    }
 
     public static function get(string $key, $default = null)
     {

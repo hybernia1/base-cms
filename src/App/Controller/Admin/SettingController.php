@@ -7,6 +7,7 @@ use App\Service\Setting;
 use App\Service\ContentType;
 use App\Service\TermType;
 use App\Service\Slugger;
+use RedBeanPHP\R as R;
 use DateTimeZone;
 
 class SettingController extends AjaxController
@@ -30,10 +31,22 @@ class SettingController extends AjaxController
         $dateFormats = ['d.m.Y', 'j. n. Y', 'Y-m-d', 'm/d/Y'];
         $timeFormats = ['H:i', 'H:i:s', 'g:i A'];
 
+        $mediaLibrary = [];
+        $selectedLogo = null;
+        $selectedFavicon = null;
+        if ($section === 'main') {
+            $mediaLibrary = $this->mediaList();
+            $selectedLogo = Setting::mediaDetails((int) ($values['site_logo_id'] ?? 0));
+            $selectedFavicon = Setting::mediaDetails((int) ($values['site_favicon_id'] ?? 0));
+        }
+
         $this->render('admin/settings/form.twig', [
             'values' => $values,
             'content_types' => ContentType::definitions(),
             'term_types' => TermType::definitions(),
+            'media' => $mediaLibrary,
+            'selected_logo' => $selectedLogo,
+            'selected_favicon' => $selectedFavicon,
             'current_menu' => 'settings:' . $section,
             'timezones' => $timezones,
             'date_formats' => $dateFormats,
@@ -84,6 +97,8 @@ class SettingController extends AjaxController
         $timezone = trim($_POST['timezone'] ?? Setting::DEFAULTS['timezone']);
         $dateFormat = trim($_POST['date_format'] ?? Setting::DEFAULTS['date_format']);
         $timeFormat = trim($_POST['time_format'] ?? Setting::DEFAULTS['time_format']);
+        $siteLogoId = $this->normalizeImageId((int) ($_POST['site_logo_id'] ?? 0));
+        $siteFaviconId = $this->normalizeImageId((int) ($_POST['site_favicon_id'] ?? 0));
 
         $validTimezones = DateTimeZone::listIdentifiers();
         if (!in_array($timezone, $validTimezones, true)) {
@@ -100,6 +115,8 @@ class SettingController extends AjaxController
         Setting::set('timezone', $timezone ?: Setting::DEFAULTS['timezone']);
         Setting::set('date_format', $dateFormat ?: Setting::DEFAULTS['date_format']);
         Setting::set('time_format', $timeFormat ?: Setting::DEFAULTS['time_format']);
+        Setting::set('site_logo_id', $siteLogoId ?: '');
+        Setting::set('site_favicon_id', $siteFaviconId ?: '');
 
         Flash::addSuccess('Základní nastavení bylo uloženo.');
     }
@@ -252,5 +269,21 @@ class SettingController extends AjaxController
         }
 
         return $result;
+    }
+
+    private function mediaList(): array
+    {
+        return R::findAll('media', ' is_image = 1 ORDER BY created_at DESC LIMIT 100 ');
+    }
+
+    private function normalizeImageId(int $id): int
+    {
+        if ($id <= 0) {
+            return 0;
+        }
+
+        $media = R::findOne('media', ' id = ? AND is_image = 1 ', [$id]);
+
+        return $media && $media->id ? (int) $media->id : 0;
     }
 }

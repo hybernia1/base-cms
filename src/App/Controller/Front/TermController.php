@@ -15,28 +15,16 @@ class TermController extends BaseFrontController
         $contentTypes = ContentType::definitions();
 
         if (!isset($termTypes[$typeKey])) {
-            http_response_code(404);
-            $this->render('front/term.twig', [
-                'term' => null,
-                'items' => [],
-                'content_types' => $contentTypes,
-                'term_type' => null,
-                'heading' => 'Nenalezeno',
-                'empty_message' => 'Zvolený typ termu neexistuje.',
+            $this->renderNotFound([
+                'message' => 'Zvolený typ termu neexistuje.',
             ]);
             return;
         }
 
         $term = R::findOne('term', ' slug = ? AND type = ? ', [$termSlug, $typeKey]);
         if (!$term) {
-            http_response_code(404);
-            $this->render('front/term.twig', [
-                'term' => null,
-                'items' => [],
-                'content_types' => $contentTypes,
-                'term_type' => $termTypes[$typeKey] ?? null,
-                'heading' => 'Nenalezeno',
-                'empty_message' => 'Vybraný term nebyl nalezen.',
+            $this->renderNotFound([
+                'message' => 'Vybraný term nebyl nalezen.',
             ]);
             return;
         }

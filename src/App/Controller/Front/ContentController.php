@@ -1,7 +1,6 @@
 <?php
 namespace App\Controller\Front;
 
-use App\Service\Captcha;
 use App\Service\ContentType;
 use App\Service\Comment;
 use App\Service\Setting;
@@ -41,12 +40,6 @@ class ContentController extends BaseFrontController
             'allow_anonymous' => Setting::get('comments_allow_anonymous', '0') === '1',
             'max_depth' => (int) Setting::get('comments_max_depth', 0),
         ];
-        $commentCaptcha = [
-            'enabled' => false,
-            'src' => Captcha::refreshKey('comments'),
-            'width' => (int) Setting::get('captcha_width', Setting::DEFAULTS['captcha_width']),
-            'height' => (int) Setting::get('captcha_height', Setting::DEFAULTS['captcha_height']),
-        ];
         $currentUser = Auth::user();
         $adminBarContext = [];
         if ($item) {
@@ -79,7 +72,6 @@ class ContentController extends BaseFrontController
         }
 
         $commentingEnabled = $commentAllowed && ($commentSettings['allow_anonymous'] || $currentUser);
-        $commentCaptcha['enabled'] = $commentAllowed && !$currentUser && $commentSettings['allow_anonymous'] && Captcha::isEnabledFor('comments');
 
         $this->render('front/content/detail.twig', [
             'item' => $item,
@@ -90,7 +82,6 @@ class ContentController extends BaseFrontController
             'comment_allowed' => $commentAllowed,
             'comment_settings' => $commentSettings,
             'commenting_enabled' => $commentingEnabled,
-            'comment_captcha' => $commentCaptcha,
             'author' => $author,
             'admin_bar' => $adminBarContext,
         ]);

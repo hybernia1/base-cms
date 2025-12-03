@@ -76,7 +76,29 @@ abstract class BaseFrontController
             $templateContext['admin_bar'] = array_merge($adminBar, $context['admin_bar'] ?? []);
         }
 
-        echo $this->twig->render($template, $templateContext);
+        try {
+            echo $this->twig->render($template, $templateContext);
+        } catch (\Throwable $e) {
+            error_log('[Theme render error] ' . $e->getMessage());
+            http_response_code(500);
+
+            $config = $GLOBALS['app']['config'] ?? [];
+            $isDebug = ($config['env'] ?? 'prod') !== 'prod';
+
+            try {
+                echo $this->twig->render('front/theme-error.twig', [
+                    'title' => 'Chyba šablony',
+                    'message' => 'Při načítání zvolené šablony došlo k chybě.',
+                    'details' => $isDebug ? $e->getMessage() : null,
+                ]);
+            } catch (\Throwable $fallback) {
+                echo '<h1>Chyba šablony</h1>';
+                echo '<p>Při vykreslování šablony došlo k problému.</p>';
+                if ($isDebug) {
+                    echo '<pre>' . htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8') . '</pre>';
+                }
+            }
+        }
     }
 
     protected function renderNotFound(array $context = []): void

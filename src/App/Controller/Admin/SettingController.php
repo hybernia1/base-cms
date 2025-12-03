@@ -18,6 +18,7 @@ class SettingController extends AjaxController
         'content-types' => ['label' => 'Typy obsahu', 'icon' => 'bi-journal-text'],
         'term-types' => ['label' => 'Typy termů', 'icon' => 'bi-tags'],
         'comments' => ['label' => 'Komentáře', 'icon' => 'bi-chat-dots'],
+        'security' => ['label' => 'Bezpečnost', 'icon' => 'bi-shield-lock'],
     ];
 
     public function index($section = 'main')
@@ -61,6 +62,9 @@ class SettingController extends AjaxController
                 break;
             case 'comments':
                 $this->updateCommentSettings();
+                break;
+            case 'security':
+                $this->updateSecuritySettings();
                 break;
             case 'content-types':
                 $this->updateContentTypes();
@@ -153,6 +157,30 @@ class SettingController extends AjaxController
         Setting::set('comments_allow_anonymous', $allowAnonymous);
 
         Flash::addSuccess('Nastavení komentářů bylo uloženo.');
+    }
+
+    private function updateSecuritySettings(): void
+    {
+        $captchaEnabled = isset($_POST['captcha_enabled']) ? '1' : '0';
+        $captchaForms = $_POST['captcha_forms'] ?? [];
+        $captchaLength = (int) ($_POST['captcha_length'] ?? Setting::DEFAULTS['captcha_length']);
+        $captchaWidth = (int) ($_POST['captcha_width'] ?? Setting::DEFAULTS['captcha_width']);
+        $captchaHeight = (int) ($_POST['captcha_height'] ?? Setting::DEFAULTS['captcha_height']);
+
+        $allowedForms = ['register', 'login', 'comments'];
+        $selectedForms = array_values(array_intersect($allowedForms, array_map('strval', (array) $captchaForms)));
+
+        $captchaLength = max(3, min(8, $captchaLength));
+        $captchaWidth = max(80, min(400, $captchaWidth));
+        $captchaHeight = max(30, min(200, $captchaHeight));
+
+        Setting::set('captcha_enabled', $captchaEnabled);
+        Setting::set('captcha_forms', json_encode($selectedForms));
+        Setting::set('captcha_length', (string) $captchaLength);
+        Setting::set('captcha_width', (string) $captchaWidth);
+        Setting::set('captcha_height', (string) $captchaHeight);
+
+        Flash::addSuccess('Bezpečnostní nastavení bylo uloženo.');
     }
 
     private function updateContentTypes(): void

@@ -12,8 +12,12 @@ class CommentNotifier
             return;
         }
 
+        $context = self::buildCommentContext($comment);
+
         EmailTemplateManager::send('comment_approved', $recipient, [
             'comment_body' => $comment->body,
+            'comment_url' => $context['url'],
+            'content_title' => $context['title'],
             'site_name' => Setting::get('site_name', 'Web'),
         ]);
     }
@@ -36,8 +40,12 @@ class CommentNotifier
             return;
         }
 
+        $context = self::buildCommentContext($comment);
+
         EmailTemplateManager::send('comment_reply', $recipient, [
             'reply_body' => $comment->body,
+            'comment_url' => $context['url'],
+            'content_title' => $context['title'],
             'site_name' => Setting::get('site_name', 'Web'),
         ]);
     }
@@ -69,5 +77,26 @@ class CommentNotifier
         }
 
         return '';
+    }
+
+    private static function buildCommentContext($comment): array
+    {
+        $content = $comment->content_id ? R::load('content', (int) $comment->content_id) : null;
+
+        if ($content && $content->id) {
+            $typeSlug = ContentType::slug((string) $content->type);
+            $contentSlug = (string) ($content->slug ?? '');
+            $baseUrl = $typeSlug && $contentSlug ? $typeSlug . '/' . $contentSlug : '';
+
+            return [
+                'title' => (string) ($content->title ?? ''),
+                'url' => $comment->id && $baseUrl !== '' ? $baseUrl . '#comment-' . $comment->id : $baseUrl,
+            ];
+        }
+
+        return [
+            'title' => 'Obsah',
+            'url' => $comment->id ? '#comment-' . $comment->id : '',
+        ];
     }
 }

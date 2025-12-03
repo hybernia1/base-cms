@@ -14,8 +14,8 @@ class EmailTemplateManager
         ],
         'user_password_reset' => [
             'subject' => 'Instrukce pro reset hesla',
-            'body_html' => '<p>Dobrý den,</p><p>pokud jste požádali o reset hesla, použijte odkaz: {{reset_link}}</p>',
-            'body_text' => "Pokud jste požádali o reset hesla, použijte odkaz: {{reset_link}}",
+            'body_html' => '<p>Dobrý den,</p><p>pokud jste požádali o reset hesla, použijte odkaz: {{reset_link}}.</p><p>Odkaz je platný 2 hodiny. Pokud jste o změnu nepožádali, prosíme, ignorujte tento e-mail.</p>',
+            'body_text' => "Pokud jste požádali o reset hesla, použijte odkaz: {{reset_link}}.\n\nOdkaz je platný 2 hodiny. Pokud jste o změnu nepožádali, prosíme, ignorujte tento e-mail.",
         ],
         'user_banned' => [
             'subject' => 'Váš účet byl zablokován',

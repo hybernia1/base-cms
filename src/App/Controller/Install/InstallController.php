@@ -133,6 +133,10 @@ class InstallController
                 `is_banned` TINYINT(1) NOT NULL DEFAULT 0,
                 `ban_reason` TEXT DEFAULT NULL,
                 `banned_at` DATETIME DEFAULT NULL,
+                `failed_attempts` INT UNSIGNED NOT NULL DEFAULT 0,
+                `locked_until` DATETIME DEFAULT NULL,
+                `last_login_at` DATETIME DEFAULT NULL,
+                `last_login_ip` VARCHAR(45) DEFAULT NULL,
                 `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
                 `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
@@ -332,6 +336,18 @@ class InstallController
         if (!isset($userColumns['banned_at'])) {
             R::exec("ALTER TABLE `user` ADD COLUMN `banned_at` DATETIME DEFAULT NULL AFTER `ban_reason`");
         }
+        if (!isset($userColumns['failed_attempts'])) {
+            R::exec("ALTER TABLE `user` ADD COLUMN `failed_attempts` INT UNSIGNED NOT NULL DEFAULT 0 AFTER `banned_at`");
+        }
+        if (!isset($userColumns['locked_until'])) {
+            R::exec("ALTER TABLE `user` ADD COLUMN `locked_until` DATETIME DEFAULT NULL AFTER `failed_attempts`");
+        }
+        if (!isset($userColumns['last_login_at'])) {
+            R::exec("ALTER TABLE `user` ADD COLUMN `last_login_at` DATETIME DEFAULT NULL AFTER `locked_until`");
+        }
+        if (!isset($userColumns['last_login_ip'])) {
+            R::exec("ALTER TABLE `user` ADD COLUMN `last_login_ip` VARCHAR(45) DEFAULT NULL AFTER `last_login_at`");
+        }
 
         $mediaColumns = R::inspect('media');
         if (!isset($mediaColumns['uploaded_by'])) {
@@ -344,5 +360,28 @@ class InstallController
                 EmailTemplateManager::updateTemplate($event, $template);
             }
         }
+
+        R::exec(
+            "CREATE TABLE IF NOT EXISTS `passwordreset` (
+                `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `user_id` INT UNSIGNED NOT NULL,
+                `token_hash` VARCHAR(255) NOT NULL,
+                `expires_at` DATETIME NOT NULL,
+                `created_at` DATETIME NOT NULL,
+                `used_at` DATETIME DEFAULT NULL,
+                KEY `idx_user` (`user_id`),
+                UNIQUE KEY `token_hash_unique` (`token_hash`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
+        R::exec(
+            "CREATE TABLE IF NOT EXISTS `loginlog` (
+                `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `user_id` INT UNSIGNED NOT NULL,
+                `ip_address` VARCHAR(45) NOT NULL,
+                `created_at` DATETIME NOT NULL,
+                KEY `idx_user` (`user_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
     }
 }

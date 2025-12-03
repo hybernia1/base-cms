@@ -74,6 +74,9 @@
                     <p class="text-muted mb-0">Přihlášení do administrace</p>
                 </div>
 
+                {% if success %}
+                    <div class="alert alert-success">{{ success }}</div>
+                {% endif %}
                 {% if error %}
                     <div class="alert alert-danger">{{ error }}</div>
                 {% endif %}
@@ -92,6 +95,7 @@
                             <i class="bi bi-box-arrow-in-right me-2"></i>
                             Přihlásit
                         </button>
+                        <a href="/password-reset" class="btn btn-link text-center">Zapomněli jste heslo?</a>
                     </form>
                 </div>
             </div>

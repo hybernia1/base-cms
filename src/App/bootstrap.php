@@ -6,7 +6,6 @@ use Twig\Loader\FilesystemLoader;
 use Twig\Environment;
 use App\Service\Setting;
 use App\Service\MediaHelper;
-use App\Service\ThemeManager;
 use Twig\TwigFunction;
 
 session_start();
@@ -39,13 +38,8 @@ try {
         }
     }
 
-    $activeThemeKey = ($isInstalled && !empty($config['db'])) ? ThemeManager::activeThemeKey() : ThemeManager::DEFAULT_THEME;
-    $themePath = ThemeManager::resolveActivePath($activeThemeKey);
     // Twig
-    $loader = new FilesystemLoader([
-        $themePath,
-        __DIR__ . '/View',
-    ]);
+    $loader = new FilesystemLoader(__DIR__ . '/View');
     $twig = new Environment($loader, [
         // 'cache' => __DIR__ . '/../../cache/twig',
     ]);
@@ -66,11 +60,6 @@ try {
     }
 
     $twig->addGlobal('app_settings', $appSettings);
-    $twig->addGlobal('active_theme', [
-        'key' => $activeThemeKey,
-        'path' => $themePath,
-        'meta' => ThemeManager::readMetadata($themePath, basename($themePath)),
-    ]);
 
     // router
     $router = new Router();

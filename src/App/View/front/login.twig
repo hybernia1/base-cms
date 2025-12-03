@@ -22,36 +22,7 @@
             {% endif %}
         </div>
 
-        {% if captcha.enabled %}
-            {% include 'front/partials/captcha.twig' with {
-                context: 'login',
-                src: captcha.src,
-                width: captcha.width,
-                height: captcha.height,
-                error: errors.captcha|default(null)
-            } %}
-        {% endif %}
-
         <button type="submit" class="btn btn-primary">Přihlásit se</button>
         <a href="/register" class="btn btn-link">Nemáte účet? Registrujte se</a>
     </form>
-{% endblock %}
-
-{% block scripts %}
-    {{ parent() }}
-    {% if captcha.enabled %}
-        <script>
-            (function() {
-                document.querySelectorAll('[data-captcha-wrapper]').forEach(function (wrapper) {
-                    const img = wrapper.querySelector('[data-captcha-image]');
-                    const btn = wrapper.querySelector('[data-captcha-refresh]');
-                    if (!img || !btn) return;
-                    const baseSrc = img.src.split('?')[0];
-                    btn.addEventListener('click', function () {
-                        img.src = baseSrc + '?t=' + Date.now();
-                    });
-                });
-            })();
-        </script>
-    {% endif %}
 {% endblock %}

@@ -3,6 +3,7 @@ namespace App\Controller\Admin;
 
 use App\Service\Auth;
 use App\Service\Flash;
+use App\Service\Comment;
 use RedBeanPHP\R as R;
 
 class ExtraController extends BaseAdminController
@@ -112,6 +113,102 @@ class ExtraController extends BaseAdminController
         ]);
     }
 
+    public function optimize(): void
+    {
+        Auth::requireRole(['admin']);
+
+        $config = $GLOBALS['app']['config'] ?? [];
+        $dsn = $config['db']['dsn'] ?? '';
+        $dbName = $this->parseDsnValue($dsn, 'dbname');
+
+        $beforeSizeBytes = $this->fetchDatabaseSizeBytes($dbName);
+
+        $stats = [
+            'login_logs' => (int) R::count('loginlog'),
+            'reset_tokens' => (int) R::count('passwordreset', ' used_at IS NOT NULL OR expires_at < NOW() '),
+            'content_trash' => (int) R::count('content', ' deleted_at IS NOT NULL '),
+            'comment_trash' => (int) R::count('comment', ' deleted_at IS NOT NULL '),
+            'db_size' => $this->formatSize($beforeSizeBytes),
+            'db_size_bytes' => $beforeSizeBytes,
+        ];
+
+        $selectedActions = [
+            'clean_login_logs' => true,
+            'clean_reset_tokens' => true,
+            'clean_content_trash' => true,
+            'clean_comment_trash' => true,
+        ];
+
+        $results = null;
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+            $selectedActions = [
+                'clean_login_logs' => isset($_POST['clean_login_logs']),
+                'clean_reset_tokens' => isset($_POST['clean_reset_tokens']),
+                'clean_content_trash' => isset($_POST['clean_content_trash']),
+                'clean_comment_trash' => isset($_POST['clean_comment_trash']),
+            ];
+
+            if (!array_filter($selectedActions)) {
+                Flash::addError('Vyber prosím alespoň jednu oblast optimalizace.');
+                header('Location: /admin/extra/optimize');
+                exit;
+            }
+
+            $deleted = [];
+
+            if ($selectedActions['clean_login_logs']) {
+                $deleted['login_logs'] = $stats['login_logs'];
+                R::exec('DELETE FROM loginlog');
+            }
+
+            if ($selectedActions['clean_reset_tokens']) {
+                $deleted['reset_tokens'] = $stats['reset_tokens'];
+                R::exec('DELETE FROM passwordreset WHERE used_at IS NOT NULL OR expires_at < NOW()');
+            }
+
+            if ($selectedActions['clean_content_trash']) {
+                $deleted['content_trash'] = $this->emptyAllContentTrash();
+            }
+
+            if ($selectedActions['clean_comment_trash']) {
+                $deleted['comment_trash'] = $stats['comment_trash'];
+                Comment::emptyTrash();
+            }
+
+            $afterCounts = [
+                'login_logs' => (int) R::count('loginlog'),
+                'reset_tokens' => (int) R::count('passwordreset', ' used_at IS NOT NULL OR expires_at < NOW() '),
+                'content_trash' => (int) R::count('content', ' deleted_at IS NOT NULL '),
+                'comment_trash' => (int) R::count('comment', ' deleted_at IS NOT NULL '),
+            ];
+
+            $afterSizeBytes = $this->fetchDatabaseSizeBytes($dbName);
+
+            $results = [
+                'deleted' => $deleted,
+                'after_counts' => $afterCounts,
+                'before_size' => $this->formatSize($beforeSizeBytes),
+                'after_size' => $this->formatSize($afterSizeBytes),
+                'freed_size' => $this->formatFreedSize($beforeSizeBytes, $afterSizeBytes),
+                'before_size_bytes' => $beforeSizeBytes,
+                'after_size_bytes' => $afterSizeBytes,
+                'timestamp' => date('Y-m-d H:i:s'),
+                'actions_executed' => array_keys(array_filter($selectedActions)),
+            ];
+
+            Flash::addSuccess('Optimalizace databáze byla dokončena.');
+        }
+
+        $this->render('admin/extra/optimize.twig', [
+            'current_menu' => 'extra:optimize',
+            'db_name' => $dbName ?: 'N/A',
+            'stats' => $stats,
+            'results' => $results,
+            'selected_actions' => $selectedActions,
+        ]);
+    }
+
     private function fetchMysqlVersion(): string
     {
         try {
@@ -123,24 +220,9 @@ class ExtraController extends BaseAdminController
 
     private function formatDatabaseSize(?string $dbName): string
     {
-        if (!$dbName) {
-            return 'Nedostupné';
-        }
+        $bytes = $this->fetchDatabaseSizeBytes($dbName);
 
-        try {
-            $bytes = R::getCell(
-                'SELECT SUM(data_length + index_length) FROM information_schema.tables WHERE table_schema = ?',
-                [$dbName]
-            );
-        } catch (\Throwable $e) {
-            return 'Nedostupné';
-        }
-
-        if ($bytes === null) {
-            return 'Nedostupné';
-        }
-
-        return $this->formatBytes((int) $bytes);
+        return $this->formatSize($bytes);
     }
 
     private function exportDatabase(array $dbConfig, string $host, ?string $port, string $dbName): ?string
@@ -281,5 +363,57 @@ class ExtraController extends BaseAdminController
         $power = min((int) floor(log($bytes, 1024)), count($units) - 1);
 
         return round($bytes / (1024 ** $power), 2) . ' ' . $units[$power];
+    }
+
+    private function formatSize(?int $bytes): string
+    {
+        if ($bytes === null) {
+            return 'Nedostupné';
+        }
+
+        return $this->formatBytes($bytes);
+    }
+
+    private function fetchDatabaseSizeBytes(?string $dbName): ?int
+    {
+        if (!$dbName) {
+            return null;
+        }
+
+        try {
+            $bytes = R::getCell(
+                'SELECT SUM(data_length + index_length) FROM information_schema.tables WHERE table_schema = ?',
+                [$dbName]
+            );
+        } catch (\Throwable $e) {
+            return null;
+        }
+
+        return $bytes !== null ? (int) $bytes : null;
+    }
+
+    private function formatFreedSize(?int $beforeBytes, ?int $afterBytes): string
+    {
+        if ($beforeBytes === null || $afterBytes === null) {
+            return 'Nedostupné';
+        }
+
+        $freed = max(0, $beforeBytes - $afterBytes);
+
+        return $this->formatBytes($freed);
+    }
+
+    private function emptyAllContentTrash(): int
+    {
+        $trashed = R::findAll('content', ' deleted_at IS NOT NULL ');
+        $count = count($trashed);
+
+        foreach ($trashed as $item) {
+            R::exec('DELETE FROM content_term WHERE content_id = ?', [(int) $item->id]);
+            R::exec('DELETE FROM content_media WHERE content_id = ?', [(int) $item->id]);
+            R::trash($item);
+        }
+
+        return $count;
     }
 }

@@ -1,0 +1,177 @@
+{% extends 'admin/layout.twig' %}
+
+{% block title %}Optimalizace databáze | Administrace{% endblock %}
+
+{% block body %}
+    <h1 class="h3 mb-3">Optimalizace databáze</h1>
+    <p class="text-muted mb-4">Vyčisti nepotřebná data a uvolni místo v databázi. Vyber, co chceš smazat, nebo spusť kompletní optimalizaci.</p>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div>
+                            <h2 class="h5 mb-1">Stav databáze</h2>
+                            <p class="text-muted mb-0">Před spuštěním optimalizace</p>
+                        </div>
+                        <span class="badge bg-light text-dark">{{ db_name }}</span>
+                    </div>
+                    <dl class="row mb-0">
+                        <dt class="col-6 text-muted">Velikost databáze</dt>
+                        <dd class="col-6 text-end fw-semibold">{{ stats.db_size }}</dd>
+
+                        <dt class="col-8 col-lg-7 text-muted">Logy přihlášení</dt>
+                        <dd class="col-4 col-lg-5 text-end">{{ stats.login_logs }} záznamů</dd>
+
+                        <dt class="col-8 col-lg-7 text-muted">Neaktivní reset tokeny</dt>
+                        <dd class="col-4 col-lg-5 text-end">{{ stats.reset_tokens }} tokenů</dd>
+
+                        <dt class="col-8 col-lg-7 text-muted">Obsah v koši</dt>
+                        <dd class="col-4 col-lg-5 text-end">{{ stats.content_trash }} položek</dd>
+
+                        <dt class="col-8 col-lg-7 text-muted">Komentáře v koši</dt>
+                        <dd class="col-4 col-lg-5 text-end">{{ stats.comment_trash }} položek</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">Vyber, co se má vyčistit</h2>
+                    <form method="post" class="d-flex flex-column gap-3">
+                        <div class="form-check p-3 border rounded">
+                            <input class="form-check-input" type="checkbox" value="1" id="clean_login_logs" name="clean_login_logs"
+                                   {% if selected_actions.clean_login_logs %}checked{% endif %}>
+                            <label class="form-check-label w-100" for="clean_login_logs">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-semibold">Smazat logy přihlášení</div>
+                                        <div class="text-muted small">Odstraní historii přihlašovacích pokusů.</div>
+                                    </div>
+                                    <span class="badge bg-secondary">{{ stats.login_logs }} záznamů</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="form-check p-3 border rounded">
+                            <input class="form-check-input" type="checkbox" value="1" id="clean_reset_tokens" name="clean_reset_tokens"
+                                   {% if selected_actions.clean_reset_tokens %}checked{% endif %}>
+                            <label class="form-check-label w-100" for="clean_reset_tokens">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-semibold">Smazat neaktivní reset tokeny</div>
+                                        <div class="text-muted small">Odstraní použité nebo expirované tokeny pro reset hesla.</div>
+                                    </div>
+                                    <span class="badge bg-secondary">{{ stats.reset_tokens }} tokenů</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="form-check p-3 border rounded">
+                            <input class="form-check-input" type="checkbox" value="1" id="clean_content_trash" name="clean_content_trash"
+                                   {% if selected_actions.clean_content_trash %}checked{% endif %}>
+                            <label class="form-check-label w-100" for="clean_content_trash">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-semibold">Smazat obsah v koši</div>
+                                        <div class="text-muted small">Nenávratně odstraní obsah označený k výmazu.</div>
+                                    </div>
+                                    <span class="badge bg-secondary">{{ stats.content_trash }} položek</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="form-check p-3 border rounded">
+                            <input class="form-check-input" type="checkbox" value="1" id="clean_comment_trash" name="clean_comment_trash"
+                                   {% if selected_actions.clean_comment_trash %}checked{% endif %}>
+                            <label class="form-check-label w-100" for="clean_comment_trash">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-semibold">Smazat komentáře v koši</div>
+                                        <div class="text-muted small">Trvale smaže komentáře přesunuté do koše.</div>
+                                    </div>
+                                    <span class="badge bg-secondary">{{ stats.comment_trash }} položek</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="submit" class="btn btn-primary d-flex align-items-center gap-2">
+                                <i class="bi bi-magic"></i>
+                                Spustit optimalizaci
+                            </button>
+                            <span class="text-muted small">Můžeš vybrat jen některé kroky nebo je nechat všechny.</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if results %}
+        <div class="card shadow-sm mt-4">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-3">
+                    <div>
+                        <h2 class="h5 mb-1">Výsledky optimalizace</h2>
+                        <p class="text-muted mb-0">Spuštěno {{ results.timestamp }}</p>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-semibold">{{ results.before_size }} → {{ results.after_size }}</div>
+                        <div class="text-muted small">Uvolněno {{ results.freed_size }}</div>
+                    </div>
+                </div>
+
+                <div class="table-responsive mb-3">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">Akce</th>
+                                <th scope="col" class="text-end">Smazáno</th>
+                                <th scope="col" class="text-end">Zbývá</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Logy přihlášení</td>
+                                <td class="text-end">{{ results.deleted.login_logs|default(0) }}</td>
+                                <td class="text-end">{{ results.after_counts.login_logs }}</td>
+                            </tr>
+                            <tr>
+                                <td>Neaktivní reset tokeny</td>
+                                <td class="text-end">{{ results.deleted.reset_tokens|default(0) }}</td>
+                                <td class="text-end">{{ results.after_counts.reset_tokens }}</td>
+                            </tr>
+                            <tr>
+                                <td>Obsah v koši</td>
+                                <td class="text-end">{{ results.deleted.content_trash|default(0) }}</td>
+                                <td class="text-end">{{ results.after_counts.content_trash }}</td>
+                            </tr>
+                            <tr>
+                                <td>Komentáře v koši</td>
+                                <td class="text-end">{{ results.deleted.comment_trash|default(0) }}</td>
+                                <td class="text-end">{{ results.after_counts.comment_trash }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert alert-secondary mb-0" role="alert">
+                    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+                        <div>
+                            <div class="fw-semibold">Shrnutí</div>
+                            <div class="text-muted small">Prováděné kroky: {{ results.actions_executed|join(', ') }}</div>
+                        </div>
+                        <div class="text-md-end">
+                            <div class="fw-semibold">Velikost po optimalizaci</div>
+                            <div class="text-muted small">{{ results.after_size }} (před {{ results.before_size }})</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

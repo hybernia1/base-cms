@@ -7,7 +7,6 @@ use App\Service\Setting;
 use App\Service\ContentType;
 use App\Service\TermType;
 use App\Service\Slugger;
-use App\Service\ThemeManager;
 use RedBeanPHP\R as R;
 use DateTimeZone;
 
@@ -20,7 +19,6 @@ class SettingController extends AjaxController
         'content-types' => ['label' => 'Typy obsahu', 'icon' => 'bi-journal-text'],
         'term-types' => ['label' => 'Typy termů', 'icon' => 'bi-tags'],
         'comments' => ['label' => 'Komentáře', 'icon' => 'bi-chat-dots'],
-        'themes' => ['label' => 'Šablony', 'icon' => 'bi-palette'],
     ];
 
     public function index($section = 'main')
@@ -36,15 +34,10 @@ class SettingController extends AjaxController
         $mediaLibrary = [];
         $selectedLogo = null;
         $selectedFavicon = null;
-        $themes = [];
-        $activeTheme = Setting::get('theme', Setting::DEFAULTS['theme']);
         if ($section === 'main') {
             $mediaLibrary = $this->mediaList();
             $selectedLogo = Setting::mediaDetails((int) ($values['site_logo_id'] ?? 0));
             $selectedFavicon = Setting::mediaDetails((int) ($values['site_favicon_id'] ?? 0));
-        }
-        if ($section === 'themes') {
-            $themes = ThemeManager::availableThemes();
         }
 
         $this->render('admin/settings/form.twig', [
@@ -60,8 +53,6 @@ class SettingController extends AjaxController
             'time_formats' => $timeFormats,
             'active_section' => $section,
             'settings_sections' => self::SECTION_DEFINITIONS,
-            'themes' => $themes,
-            'active_theme' => $activeTheme,
         ]);
     }
 
@@ -89,9 +80,6 @@ class SettingController extends AjaxController
                 break;
             case 'term-types':
                 $this->updateTermTypes();
-                break;
-            case 'themes':
-                $this->updateThemeSettings();
                 break;
             default:
                 Flash::addError('Neplatná sekce nastavení.');
@@ -201,31 +189,6 @@ class SettingController extends AjaxController
         Setting::set('term_types', json_encode($termTypes ?: TermType::defaults()));
 
         Flash::addSuccess('Typy termů byly uloženy.');
-    }
-
-    private function updateThemeSettings(): void
-    {
-        $selectedTheme = trim($_POST['theme'] ?? '');
-        $upload = $_FILES['theme_package'] ?? null;
-
-        if ($upload && ($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE && ($upload['tmp_name'] ?? '')) {
-            $result = ThemeManager::installFromUpload($upload);
-            if ($result['success'] ?? false) {
-                $selectedTheme = $result['theme'] ?? $selectedTheme;
-                Flash::addSuccess('Nová šablona byla nahrána a je připravena k použití.');
-            } else {
-                Flash::addError($result['error'] ?? 'Nahrávání šablony se nezdařilo.');
-            }
-        }
-
-        if ($selectedTheme !== '') {
-            if (ThemeManager::themeExists($selectedTheme)) {
-                Setting::set('theme', $selectedTheme);
-                Flash::addSuccess('Šablona byla nastavena jako výchozí.');
-            } else {
-                Flash::addError('Zvolená šablona neexistuje.');
-            }
-        }
     }
 
     private function normalizeSection(?string $section): string

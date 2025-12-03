@@ -9,7 +9,7 @@
 
     <div class="row">
         <div class="col-12">
-            <form method="post" action="/admin/settings/{{ active_section }}" class="card shadow-sm" id="settingsForm" enctype="multipart/form-data">
+            <form method="post" action="/admin/settings/{{ active_section }}" class="card shadow-sm" id="settingsForm">
                 <div class="card-body p-4">
                     {% if active_section == 'main' %}
                         <h2 class="h5 mb-3">Základní nastavení</h2>
@@ -197,49 +197,6 @@
                             <input class="form-check-input" type="checkbox" role="switch" id="comments_allow_anonymous" name="comments_allow_anonymous" value="1" {% if values.comments_allow_anonymous == '1' %}checked{% endif %}>
                             <label class="form-check-label" for="comments_allow_anonymous">Povolit komentáře anonymním uživatelům</label>
                             <div class="form-text">Při vypnutí tohoto nastavení se komentáře povolí pouze přihlášeným účtům a schvalování se nevyužije.</div>
-                        </div>
-
-                    {% elseif active_section == 'themes' %}
-                        <h2 class="h5 mb-3">Šablony</h2>
-                        <p>Vyberte aktivní šablonu, nebo nahrajte novou ve formátu ZIP. Šablony se ukládají do složky <code>themes/</code>.</p>
-
-                        <div class="row g-3">
-                            {% if themes %}
-                                {% for key, theme in themes %}
-                                    <div class="col-md-6">
-                                        <div class="border rounded p-3 h-100 {% if key == active_theme %}border-primary{% endif %}">
-                                            <div class="d-flex justify-content-between align-items-start">
-                                                <div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="theme" id="theme_{{ key }}" value="{{ key }}" {% if key == active_theme %}checked{% endif %}>
-                                                        <label class="form-check-label fw-semibold" for="theme_{{ key }}">{{ theme.name|default(key) }}</label>
-                                                    </div>
-                                                    <div class="small text-muted">Verze {{ theme.version|default('1.0.0') }}</div>
-                                                </div>
-                                                <span class="badge bg-light text-dark">{{ key }}</span>
-                                            </div>
-                                            {% if theme.description %}
-                                                <p class="mt-2 mb-1">{{ theme.description }}</p>
-                                            {% endif %}
-                                            {% if theme.author %}
-                                                <div class="small text-muted">Autor: {{ theme.author }}</div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            {% else %}
-                                <div class="col-12">
-                                    <div class="alert alert-warning">Nebyly nalezeny žádné šablony. Nahrajte prosím ZIP s šablonou.</div>
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <hr class="my-4">
-
-                        <div class="mb-3">
-                            <label for="theme_package" class="form-label">Nahrát šablonu (ZIP)</label>
-                            <input type="file" class="form-control" name="theme_package" id="theme_package" accept=".zip">
-                            <div class="form-text">Archiv musí obsahovat šablonu v samostatné složce, doporučeně s <code>theme.json</code> nebo <code>{{ active_theme }}.json</code> popisem.</div>
                         </div>
 
                     {% elseif active_section == 'content-types' %}

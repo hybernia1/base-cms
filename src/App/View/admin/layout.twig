@@ -221,6 +221,7 @@
                             {% set extraInfoActive = current_menu is defined and current_menu == 'extra:info' %}
                             {% set extraBackupActive = current_menu is defined and current_menu == 'extra:backup' %}
                             {% set extraDebugActive = current_menu is defined and current_menu == 'extra:debug' %}
+                            {% set extraOptimizeActive = current_menu is defined and current_menu == 'extra:optimize' %}
                             <li class="nav-item">
                                 <a class="nav-link d-flex align-items-center {% if extraInfoActive %}active{% endif %}" href="/admin/extra/info">
                                     <i class="bi bi-info-circle me-2"></i> Info o webu
@@ -230,6 +231,11 @@
                                 <a class="nav-link d-flex align-items-center {% if extraDebugActive %}active{% endif %}" href="/admin/extra/debug">
                                     <i class="bi bi-bug me-2"></i> Debug mód
                                     {% if app_is_debug|default(false) %}<span class="badge bg-warning text-dark ms-auto">Aktivní</span>{% endif %}
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-flex align-items-center {% if extraOptimizeActive %}active{% endif %}" href="/admin/extra/optimize">
+                                    <i class="bi bi-collection me-2"></i> Optimalizace databáze
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -403,6 +409,7 @@
                             {% set extraInfoActive = current_menu is defined and current_menu == 'extra:info' %}
                             {% set extraBackupActive = current_menu is defined and current_menu == 'extra:backup' %}
                             {% set extraDebugActive = current_menu is defined and current_menu == 'extra:debug' %}
+                            {% set extraOptimizeActive = current_menu is defined and current_menu == 'extra:optimize' %}
                             <li class="nav-item">
                                 <a class="nav-link d-flex align-items-center {% if extraInfoActive %}active{% endif %}" href="/admin/extra/info">
                                     <i class="bi bi-info-circle me-2"></i> Info o webu
@@ -412,6 +419,11 @@
                                 <a class="nav-link d-flex align-items-center {% if extraDebugActive %}active{% endif %}" href="/admin/extra/debug">
                                     <i class="bi bi-bug me-2"></i> Debug mód
                                     {% if app_is_debug|default(false) %}<span class="badge bg-warning text-dark ms-auto">Aktivní</span>{% endif %}
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link d-flex align-items-center {% if extraOptimizeActive %}active{% endif %}" href="/admin/extra/optimize">
+                                    <i class="bi bi-collection me-2"></i> Optimalizace databáze
                                 </a>
                             </li>
                             <li class="nav-item">

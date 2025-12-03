@@ -144,8 +144,10 @@ $router->post('/admin/comments/trash/empty', 'App\\Controller\\Admin\\CommentCon
 $router->get('/admin/extra/info', 'App\\Controller\\Admin\\ExtraController@info');
 $router->get('/admin/extra/debug', 'App\\Controller\\Admin\\ExtraController@debug');
 $router->get('/admin/extra/backup', 'App\\Controller\\Admin\\ExtraController@backup');
+$router->get('/admin/extra/optimize', 'App\\Controller\\Admin\\ExtraController@optimize');
 $router->post('/admin/extra/debug', 'App\\Controller\\Admin\\ExtraController@debug');
 $router->post('/admin/extra/backup', 'App\\Controller\\Admin\\ExtraController@backup');
+$router->post('/admin/extra/optimize', 'App\\Controller\\Admin\\ExtraController@optimize');
 
 $router->get('/admin/search', 'App\\Controller\\Admin\\SearchController@index');
 

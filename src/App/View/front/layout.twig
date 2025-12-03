@@ -48,6 +48,13 @@
                         <li class="nav-item"><a class="nav-link" href="/login"><i class="bi bi-box-arrow-in-right me-1"></i>Přihlášení</a></li>
                         <li class="nav-item"><a class="nav-link" href="/register"><i class="bi bi-person-plus me-1"></i>Registrace</a></li>
                     {% endif %}
+                    <li class="nav-item w-100 w-lg-auto ms-lg-3">
+                        <form class="d-flex" role="search" method="get" action="/search">
+                            <label class="visually-hidden" for="navSearch">Hledat</label>
+                            <input class="form-control form-control-sm me-2" type="search" name="q" id="navSearch" placeholder="Hledat…" aria-label="Hledat">
+                            <button class="btn btn-outline-light btn-sm" type="submit"><i class="bi bi-search"></i></button>
+                        </form>
+                    </li>
                 </ul>
             </div>
         </div>

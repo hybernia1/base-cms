@@ -104,6 +104,14 @@ class UserController extends BaseFrontController
 
     private function renderProfile($user, bool $isOwner): void
     {
+        $adminBar = [];
+        if (Auth::hasRole('admin')) {
+            $adminBar = [
+                'edit_url' => '/admin/users/' . $user->id . '/edit',
+                'current_title' => $user->nickname ?: $user->email,
+            ];
+        }
+
         $this->render('front/user/profile.twig', [
             'user' => $user,
             'is_owner' => $isOwner,
@@ -111,6 +119,7 @@ class UserController extends BaseFrontController
             'is_banned' => (int) ($user->is_banned ?? 0) === 1,
             'ban_reason' => $user->ban_reason ?? null,
             'comments' => $this->findUserComments((int) $user->id, $isOwner),
+            'admin_bar' => $adminBar,
         ]);
     }
 

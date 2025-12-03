@@ -114,16 +114,6 @@
                                     </div>
                                 {% endif %}
 
-                                {% if comment_captcha.enabled %}
-                                    {% include 'front/partials/captcha.twig' with {
-                                        context: 'comments',
-                                        src: comment_captcha.src,
-                                        width: comment_captcha.width,
-                                        height: comment_captcha.height,
-                                        disabled: not commenting_enabled
-                                    } %}
-                                {% endif %}
-
                                 <div id="commentAlert" class="alert d-none mt-3" role="alert"></div>
 
                                 <button type="submit" class="btn btn-primary mt-3" {% if not commenting_enabled %}disabled{% endif %}>Odeslat</button>
@@ -151,20 +141,6 @@
 
                 const commentBody = document.getElementById('comment_body');
                 const alertBox = document.getElementById('commentAlert');
-                const captchaWrapper = form.querySelector('[data-captcha-wrapper]');
-                const captchaImage = captchaWrapper ? captchaWrapper.querySelector('[data-captcha-image]') : null;
-                const captchaButton = captchaWrapper ? captchaWrapper.querySelector('[data-captcha-refresh]') : null;
-                const captchaBaseSrc = captchaImage ? captchaImage.src.split('?')[0] : '';
-
-                const refreshCaptcha = () => {
-                    if (captchaImage && captchaBaseSrc) {
-                        captchaImage.src = captchaBaseSrc + '?t=' + Date.now();
-                    }
-                };
-
-                if (captchaButton) {
-                    captchaButton.addEventListener('click', refreshCaptcha);
-                }
 
                 document.querySelectorAll('.reply-button').forEach((btn) => {
                     btn.addEventListener('click', () => {
@@ -224,10 +200,6 @@
                             if (replyInfo) {
                                 replyInfo.classList.add('d-none');
                             }
-                            refreshCaptcha();
-                        }
-                        if (data.status !== 'success') {
-                            refreshCaptcha();
                         }
                     } catch (error) {
                         if (alertBox) {
@@ -235,7 +207,6 @@
                             alertBox.className = 'alert alert-danger mt-3';
                             alertBox.classList.remove('d-none');
                         }
-                        refreshCaptcha();
                     }
                 });
             })();

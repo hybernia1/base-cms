@@ -77,9 +77,11 @@
                             {# Stav + Titulek #}
                             <div class="d-flex align-items-center gap-2">
                                 {% if item.status == 'published' %}
-                                    <span class="badge text-bg-success">Publ.</span>
+                                    <i class="bi bi-check-circle-fill text-success" aria-hidden="true"></i>
+                                    <span class="visually-hidden">Publikovaný obsah</span>
                                 {% else %}
-                                    <span class="badge text-bg-secondary">Draft</span>
+                                    <i class="bi bi-pencil-fill text-secondary" aria-hidden="true"></i>
+                                    <span class="visually-hidden">Koncept</span>
                                 {% endif %}
                                 <span>{{ item.title }}</span>
                             </div>

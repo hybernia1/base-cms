@@ -117,6 +117,8 @@ class SettingController extends AjaxController
 
     private function updateEmailSettings(): void
     {
+        $mailTransport = $_POST['mail_transport'] ?? Setting::DEFAULTS['mail_transport'];
+        $mailTransport = in_array($mailTransport, ['smtp', 'mail'], true) ? $mailTransport : Setting::DEFAULTS['mail_transport'];
         $smtpHost = trim($_POST['smtp_host'] ?? '');
         $smtpPort = (int) ($_POST['smtp_port'] ?? Setting::DEFAULTS['smtp_port']);
         $smtpUsername = trim($_POST['smtp_username'] ?? '');
@@ -125,6 +127,7 @@ class SettingController extends AjaxController
         $smtpFromEmail = trim($_POST['smtp_from_email'] ?? '');
         $smtpFromName = trim($_POST['smtp_from_name'] ?? '');
 
+        Setting::set('mail_transport', $mailTransport);
         Setting::set('smtp_host', $smtpHost);
         Setting::set('smtp_port', $smtpPort > 0 ? (string) $smtpPort : Setting::DEFAULTS['smtp_port']);
         Setting::set('smtp_username', $smtpUsername);

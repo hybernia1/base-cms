@@ -70,6 +70,17 @@
                     {% elseif active_section == 'email' %}
                         <h2 class="h5 mb-3">E-mailové nastavení</h2>
 
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="mail_transport" class="form-label">Způsob odesílání</label>
+                                {% set mailTransport = values.mail_transport|default('mail') %}
+                                <select id="mail_transport" name="mail_transport" class="form-select">
+                                    <option value="mail" {% if mailTransport == 'mail' %}selected{% endif %}>Nativní PHP mail()</option>
+                                    <option value="smtp" {% if mailTransport == 'smtp' %}selected{% endif %}>SMTP server</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label for="smtp_host" class="form-label">SMTP server</label>

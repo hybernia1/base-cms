@@ -28,6 +28,7 @@ class Setting
         'content_types' => '',
         'term_types' => '',
         'asset_source' => 'cdn',
+        'asset_library_versions' => '{}',
     ];
 
     public static function get(string $key, $default = null)

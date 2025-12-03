@@ -5,6 +5,7 @@ use App\Service\Auth;
 use App\Service\ContentType;
 use App\Service\Flash;
 use App\Service\Slugger;
+use App\Service\Comment;
 use RedBeanPHP\R as R;
 use App\Service\Upload;
 use App\Service\TermType;
@@ -892,6 +893,7 @@ class ContentController extends AjaxController
     {
         R::exec('DELETE FROM content_term WHERE content_id = ?', [(int) $content->id]);
         R::exec('DELETE FROM content_media WHERE content_id = ?', [(int) $content->id]);
+        Comment::deleteForContent((int) $content->id);
         R::trash($content);
     }
 }

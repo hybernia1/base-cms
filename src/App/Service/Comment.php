@@ -209,4 +209,10 @@ class Comment
             R::trashAll($trashed);
         }
     }
+
+    public static function deleteForContent(int $contentId): void
+    {
+        self::ensureSchema();
+        R::exec('DELETE FROM ' . self::TABLE . ' WHERE content_id = ?', [$contentId]);
+    }
 }

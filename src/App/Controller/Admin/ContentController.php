@@ -67,13 +67,7 @@ class ContentController extends AjaxController
         if ($this->respondAjax(
             'admin/content/_container.twig',
             $this->prepareContentAjaxPayload($items, $viewContext),
-            $pagination['current_url'],
-            [
-                'html' => $this->twig->render(
-                    'admin/content/_container.twig',
-                    array_merge($this->baseContext(false), $viewContext)
-                ),
-            ]
+            $pagination['current_url']
         )) {
             return;
         }

@@ -119,13 +119,7 @@ class CommentController extends AjaxController
         if ($this->respondAjax(
             'admin/comments/_list.twig',
             $this->prepareCommentsAjaxPayload($comments, $viewContext),
-            $pagination['current_url'],
-            [
-                'html' => $this->twig->render(
-                    'admin/comments/_list.twig',
-                    array_merge($this->baseContext(false), $viewContext)
-                ),
-            ]
+            $pagination['current_url']
         )) {
             return;
         }

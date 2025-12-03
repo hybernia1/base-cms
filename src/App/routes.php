@@ -23,6 +23,7 @@ $router->post('/login', 'App\\Controller\\Front\\AuthController@login');
 $router->get('/logout', 'App\\Controller\\Front\\AuthController@logout');
 $router->get('/register', 'App\\Controller\\Front\\AuthController@registerForm');
 $router->post('/register', 'App\\Controller\\Front\\AuthController@register');
+$router->get('/captcha/([\\w-]+)', 'App\\Controller\\Front\\CaptchaController@show');
 $router->get('/profile', 'App\\Controller\\Front\\UserController@profile');
 $router->get('/profile/edit', 'App\\Controller\\Front\\UserController@editForm');
 $router->post('/profile/edit', 'App\\Controller\\Front\\UserController@update');

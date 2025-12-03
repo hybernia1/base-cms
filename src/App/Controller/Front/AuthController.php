@@ -2,6 +2,7 @@
 namespace App\Controller\Front;
 
 use App\Service\Auth;
+use App\Service\Captcha;
 use App\Service\EmailTemplateManager;
 use App\Service\Flash;
 use App\Service\Setting;
@@ -23,6 +24,7 @@ class AuthController extends BaseFrontController
                 'email' => '',
             ],
             'errors' => [],
+            'captcha' => $this->captchaContext('register'),
         ]);
     }
 
@@ -45,6 +47,7 @@ class AuthController extends BaseFrontController
             $this->render('front/register.twig', [
                 'values' => $data,
                 'errors' => $errors,
+                'captcha' => $this->captchaContext('register'),
             ]);
             return;
         }
@@ -76,6 +79,7 @@ class AuthController extends BaseFrontController
                 'email' => '',
             ],
             'errors' => [],
+            'captcha' => $this->captchaContext('login'),
         ]);
     }
 
@@ -92,10 +96,15 @@ class AuthController extends BaseFrontController
             $errors['password'] = 'Zadejte heslo.';
         }
 
+        if (Captcha::isEnabledFor('login') && !Captcha::validate('login', $data['captcha'] ?? null)) {
+            $errors['captcha'] = 'Prosím opište text z obrázku.';
+        }
+
         if ($errors) {
             $this->render('front/login.twig', [
                 'values' => $data,
                 'errors' => $errors,
+                'captcha' => $this->captchaContext('login'),
             ]);
             return;
         }
@@ -106,6 +115,7 @@ class AuthController extends BaseFrontController
             $this->render('front/login.twig', [
                 'values' => ['email' => $data['email']],
                 'errors' => [],
+                'captcha' => $this->captchaContext('login'),
             ]);
             return;
         }
@@ -129,6 +139,7 @@ class AuthController extends BaseFrontController
             'email' => trim($_POST['email'] ?? ''),
             'password' => $_POST['password'] ?? '',
             'password_confirm' => $_POST['password_confirm'] ?? '',
+            'captcha' => trim($_POST['captcha'] ?? ''),
         ];
     }
 
@@ -137,6 +148,7 @@ class AuthController extends BaseFrontController
         return [
             'email' => trim($_POST['email'] ?? ''),
             'password' => $_POST['password'] ?? '',
+            'captcha' => trim($_POST['captcha'] ?? ''),
         ];
     }
 
@@ -156,12 +168,26 @@ class AuthController extends BaseFrontController
             $errors['password_confirm'] = 'Hesla se neshodují.';
         }
 
+        if (Captcha::isEnabledFor('register') && !Captcha::validate('register', $data['captcha'] ?? null)) {
+            $errors['captcha'] = 'Prosím opište text z obrázku.';
+        }
+
         return $errors;
     }
 
     private function emailExists(string $email): bool
     {
         return (bool) R::findOne('user', ' email = ? ', [$email]);
+    }
+
+    private function captchaContext(string $context): array
+    {
+        return [
+            'enabled' => Captcha::isEnabledFor($context),
+            'src' => Captcha::refreshKey($context),
+            'width' => (int) Setting::get('captcha_width', Setting::DEFAULTS['captcha_width']),
+            'height' => (int) Setting::get('captcha_height', Setting::DEFAULTS['captcha_height']),
+        ];
     }
 
     private function isRegistrationEnabled(): bool

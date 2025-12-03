@@ -2,6 +2,7 @@
 namespace App\Controller\Front;
 
 use App\Service\Auth;
+use App\Service\Captcha;
 use App\Service\Comment;
 use App\Service\CommentNotifier;
 use App\Service\Setting;
@@ -50,6 +51,12 @@ class CommentController extends BaseFrontController
             if ($authorName === '' || $authorEmail === '' || !filter_var($authorEmail, FILTER_VALIDATE_EMAIL)) {
                 http_response_code(400);
                 echo json_encode(['status' => 'error', 'message' => 'Zadejte jméno a platný e-mail.']);
+                return;
+            }
+
+            if (Captcha::isEnabledFor('comments') && !Captcha::validate('comments', $_POST['captcha'] ?? null)) {
+                http_response_code(400);
+                echo json_encode(['status' => 'error', 'message' => 'Neplatná captcha, zkuste to prosím znovu.']);
                 return;
             }
         }

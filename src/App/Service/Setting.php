@@ -27,6 +27,11 @@ class Setting
         'time_format' => 'H:i',
         'content_types' => '',
         'term_types' => '',
+        'captcha_enabled' => '0',
+        'captcha_forms' => '[]',
+        'captcha_length' => '5',
+        'captcha_width' => '180',
+        'captcha_height' => '50',
     ];
 
     public static function get(string $key, $default = null)

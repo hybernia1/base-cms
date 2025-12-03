@@ -81,5 +81,47 @@
                 {% endif %}
             </div>
         </div>
+
+        <div class="card shadow-sm mt-4">
+            <div class="card-body">
+                <h2 class="h5">Přihlášení</h2>
+                <p class="mb-3">
+                    <strong>Poslední přihlášení:</strong>
+                    {% if values.last_login_at %}
+                        {{ values.last_login_at }}
+                        {% if values.last_login_ip %}
+                            z IP {{ values.last_login_ip }}
+                        {% endif %}
+                    {% else %}
+                        zatím žádné
+                    {% endif %}
+                </p>
+
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">Datum</th>
+                                <th scope="col">IP adresa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if login_logs is not empty %}
+                                {% for log in login_logs %}
+                                    <tr>
+                                        <td>{{ log.created_at }}</td>
+                                        <td>{{ log.ip_address }}</td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="2" class="text-muted">Žádné záznamy o přihlášení.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     {% endif %}
 {% endblock %}

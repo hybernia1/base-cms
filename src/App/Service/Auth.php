@@ -3,6 +3,8 @@ namespace App\Service;
 
 use RedBeanPHP\R as R;
 use App\Service\Flash;
+use App\Service\PasswordReset;
+use App\Service\EmailTemplateManager;
 
 class Auth
 {
@@ -23,12 +25,22 @@ class Auth
     public static function attemptDetailed(string $email, string $password): array
     {
         $user = R::findOne('user', ' email = ? ', [$email]);
+        $genericError = 'Neplatný e-mail nebo heslo.';
+
         if (!$user) {
-            return ['success' => false, 'message' => 'Neplatný e-mail nebo heslo.'];
+            return ['success' => false, 'message' => $genericError];
+        }
+
+        if (self::isLocked($user)) {
+            return [
+                'success' => false,
+                'message' => 'Účet je dočasně uzamčen kvůli opakovaným neúspěšným pokusům. Zkuste to prosím později nebo použijte odkaz pro reset hesla.',
+            ];
         }
 
         if (!password_verify($password, $user->password)) {
-            return ['success' => false, 'message' => 'Neplatný e-mail nebo heslo.'];
+            self::recordFailedAttempt($user);
+            return ['success' => false, 'message' => $genericError];
         }
 
         if ((int) ($user->is_banned ?? 0) === 1) {
@@ -36,6 +48,7 @@ class Auth
         }
 
         $_SESSION['user_id'] = $user->id;
+        self::recordSuccessfulLogin($user);
         return ['success' => true, 'message' => null, 'user' => $user];
     }
 
@@ -95,5 +108,51 @@ class Auth
         unset($_SESSION['user_id']);
         header('Location: /admin/login');
         exit;
+    }
+
+    private static function recordSuccessfulLogin($user): void
+    {
+        $user->failed_attempts = 0;
+        $user->locked_until = null;
+        $user->last_login_at = date('Y-m-d H:i:s');
+        $user->last_login_ip = self::getIpAddress();
+        R::store($user);
+
+        $log = R::dispense('loginlog');
+        $log->user_id = $user->id;
+        $log->ip_address = $user->last_login_ip;
+        $log->created_at = $user->last_login_at;
+        R::store($log);
+    }
+
+    private static function recordFailedAttempt($user): void
+    {
+        $user->failed_attempts = (int) ($user->failed_attempts ?? 0) + 1;
+
+        if ($user->failed_attempts >= 5) {
+            $user->locked_until = date('Y-m-d H:i:s', time() + 2 * 60 * 60);
+            $token = PasswordReset::createToken($user);
+            $resetLink = PasswordReset::buildResetLink($token);
+            EmailTemplateManager::send('user_password_reset', $user->email, [
+                'email' => $user->email,
+                'reset_link' => $resetLink,
+            ]);
+        }
+
+        R::store($user);
+    }
+
+    private static function isLocked($user): bool
+    {
+        if (empty($user->locked_until)) {
+            return false;
+        }
+
+        return strtotime((string) $user->locked_until) > time();
+    }
+
+    private static function getIpAddress(): string
+    {
+        return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     }
 }

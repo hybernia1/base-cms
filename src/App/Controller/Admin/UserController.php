@@ -125,6 +125,8 @@ class UserController extends AjaxController
             exit;
         }
 
+        $loginLogs = $this->getLoginLogs((int) $user->id);
+
         $this->render('admin/users/form.twig', [
             'roles' => self::ROLES,
             'values' => [
@@ -133,12 +135,15 @@ class UserController extends AjaxController
                 'role'  => $user->role,
                 'is_banned' => (int) ($user->is_banned ?? 0),
                 'ban_reason' => $user->ban_reason ?? '',
+                'last_login_at' => $user->last_login_at ?? null,
+                'last_login_ip' => $user->last_login_ip ?? null,
             ],
             'current_menu' => 'users',
             'form_action' => "/admin/users/{$user->id}/edit",
             'heading' => 'Upravit uživatele',
             'user_id' => $user->id,
             'errors' => [],
+            'login_logs' => $loginLogs,
         ]);
     }
 
@@ -160,17 +165,21 @@ class UserController extends AjaxController
         }
 
         if ($errors) {
+            $loginLogs = $this->getLoginLogs((int) $user->id);
             $this->render('admin/users/form.twig', [
                 'roles' => self::ROLES,
                 'errors' => $errors,
                 'values' => array_merge($data, [
                     'is_banned' => (int) ($user->is_banned ?? 0),
                     'ban_reason' => $user->ban_reason ?? '',
+                    'last_login_at' => $user->last_login_at ?? null,
+                    'last_login_ip' => $user->last_login_ip ?? null,
                 ]),
                 'current_menu' => 'users',
                 'form_action' => "/admin/users/{$user->id}/edit",
                 'heading' => 'Upravit uživatele',
                 'user_id' => $user->id,
+                'login_logs' => $loginLogs,
             ]);
             return;
         }
@@ -346,6 +355,11 @@ class UserController extends AjaxController
     {
         $user = R::load('user', (int) $id);
         return $user && $user->id ? $user : null;
+    }
+
+    private function getLoginLogs(int $userId): array
+    {
+        return R::findAll('loginlog', ' user_id = ? ORDER BY created_at DESC LIMIT 10 ', [$userId]);
     }
 
 }

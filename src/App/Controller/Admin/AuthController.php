@@ -12,6 +12,7 @@ class AuthController extends AjaxController
 
         $this->render('admin/login.twig', [
             'error' => $flash['error'][0] ?? null,
+            'success' => $flash['success'][0] ?? null,
         ]);
     }
 

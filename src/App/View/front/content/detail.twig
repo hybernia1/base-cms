@@ -48,7 +48,7 @@
                             {% if comments %}
                                 <div class="list-group mb-4">
                                     {% for comment in comments %}
-                                        <div class="list-group-item border-0 border-bottom" style="margin-left: {{ comment.depth * 1.5 }}rem;">
+                                        <div class="list-group-item border-0 border-bottom" id="comment-{{ comment.id }}" style="margin-left: {{ comment.depth * 1.5 }}rem;">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <div>
                                                     <div class="fw-semibold">

@@ -53,6 +53,51 @@
                             </div>
                         </div>
 
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-6">
+                                <label class="form-label">Logo webu</label>
+                                <div class="d-flex align-items-center gap-3 flex-wrap">
+                                    <div class="border rounded bg-light p-2" id="siteLogoPreview">
+                                        {% if selected_logo %}
+                                            <img src="{{ selected_logo.url }}" alt="{{ selected_logo.alt }}" class="img-fluid" style="max-height: 64px;">
+                                            <div class="small text-muted mt-1 text-truncate" title="{{ selected_logo.original_name }}">{{ selected_logo.original_name }}</div>
+                                        {% else %}
+                                            <div class="text-muted small">Zatím nevybráno</div>
+                                        {% endif %}
+                                    </div>
+                                    <input type="hidden" name="site_logo_id" id="site_logo_id" value="{{ values.site_logo_id }}">
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#mediaLibraryModal" data-media-action="logo">
+                                            Vybrat z knihovny
+                                        </button>
+                                        <button class="btn btn-outline-danger" type="button" id="removeSiteLogo">Odebrat</button>
+                                    </div>
+                                </div>
+                                <div class="form-text">Použije se v navigaci webu.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Favicon</label>
+                                <div class="d-flex align-items-center gap-3 flex-wrap">
+                                    <div class="border rounded bg-light p-2" id="siteFaviconPreview">
+                                        {% if selected_favicon %}
+                                            <img src="{{ selected_favicon.url }}" alt="{{ selected_favicon.alt }}" class="img-fluid" style="max-height: 48px;">
+                                            <div class="small text-muted mt-1 text-truncate" title="{{ selected_favicon.original_name }}">{{ selected_favicon.original_name }}</div>
+                                        {% else %}
+                                            <div class="text-muted small">Zatím nevybráno</div>
+                                        {% endif %}
+                                    </div>
+                                    <input type="hidden" name="site_favicon_id" id="site_favicon_id" value="{{ values.site_favicon_id }}">
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#mediaLibraryModal" data-media-action="favicon">
+                                            Vybrat z knihovny
+                                        </button>
+                                        <button class="btn btn-outline-danger" type="button" id="removeSiteFavicon">Odebrat</button>
+                                    </div>
+                                </div>
+                                <div class="form-text">Zobrazí se v prohlížeči jako ikona webu.</div>
+                            </div>
+                        </div>
+
                     {% elseif active_section == 'uploads' %}
                         <h2 class="h5 mb-3">Uploady</h2>
 
@@ -279,9 +324,198 @@
             </form>
         </div>
     </div>
+
+    {% if active_section == 'main' %}
+        <div class="modal fade" id="mediaLibraryModal" tabindex="-1" aria-labelledby="mediaLibraryLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="mediaLibraryLabel">Knihovna médií</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="mediaUploadForm" class="row g-2 align-items-end mb-3" enctype="multipart/form-data">
+                            <div class="col-md-6">
+                                <label for="mediaFile" class="form-label">Nahrát nový obrázek</label>
+                                <input class="form-control" type="file" id="mediaFile" name="file" accept="image/*" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="mediaAlt" class="form-label">Alt text</label>
+                                <input type="text" id="mediaAlt" name="alt" class="form-control" placeholder="Popis obrázku (nepovinné)">
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">Nahrát</button>
+                            </div>
+                        </form>
+
+                        <div class="row row-cols-2 row-cols-md-4 row-cols-xl-6 g-3" id="mediaLibraryGrid">
+                            {% for mediaItem in media %}
+                                {% if mediaItem.is_image %}
+                                    <div class="col">
+                                        <div class="card h-100 media-card" role="button" tabindex="0" data-media-id="{{ mediaItem.id }}" data-media-url="/{{ mediaItem.path }}/{{ mediaItem.webp_filename ?: mediaItem.filename }}" data-media-label="{{ mediaItem.original_name ?: mediaItem.filename }}">
+                                            <img src="/{{ mediaItem.path }}/{{ mediaItem.webp_filename ?: mediaItem.filename }}" class="card-img-top" alt="{{ mediaItem.alt }}">
+                                            <div class="card-body p-2">
+                                                <div class="small text-truncate" title="{{ mediaItem.original_name ?: mediaItem.filename }}">{{ mediaItem.original_name ?: mediaItem.filename }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="alert alert-info mt-3" id="mediaLibraryEmpty" {% if media is not empty %}style="display:none;"{% endif %}>Zatím žádné obrázky.</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zavřít</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 {% endblock %}
 
 {% block scripts %}
+    {% if active_section == 'main' %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const mediaGrid = document.getElementById('mediaLibraryGrid');
+                const mediaModalEl = document.getElementById('mediaLibraryModal');
+                const mediaEmptyAlert = document.getElementById('mediaLibraryEmpty');
+                const logoPreview = document.getElementById('siteLogoPreview');
+                const faviconPreview = document.getElementById('siteFaviconPreview');
+                const logoInput = document.getElementById('site_logo_id');
+                const faviconInput = document.getElementById('site_favicon_id');
+                const removeLogoBtn = document.getElementById('removeSiteLogo');
+                const removeFaviconBtn = document.getElementById('removeSiteFavicon');
+                const mediaUploadForm = document.getElementById('mediaUploadForm');
+                const mediaActionButtons = document.querySelectorAll('[data-media-action]');
+
+                let currentMediaAction = 'logo';
+
+                const renderPlaceholder = (target) => {
+                    if (!target) return;
+                    target.innerHTML = '<div class="text-muted small">Zatím nevybráno</div>';
+                };
+
+                const updatePreview = (target, url, label, maxHeight) => {
+                    if (!target) return;
+                    target.innerHTML = `
+                        <img src="${url}" alt="${label}" class="img-fluid" style="max-height:${maxHeight}px;">
+                        <div class="small text-muted mt-1 text-truncate" title="${label}">${label}</div>
+                    `;
+                };
+
+                const assignMedia = (id, url, label) => {
+                    const isFavicon = currentMediaAction === 'favicon';
+                    const input = isFavicon ? faviconInput : logoInput;
+                    const preview = isFavicon ? faviconPreview : logoPreview;
+                    const maxHeight = isFavicon ? 48 : 64;
+
+                    if (!input || !preview) {
+                        return;
+                    }
+
+                    input.value = id;
+                    updatePreview(preview, url, label, maxHeight);
+                };
+
+                const clearSelection = (type) => {
+                    const input = type === 'favicon' ? faviconInput : logoInput;
+                    const preview = type === 'favicon' ? faviconPreview : logoPreview;
+                    if (input) {
+                        input.value = '';
+                    }
+                    renderPlaceholder(preview);
+                };
+
+                mediaActionButtons.forEach((button) => {
+                    button.addEventListener('click', () => {
+                        currentMediaAction = button.dataset.mediaAction || 'logo';
+                    });
+                });
+
+                if (removeLogoBtn) {
+                    removeLogoBtn.addEventListener('click', () => clearSelection('logo'));
+                }
+
+                if (removeFaviconBtn) {
+                    removeFaviconBtn.addEventListener('click', () => clearSelection('favicon'));
+                }
+
+                if (mediaGrid) {
+                    mediaGrid.addEventListener('click', function (event) {
+                        const card = event.target.closest('.media-card');
+                        if (!card) {
+                            return;
+                        }
+
+                        const id = card.dataset.mediaId;
+                        const url = card.dataset.mediaUrl;
+                        const label = card.dataset.mediaLabel;
+
+                        assignMedia(id, url, label);
+
+                        if (mediaModalEl) {
+                            const modalInstance = bootstrap.Modal.getOrCreateInstance(mediaModalEl);
+                            modalInstance.hide();
+                        }
+                    });
+                }
+
+                const addMediaCard = (id, url, label) => {
+                    if (!mediaGrid) return;
+                    if (mediaEmptyAlert) {
+                        mediaEmptyAlert.style.display = 'none';
+                    }
+
+                    const col = document.createElement('div');
+                    col.className = 'col';
+                    col.innerHTML = `
+                        <div class="card h-100 media-card" role="button" tabindex="0" data-media-id="${id}" data-media-url="${url}" data-media-label="${label}">
+                            <img src="${url}" class="card-img-top" alt="${label}">
+                            <div class="card-body p-2">
+                                <div class="small text-truncate" title="${label}">${label}</div>
+                            </div>
+                        </div>
+                    `;
+
+                    mediaGrid.prepend(col);
+                };
+
+                if (mediaUploadForm) {
+                    mediaUploadForm.addEventListener('submit', async function (event) {
+                        event.preventDefault();
+
+                        const formData = new FormData(mediaUploadForm);
+                        try {
+                            const response = await fetch('/admin/media/upload', {
+                                method: 'POST',
+                                body: formData,
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'Accept': 'application/json',
+                                },
+                            });
+
+                            const data = await response.json();
+                            if (!response.ok || data.error) {
+                                throw new Error(data.error || data.message || 'Nahrávání se nezdařilo.');
+                            }
+
+                            if (data.id && data.path) {
+                                addMediaCard(data.id, data.path, data.original_name || 'Nový obrázek');
+                                assignMedia(data.id, data.path, data.original_name || 'Nový obrázek');
+                            }
+
+                            mediaUploadForm.reset();
+                        } catch (error) {
+                            alert(error.message || 'Nahrávání se nezdařilo.');
+                        }
+                    });
+                }
+            });
+        </script>
+    {% endif %}
+
     <script>
         (function () {
             // ---------- Typy obsahu ----------

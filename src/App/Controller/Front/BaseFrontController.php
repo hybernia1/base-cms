@@ -4,6 +4,7 @@ namespace App\Controller\Front;
 use App\Service\Flash;
 use App\Service\ContentType;
 use App\Service\Auth;
+use App\Service\Setting;
 use RedBeanPHP\R as R;
 
 abstract class BaseFrontController
@@ -21,6 +22,10 @@ abstract class BaseFrontController
 
         $currentUser = Auth::user();
         $adminBar = [];
+
+        $siteName = Setting::get('site_name', Setting::DEFAULTS['site_name']);
+        $siteLogo = Setting::mediaDetails((int) Setting::get('site_logo_id', 0));
+        $siteFavicon = Setting::mediaDetails((int) Setting::get('site_favicon_id', 0));
 
         if ($currentUser) {
             $contentTypes = ContentType::definitions();
@@ -60,6 +65,11 @@ abstract class BaseFrontController
             'flash_error'   => $flash['error'],
             'post_archive_slug' => ContentType::defaultSlug('post'),
             'current_user' => $currentUser,
+            'site' => [
+                'name' => $siteName,
+                'logo' => $siteLogo,
+                'favicon' => $siteFavicon,
+            ],
         ], $context);
 
         if ($adminBar || isset($context['admin_bar'])) {

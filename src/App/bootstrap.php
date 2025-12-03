@@ -5,6 +5,8 @@ use RedBeanPHP\R as R;
 use Twig\Loader\FilesystemLoader;
 use Twig\Environment;
 use App\Service\Setting;
+use App\Service\MediaHelper;
+use Twig\TwigFunction;
 
 session_start();
 
@@ -41,6 +43,9 @@ try {
     $twig = new Environment($loader, [
         // 'cache' => __DIR__ . '/../../cache/twig',
     ]);
+
+    $twig->addFunction(new TwigFunction('file_icon', fn (?string $mime) => MediaHelper::mimeToIcon($mime)));
+    $twig->addFunction(new TwigFunction('human_size', fn ($bytes) => MediaHelper::humanSize($bytes)));
 
     $appSettings = [
         'timezone' => Setting::DEFAULTS['timezone'],

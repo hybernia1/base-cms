@@ -30,6 +30,7 @@ class Setting
         'term_types' => '',
         'site_logo_id' => '',
         'site_favicon_id' => '',
+        'theme' => 'blue',
     ];
 
     public static function mediaDetails(?int $mediaId): ?array

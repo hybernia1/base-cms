@@ -69,10 +69,14 @@
                                     </div>
                                     <input type="hidden" name="site_logo_id" id="site_logo_id" value="{{ values.site_logo_id }}">
                                     <div class="d-flex gap-2 flex-wrap">
-                                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#mediaLibraryModal" data-media-action="logo">
-                                            Vybrat z knihovny
+                                        <button class="btn btn-outline-secondary d-inline-flex align-items-center gap-2" type="button" data-bs-toggle="modal" data-bs-target="#mediaLibraryModal" data-media-action="logo">
+                                            <i class="bi bi-images"></i>
+                                            <span>Vybrat z knihovny</span>
                                         </button>
-                                        <button class="btn btn-outline-danger" type="button" id="removeSiteLogo">Odebrat</button>
+                                        <button class="btn btn-outline-danger d-inline-flex align-items-center gap-2" type="button" id="removeSiteLogo">
+                                            <i class="bi bi-trash"></i>
+                                            <span>Odebrat</span>
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="form-text">Použije se v navigaci webu.</div>
@@ -90,10 +94,14 @@
                                     </div>
                                     <input type="hidden" name="site_favicon_id" id="site_favicon_id" value="{{ values.site_favicon_id }}">
                                     <div class="d-flex gap-2 flex-wrap">
-                                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#mediaLibraryModal" data-media-action="favicon">
-                                            Vybrat z knihovny
+                                        <button class="btn btn-outline-secondary d-inline-flex align-items-center gap-2" type="button" data-bs-toggle="modal" data-bs-target="#mediaLibraryModal" data-media-action="favicon">
+                                            <i class="bi bi-images"></i>
+                                            <span>Vybrat z knihovny</span>
                                         </button>
-                                        <button class="btn btn-outline-danger" type="button" id="removeSiteFavicon">Odebrat</button>
+                                        <button class="btn btn-outline-danger d-inline-flex align-items-center gap-2" type="button" id="removeSiteFavicon">
+                                            <i class="bi bi-trash"></i>
+                                            <span>Odebrat</span>
+                                        </button>
                                     </div>
                                 </div>
                                 <div class="form-text">Zobrazí se v prohlížeči jako ikona webu.</div>
@@ -251,8 +259,9 @@
                             <p class="mb-0 flex-grow-1">
                                 Definujte typy obsahu podobně jako ve WordPressu. Každý typ musí mít klíč (používá se v databázi) a slug (pro URL v administraci).
                             </p>
-                            <button type="button" class="btn btn-outline-primary ms-auto" id="addContentType">
-                                Přidat typ
+                            <button type="button" class="btn btn-outline-primary ms-auto d-inline-flex align-items-center gap-2" id="addContentType">
+                                <i class="bi bi-plus-lg"></i>
+                                <span>Přidat typ</span>
                             </button>
                         </div>
 
@@ -272,8 +281,8 @@
                                             <span class="fw-semibold">
                                                 {{ type.name }} ({{ type.key }})
                                             </span>
-                                            <button type="button" class="btn btn-outline-danger btn-sm remove-content-type">
-                                                Smazat
+                                            <button type="button" class="btn btn-outline-danger btn-sm btn-icon remove-content-type" title="Smazat typ" aria-label="Smazat typ">
+                                                <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
                                         <div class="row g-2">
@@ -310,8 +319,9 @@
                             <p class="mb-0 flex-grow-1">
                                 Stejně jako u typů obsahu si můžete definovat vlastní typy termů (tagy, kategorie...).
                             </p>
-                            <button type="button" class="btn btn-outline-primary ms-auto" id="addTermType">
-                                Přidat typ termu
+                            <button type="button" class="btn btn-outline-primary ms-auto d-inline-flex align-items-center gap-2" id="addTermType">
+                                <i class="bi bi-plus-lg"></i>
+                                <span>Přidat typ termu</span>
                             </button>
                         </div>
 
@@ -331,8 +341,8 @@
                                             <span class="fw-semibold">
                                                 {{ type.label }} ({{ type.key }})
                                             </span>
-                                            <button type="button" class="btn btn-outline-danger btn-sm remove-term-type">
-                                                Smazat
+                                            <button type="button" class="btn btn-outline-danger btn-sm btn-icon remove-term-type" title="Smazat typ termu" aria-label="Smazat typ termu">
+                                                <i class="bi bi-trash"></i>
                                             </button>
                                         </div>
                                         <div class="row g-2">

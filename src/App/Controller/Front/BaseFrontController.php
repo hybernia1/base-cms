@@ -28,7 +28,27 @@ abstract class BaseFrontController
         $siteLogo = Setting::mediaDetails((int) Setting::get('site_logo_id', 0));
         $siteFavicon = Setting::mediaDetails((int) Setting::get('site_favicon_id', 0));
         $indexingEnabled = Setting::get('indexing_enabled', Setting::DEFAULTS['indexing_enabled']) === '1';
+        $googleAnalyticsId = Setting::get('google_analytics_id', '');
         $navigation = Navigation::tree();
+
+        $hooks = [
+            'head' => [],
+            'footer' => [],
+        ];
+
+        if ($googleAnalyticsId !== '') {
+            $escapedAnalyticsId = htmlspecialchars($googleAnalyticsId, ENT_QUOTES, 'UTF-8');
+            $hooks['head'][] = <<<HTML
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={$escapedAnalyticsId}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '{$escapedAnalyticsId}');
+</script>
+HTML;
+        }
 
         if ($currentUser) {
             $contentTypes = ContentType::definitions();
@@ -77,6 +97,7 @@ abstract class BaseFrontController
             'seo' => [
                 'indexing_enabled' => $indexingEnabled,
             ],
+            'hooks' => $hooks,
         ], $context);
 
         if ($adminBar || isset($context['admin_bar'])) {

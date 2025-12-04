@@ -380,6 +380,15 @@ class InstallController
         }
 
         $mediaColumns = R::inspect('media');
+        if (!isset($mediaColumns['webp_filename'])) {
+            R::exec("ALTER TABLE `media` ADD COLUMN `webp_filename` VARCHAR(255) DEFAULT NULL AFTER `filename`");
+        }
+        if (!isset($mediaColumns['original_name'])) {
+            R::exec("ALTER TABLE `media` ADD COLUMN `original_name` VARCHAR(255) DEFAULT '' AFTER `is_image`");
+        }
+        if (!isset($mediaColumns['alt'])) {
+            R::exec("ALTER TABLE `media` ADD COLUMN `alt` VARCHAR(255) DEFAULT '' AFTER `original_name`");
+        }
         if (!isset($mediaColumns['uploaded_by'])) {
             R::exec("ALTER TABLE `media` ADD COLUMN `uploaded_by` INT UNSIGNED DEFAULT NULL AFTER `id`");
             R::exec("CREATE INDEX idx_uploaded_by ON media (uploaded_by)");

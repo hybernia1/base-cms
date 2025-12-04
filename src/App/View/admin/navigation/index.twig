@@ -1,23 +1,24 @@
 {% extends 'admin/layout.twig' %}
+{% import 'admin/partials/components.twig' as ui %}
 {% set current_menu = 'navigation' %}
 
 {% block title %}Navigace{% endblock %}
 
 {% block body %}
-    <div class="d-flex align-items-center justify-content-between mb-4">
-        <div>
-            <div class="text-muted small">Přizpůsobení</div>
-            <h1 class="h3 mb-0">Navigace</h1>
-        </div>
-        <button class="btn btn-primary d-flex align-items-center gap-2" type="button" data-bs-toggle="collapse"
-                data-bs-target="#navForm" aria-expanded="{{ edit_id ? 'true' : 'false' }}" aria-controls="navForm">
-            <span class="d-inline-flex justify-content-center align-items-center rounded-circle bg-white text-primary"
-                  style="width: 28px; height: 28px;">
-                <span class="fw-bold">+</span>
-            </span>
-            <span>{{ edit_id ? 'Upravit položku' : 'Přidat položku' }}</span>
-        </button>
-    </div>
+    {% set header_actions = [{
+        type: 'button',
+        button_type: 'button',
+        label: edit_id ? 'Upravit položku' : 'Přidat položku',
+        variant: 'primary',
+        attributes: {
+            'data-bs-toggle': 'collapse',
+            'data-bs-target': '#navForm',
+            'aria-expanded': edit_id ? 'true' : 'false',
+            'aria-controls': 'navForm'
+        }
+    }] %}
+
+    {{ ui.page_header('Navigace', header_actions) }}
 
     <div class="card shadow-sm mb-4">
         <div class="card-body">

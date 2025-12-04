@@ -6,6 +6,7 @@ use App\Service\ContentType;
 use App\Service\Auth;
 use App\Service\Setting;
 use App\Service\Navigation;
+use App\Service\SecurityIntegration;
 use RedBeanPHP\R as R;
 
 abstract class BaseFrontController
@@ -34,6 +35,13 @@ abstract class BaseFrontController
         $hooks = [
             'head' => [],
             'footer' => [],
+        ];
+
+        $security = [
+            'recaptcha' => [
+                'enabled' => SecurityIntegration::isRecaptchaEnabled(),
+                'site_key' => SecurityIntegration::recaptchaSiteKey(),
+            ],
         ];
 
         if ($googleAnalyticsId !== '') {
@@ -98,6 +106,7 @@ HTML;
                 'indexing_enabled' => $indexingEnabled,
             ],
             'hooks' => $hooks,
+            'security' => $security,
         ], $context);
 
         if ($adminBar || isset($context['admin_bar'])) {

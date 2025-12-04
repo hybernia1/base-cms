@@ -112,6 +112,70 @@
 <footer class="container">© {{ "now"|date('Y') }} {{ site.name|default('Base CMS') }}</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% if security.recaptcha.enabled and security.recaptcha.site_key %}
+    <script src="https://www.google.com/recaptcha/api.js?render={{ security.recaptcha.site_key }}"></script>
+    <script>
+        window.recaptchaIntegration = {
+            enabled: true,
+            siteKey: '{{ security.recaptcha.site_key|e("js") }}',
+            async injectToken(form, action = 'submit') {
+                if (!this.enabled || !this.siteKey || typeof grecaptcha === 'undefined') {
+                    return false;
+                }
+
+                return new Promise((resolve) => {
+                    grecaptcha.ready(() => {
+                        grecaptcha.execute(this.siteKey, {action}).then((token) => {
+                            let input = form.querySelector('input[name="g-recaptcha-response"]');
+                            if (!input) {
+                                input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = 'g-recaptcha-response';
+                                form.appendChild(input);
+                            }
+                            input.value = token;
+                            resolve(true);
+                        }).catch(() => resolve(false));
+                    });
+                });
+            },
+            bindForms() {
+                const forms = document.querySelectorAll('form[method="post"]:not([data-recaptcha-manual="true"])');
+                forms.forEach((form) => {
+                    if (form.dataset.recaptchaBound === 'true') {
+                        return;
+                    }
+
+                    form.dataset.recaptchaBound = 'true';
+
+                    form.addEventListener('submit', async (event) => {
+                        if (form.dataset.recaptchaValidated === 'true') {
+                            form.dataset.recaptchaValidated = '';
+                            return;
+                        }
+
+                        event.preventDefault();
+                        const action = form.dataset.recaptchaAction || 'submit';
+                        const success = await this.injectToken(form, action);
+
+                        if (success) {
+                            form.dataset.recaptchaValidated = 'true';
+                            form.submit();
+                        } else {
+                            alert('Bezpečnostní ověření se nepodařilo. Zkuste to prosím znovu.');
+                        }
+                    });
+                });
+            },
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.recaptchaIntegration) {
+                window.recaptchaIntegration.bindForms();
+            }
+        });
+    </script>
+{% endif %}
 {% block scripts %}{% endblock %}
 {% if hooks is defined and hooks.footer is defined %}
     {% for snippet in hooks.footer %}

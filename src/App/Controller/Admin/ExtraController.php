@@ -4,6 +4,7 @@ namespace App\Controller\Admin;
 use App\Service\Auth;
 use App\Service\Flash;
 use App\Service\Comment;
+use App\Service\Setting;
 use RedBeanPHP\R as R;
 
 class ExtraController extends BaseAdminController
@@ -111,6 +112,56 @@ class ExtraController extends BaseAdminController
             'current_env' => $currentEnv,
             'is_debug' => $currentEnv !== 'prod',
         ]);
+    }
+
+    public function integration(): void
+    {
+        Auth::requireRole(['admin']);
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+            $this->saveIntegration();
+            return;
+        }
+
+        $values = [
+            'recaptcha_enabled' => Setting::get('recaptcha_enabled', '0') === '1',
+            'recaptcha_site_key' => Setting::get('recaptcha_site_key', ''),
+            'recaptcha_secret_key' => Setting::get('recaptcha_secret_key', ''),
+            'abuseipdb_api_key' => Setting::get('abuseipdb_api_key', ''),
+            'abuseipdb_report_recaptcha' => Setting::get('abuseipdb_report_recaptcha', '0') === '1',
+        ];
+
+        $this->render('admin/extra/integration.twig', [
+            'current_menu' => 'extra:integration',
+            'values' => $values,
+        ]);
+    }
+
+    private function saveIntegration(): void
+    {
+        Auth::requireRole(['admin']);
+
+        $recaptchaEnabled = isset($_POST['recaptcha_enabled']);
+        $recaptchaSiteKey = trim($_POST['recaptcha_site_key'] ?? '');
+        $recaptchaSecretKey = trim($_POST['recaptcha_secret_key'] ?? '');
+        $abuseipdbKey = trim($_POST['abuseipdb_api_key'] ?? '');
+        $reportRecaptcha = isset($_POST['abuseipdb_report_recaptcha']);
+
+        if ($recaptchaEnabled && ($recaptchaSiteKey === '' || $recaptchaSecretKey === '')) {
+            Flash::addError('Pro zapnutí reCAPTCHA vyplň obě hodnoty klíčů.');
+            header('Location: /admin/extra/integration');
+            exit;
+        }
+
+        Setting::set('recaptcha_enabled', $recaptchaEnabled ? '1' : '0');
+        Setting::set('recaptcha_site_key', $recaptchaSiteKey);
+        Setting::set('recaptcha_secret_key', $recaptchaSecretKey);
+        Setting::set('abuseipdb_api_key', $abuseipdbKey);
+        Setting::set('abuseipdb_report_recaptcha', $reportRecaptcha ? '1' : '0');
+
+        Flash::addSuccess('Integrace byly uloženy.');
+        header('Location: /admin/extra/integration');
+        exit;
     }
 
     public function optimize(): void

@@ -5,7 +5,7 @@
 {% block body %}
     <h1>Upravit profil</h1>
 
-    <form method="post" action="/profile/edit" class="card p-4 shadow-sm">
+    <form method="post" action="/profile/edit" class="card p-4 shadow-sm" data-recaptcha-action="profile_update">
         <div class="mb-3">
             <label class="form-label">E-mail</label>
             <input type="email" class="form-control" value="{{ values.email }}" disabled>

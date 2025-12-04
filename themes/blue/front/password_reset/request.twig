@@ -6,7 +6,7 @@
     <h1>Reset hesla</h1>
     <p class="mb-3">Zadejte svůj e-mail a pošleme vám odkaz pro nastavení nového hesla.</p>
 
-    <form method="post" action="/password-reset" class="card p-4 shadow-sm" data-recaptcha-action="password_reset_request">
+    <form method="post" action="/password-reset" class="card p-4 shadow-sm">
         <div class="mb-3">
             <label class="form-label" for="email">E-mail</label>
             <input type="email" name="email" id="email" class="form-control" value="{{ values.email }}" required>

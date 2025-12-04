@@ -81,7 +81,7 @@
                                 <div class="alert alert-info">Komentáře jsou povoleny pouze pro přihlášené uživatele.</div>
                             {% endif %}
 
-                            <form method="post" action="/comments" class="mt-3" id="commentForm" data-recaptcha-manual="true" data-recaptcha-action="comment_submit">
+                            <form method="post" action="/comments" class="mt-3" id="commentForm">
                                 <input type="hidden" name="content_id" value="{{ item.id }}">
                                 <input type="hidden" name="parent_id" value="">
 
@@ -174,18 +174,6 @@
                             alertBox.classList.remove('d-none');
                         }
                         return;
-                    }
-
-                    if (window.recaptchaIntegration && window.recaptchaIntegration.enabled) {
-                        const success = await window.recaptchaIntegration.injectToken(form, form.dataset.recaptchaAction || 'comment_submit');
-                        if (!success) {
-                            if (alertBox) {
-                                alertBox.textContent = 'Nepodařilo se ověřit reCAPTCHA. Zkuste to prosím znovu.';
-                                alertBox.className = 'alert alert-danger mt-3';
-                                alertBox.classList.remove('d-none');
-                            }
-                            return;
-                        }
                     }
 
                     const formData = new FormData(form);

@@ -230,24 +230,6 @@ class InstallController
         );
 
         R::exec(
-            "CREATE TABLE IF NOT EXISTS `navigationitem` (
-                `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-                `label` VARCHAR(255) NOT NULL,
-                `type` VARCHAR(50) NOT NULL DEFAULT 'custom',
-                `url` VARCHAR(255) DEFAULT NULL,
-                `target_id` INT UNSIGNED DEFAULT NULL,
-                `target_key` VARCHAR(191) DEFAULT NULL,
-                `parent_id` INT UNSIGNED DEFAULT NULL,
-                `position` INT UNSIGNED NOT NULL DEFAULT 0,
-                `open_in_new_tab` TINYINT(1) NOT NULL DEFAULT 0,
-                `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                KEY `idx_parent` (`parent_id`),
-                KEY `idx_type` (`type`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-        );
-
-        R::exec(
             "CREATE TABLE IF NOT EXISTS `emailtemplate` (
                 `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                 `event` VARCHAR(191) NOT NULL UNIQUE,
@@ -326,16 +308,6 @@ class InstallController
 
         if (!isset($contentMediaColumns['created_at'])) {
             R::exec("ALTER TABLE `content_media` ADD COLUMN `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `relation`");
-        }
-
-        $navigationColumns = R::inspect('navigationitem');
-        if ($navigationColumns) {
-            if (!isset($navigationColumns['target_key'])) {
-                R::exec("ALTER TABLE `navigationitem` ADD COLUMN `target_key` VARCHAR(191) DEFAULT NULL AFTER `target_id`");
-            }
-            if (!isset($navigationColumns['open_in_new_tab'])) {
-                R::exec("ALTER TABLE `navigationitem` ADD COLUMN `open_in_new_tab` TINYINT(1) NOT NULL DEFAULT 0 AFTER `position`");
-            }
         }
 
         R::exec(
@@ -419,19 +391,5 @@ class InstallController
                 KEY `idx_user` (`user_id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
-
-        if (R::count('navigationitem') === 0) {
-            $now = date('Y-m-d H:i:s');
-            R::exec(
-                "INSERT INTO navigationitem (label, type, url, target_id, target_key, parent_id, position, open_in_new_tab, created_at, updated_at)
-                 VALUES
-                 ('Domů', 'core_home', NULL, NULL, NULL, NULL, 0, 0, ?, ?),
-                 ('Archiv', 'archive', NULL, NULL, 'post', NULL, 1, 0, ?, ?),
-                 ('Vyhledávání', 'core_search', NULL, NULL, NULL, NULL, 2, 0, ?, ?),
-                 ('Přihlášení', 'core_login', NULL, NULL, NULL, NULL, 3, 0, ?, ?),
-                 ('Registrace', 'core_register', NULL, NULL, NULL, NULL, 4, 0, ?, ?)",
-                [$now, $now, $now, $now, $now, $now, $now, $now, $now, $now]
-            );
-        }
     }
 }

@@ -6,7 +6,6 @@ use App\Service\ContentType;
 use App\Service\Auth;
 use App\Service\Setting;
 use App\Service\Navigation;
-use App\Service\Recaptcha;
 use RedBeanPHP\R as R;
 
 abstract class BaseFrontController
@@ -30,8 +29,6 @@ abstract class BaseFrontController
         $siteFavicon = Setting::mediaDetails((int) Setting::get('site_favicon_id', 0));
         $indexingEnabled = Setting::get('indexing_enabled', Setting::DEFAULTS['indexing_enabled']) === '1';
         $googleAnalyticsId = Setting::get('google_analytics_id', '');
-        $recaptchaSiteKey = Setting::get('recaptcha_site_key', '');
-        $recaptchaEnabled = Recaptcha::isEnabled();
         $navigation = Navigation::tree();
 
         $hooks = [
@@ -49,78 +46,6 @@ abstract class BaseFrontController
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
   gtag('config', '{$escapedAnalyticsId}');
-</script>
-HTML;
-        }
-
-        if ($recaptchaEnabled && $recaptchaSiteKey !== '') {
-            $escapedRecaptchaKey = htmlspecialchars($recaptchaSiteKey, ENT_QUOTES, 'UTF-8');
-            $hooks['head'][] = '<script src="https://www.google.com/recaptcha/api.js?render=' . $escapedRecaptchaKey . '"></script>';
-            $hooks['footer'][] = <<<HTML
-<script>
-    window.cmsRecaptcha = window.cmsRecaptcha || {};
-    window.cmsRecaptcha.siteKey = '{$escapedRecaptchaKey}';
-    window.cmsRecaptcha.getToken = function(action = 'submit') {
-        return new Promise((resolve) => {
-            if (!window.grecaptcha || !window.cmsRecaptcha.siteKey) {
-                resolve(null);
-                return;
-            }
-
-            grecaptcha.ready(function() {
-                grecaptcha.execute(window.cmsRecaptcha.siteKey, {action: action}).then(function(token) {
-                    resolve(token || null);
-                }).catch(function() {
-                    resolve(null);
-                });
-            });
-        });
-    };
-
-    window.cmsRecaptcha.showError = function(form, message) {
-        if (!form) { return; }
-        const alertBox = form.querySelector('[data-recaptcha-alert]');
-        if (alertBox) {
-            alertBox.textContent = message;
-            alertBox.classList.remove('d-none');
-            alertBox.classList.add('alert', 'alert-danger');
-            return;
-        }
-
-        window.alert(message);
-    };
-
-    window.cmsRecaptcha.bindForms = function() {
-        const forms = document.querySelectorAll('form[method="post"]:not([data-recaptcha="disabled"]):not([data-recaptcha="manual"])');
-        forms.forEach(function(form) {
-            if (form.dataset.recaptchaBound === '1') {
-                return;
-            }
-
-            form.dataset.recaptchaBound = '1';
-            form.addEventListener('submit', async function(event) {
-                const action = form.dataset.recaptchaAction || 'submit';
-                const token = await window.cmsRecaptcha.getToken(action);
-                if (!token) {
-                    event.preventDefault();
-                    window.cmsRecaptcha.showError(form, 'Ověření reCAPTCHA se nezdařilo. Zkuste to prosím znovu.');
-                    return;
-                }
-
-                let input = form.querySelector('input[name="recaptcha_token"]');
-                if (!input) {
-                    input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = 'recaptcha_token';
-                    form.appendChild(input);
-                }
-
-                input.value = token;
-            }, true);
-        });
-    };
-
-    document.addEventListener('DOMContentLoaded', window.cmsRecaptcha.bindForms);
 </script>
 HTML;
         }
@@ -171,10 +96,6 @@ HTML;
             'navigation' => $navigation,
             'seo' => [
                 'indexing_enabled' => $indexingEnabled,
-            ],
-            'recaptcha' => [
-                'enabled' => $recaptchaEnabled,
-                'site_key' => $recaptchaSiteKey,
             ],
             'hooks' => $hooks,
         ], $context);

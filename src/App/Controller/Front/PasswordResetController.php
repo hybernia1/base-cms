@@ -4,6 +4,7 @@ namespace App\Controller\Front;
 use App\Service\EmailTemplateManager;
 use App\Service\Flash;
 use App\Service\PasswordReset;
+use App\Service\Recaptcha;
 use RedBeanPHP\R as R;
 
 class PasswordResetController extends BaseFrontController
@@ -20,6 +21,16 @@ class PasswordResetController extends BaseFrontController
     {
         $email = trim($_POST['email'] ?? '');
         $errors = [];
+
+        $recaptcha = Recaptcha::verify($_POST['recaptcha_token'] ?? null, 'password_reset_request');
+        if (!$recaptcha['success']) {
+            Flash::addError($recaptcha['message'] ?? 'Ověření reCAPTCHA selhalo.');
+            $this->render('front/password_reset/request.twig', [
+                'values' => ['email' => $email],
+                'errors' => $errors,
+            ]);
+            return;
+        }
 
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $errors['email'] = 'Zadejte platný e-mail.';
@@ -75,6 +86,16 @@ class PasswordResetController extends BaseFrontController
         $password = $_POST['password'] ?? '';
         $confirm = $_POST['password_confirm'] ?? '';
         $errors = [];
+
+        $recaptcha = Recaptcha::verify($_POST['recaptcha_token'] ?? null, 'password_reset_submit');
+        if (!$recaptcha['success']) {
+            Flash::addError($recaptcha['message'] ?? 'Ověření reCAPTCHA selhalo.');
+            $this->render('front/password_reset/reset.twig', [
+                'token' => $token,
+                'errors' => $errors,
+            ]);
+            return;
+        }
 
         if (strlen($password) < 6) {
             $errors['password'] = 'Heslo musí mít alespoň 6 znaků.';

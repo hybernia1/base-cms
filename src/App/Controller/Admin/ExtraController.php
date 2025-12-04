@@ -4,6 +4,7 @@ namespace App\Controller\Admin;
 use App\Service\Auth;
 use App\Service\Flash;
 use App\Service\Comment;
+use App\Service\Setting;
 use RedBeanPHP\R as R;
 
 class ExtraController extends BaseAdminController
@@ -215,6 +216,45 @@ class ExtraController extends BaseAdminController
             'stats' => $stats,
             'results' => $results,
             'selected_actions' => $selectedActions,
+        ]);
+    }
+
+    public function integrations(): void
+    {
+        Auth::requireRole(['admin']);
+
+        $values = [
+            'recaptcha_site_key' => Setting::get('recaptcha_site_key', ''),
+            'recaptcha_secret_key' => Setting::get('recaptcha_secret_key', ''),
+        ];
+        $errors = [];
+
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+            $siteKey = trim($_POST['recaptcha_site_key'] ?? '');
+            $secretKey = trim($_POST['recaptcha_secret_key'] ?? '');
+
+            if (($siteKey === '') !== ($secretKey === '')) {
+                $errors['recaptcha'] = 'Pro aktivaci reCAPTCHA vyplň oba klíče nebo je nech prázdné pro vypnutí integrace.';
+            } else {
+                Setting::set('recaptcha_site_key', $siteKey);
+                Setting::set('recaptcha_secret_key', $secretKey);
+
+                $message = $siteKey === ''
+                    ? 'Integrace reCAPTCHA byla vypnuta.'
+                    : 'Klíče reCAPTCHA byly uloženy.';
+                Flash::addSuccess($message);
+                header('Location: /admin/extra/integrations');
+                exit;
+            }
+
+            $values['recaptcha_site_key'] = $siteKey;
+            $values['recaptcha_secret_key'] = $secretKey;
+        }
+
+        $this->render('admin/extra/integrations.twig', [
+            'current_menu' => 'extra:integrations',
+            'values' => $values,
+            'errors' => $errors,
         ]);
     }
 

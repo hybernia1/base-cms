@@ -5,6 +5,7 @@ use App\Service\Auth;
 use App\Service\ContentType;
 use App\Service\Flash;
 use App\Service\UserProfile;
+use App\Service\Recaptcha;
 use RedBeanPHP\R as R;
 
 class UserController extends BaseFrontController
@@ -77,6 +78,16 @@ class UserController extends BaseFrontController
         }
 
         $data = $this->sanitizeProfile();
+        $recaptcha = Recaptcha::verify($_POST['recaptcha_token'] ?? null, 'profile_update');
+        if (!$recaptcha['success']) {
+            Flash::addError($recaptcha['message'] ?? 'Ověření reCAPTCHA selhalo.');
+            $this->render('front/user/edit.twig', [
+                'values' => array_merge($data, ['email' => $user->email]),
+                'errors' => [],
+            ]);
+            return;
+        }
+
         $errors = $this->validateProfile($data);
 
         if ($errors) {

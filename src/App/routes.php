@@ -120,6 +120,10 @@ $router->post('/admin/terms/create', 'App\\Controller\\Admin\\TermController@cre
 $router->get('/admin/terms/(\\d+)/edit', 'App\\Controller\\Admin\\TermController@editForm');
 $router->post('/admin/terms/(\\d+)/edit', 'App\\Controller\\Admin\\TermController@update');
 $router->post('/admin/terms/(\\d+)/delete', 'App\\Controller\\Admin\\TermController@delete');
+$router->get('/admin/navigation', 'App\\Controller\\Admin\\NavigationController@index');
+$router->post('/admin/navigation/create', 'App\\Controller\\Admin\\NavigationController@create');
+$router->post('/admin/navigation/(\\d+)/edit', 'App\\Controller\\Admin\\NavigationController@update');
+$router->post('/admin/navigation/(\\d+)/delete', 'App\\Controller\\Admin\\NavigationController@delete');
 $router->get('/admin/media', 'App\\Controller\\Admin\\MediaController@index');
 $router->get('/admin/media/gallery', 'App\\Controller\\Admin\\MediaController@gallery');
 $router->get('/admin/media/files', 'App\\Controller\\Admin\\MediaController@files');

@@ -1,0 +1,268 @@
+{% extends 'admin/layout.twig' %}
+{% set current_menu = 'navigation' %}
+
+{% block title %}Navigace{% endblock %}
+
+{% block body %}
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <div class="text-muted small">Přizpůsobení</div>
+            <h1 class="h3 mb-0">Navigace</h1>
+        </div>
+        <button class="btn btn-primary d-flex align-items-center gap-2" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navForm" aria-expanded="{{ edit_id ? 'true' : 'false' }}" aria-controls="navForm">
+            <span class="d-inline-flex justify-content-center align-items-center rounded-circle bg-white text-primary"
+                  style="width: 28px; height: 28px;">
+                <span class="fw-bold">+</span>
+            </span>
+            <span>{{ edit_id ? 'Upravit položku' : 'Přidat položku' }}</span>
+        </button>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <h5 class="card-title mb-0">Položky navigace</h5>
+                <span class="text-muted small">Neplatné odkazy se automaticky skryjí na webu.</span>
+            </div>
+            {% if items %}
+                <ul class="list-group list-group-flush">
+                    {% import _self as nav %}
+                    {{ nav.render_items(items) }}
+                </ul>
+            {% else %}
+                <p class="text-muted mb-0">Navigace zatím neobsahuje žádné položky.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="collapse {{ edit_id ? 'show' : '' }}" id="navForm">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <h5 class="card-title mb-0">{{ edit_id ? 'Upravit položku' : 'Nová položka' }}</h5>
+                        <div class="text-muted small">Zvolte typ odkazu a doplňte detaily. Nepovinná pole se zobrazí až po výběru typu.</div>
+                    </div>
+                    {% if edit_id %}
+                        <a href="/admin/navigation" class="btn btn-outline-secondary btn-sm">Zrušit úpravy</a>
+                    {% endif %}
+                </div>
+
+                <div class="alert alert-light border mb-4">
+                    <div class="fw-semibold mb-1">Zrychlený výběr</div>
+                    <div class="row g-3 align-items-end">
+                        <div class="col-lg-8">
+                            <label class="form-label mb-1">Najít obsah nebo term</label>
+                            <input type="text" class="form-control" id="navQuickPick" list="navSuggestions"
+                                   placeholder="Začněte psát název...">
+                            <datalist id="navSuggestions">
+                                {% for content in content_options %}
+                                    <option value="{{ content.title }} ({{ content.type }})" data-type="{{ constant('App\\Service\\Navigation::TYPE_CONTENT') }}" data-id="{{ content.id }}"></option>
+                                {% endfor %}
+                                {% for term in term_options %}
+                                    <option value="{{ term.name }} ({{ term.type }})" data-type="{{ constant('App\\Service\\Navigation::TYPE_TERM') }}" data-id="{{ term.id }}"></option>
+                                {% endfor %}
+                            </datalist>
+                            <div class="form-text">Vybráním položky se automaticky nastaví typ i cílový obsah.</div>
+                        </div>
+                        <div class="col-lg-4">
+                            <label class="form-label mb-1">Výchozí název</label>
+                            <input type="text" id="navQuickLabel" class="form-control" placeholder="Použít název z výběru">
+                            <div class="form-text">Ponechte prázdné, pokud chcete název přepsat ručně.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post" action="{{ edit_id ? '/admin/navigation/' ~ edit_id ~ '/edit' : '/admin/navigation/create' }}">
+                    <div class="row g-4">
+                        <div class="col-lg-4">
+                            <label class="form-label">Typ odkazu</label>
+                            <select name="type" id="navType" class="form-select {% if errors.type %}is-invalid{% endif %}" required>
+                                {% for key, label in types %}
+                                    <option value="{{ key }}" {% if values.type == key %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if errors.type %}<div class="invalid-feedback">{{ errors.type }}</div>{% endif %}
+                            <div class="form-text">Zobrazená pole se mění podle typu.</div>
+                        </div>
+                        <div class="col-lg-5">
+                            <label class="form-label">Název v menu</label>
+                            <input type="text" name="label" id="navLabel" class="form-control {% if errors.label %}is-invalid{% endif %}"
+                                   value="{{ values.label|e }}" required>
+                            {% if errors.label %}<div class="invalid-feedback">{{ errors.label }}</div>{% endif %}
+                        </div>
+                        <div class="col-lg-3">
+                            <label class="form-label">Pořadí</label>
+                            <input type="number" name="position" min="0" class="form-control" value="{{ values.position|default(0) }}">
+                        </div>
+                    </div>
+
+                    <div class="row g-4 mt-1 align-items-end">
+                        <div class="col-lg-6" data-type="custom">
+                            <label class="form-label">Cílová URL</label>
+                            <input type="url" name="url" class="form-control {% if errors.url %}is-invalid{% endif %}"
+                                   value="{{ values.url|e }}" placeholder="https://example.com">
+                            {% if errors.url %}<div class="invalid-feedback">{{ errors.url }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-lg-6" data-type="content">
+                            <label class="form-label">Vybrat obsah</label>
+                            <select name="content_id" id="navContent" class="form-select {% if errors.target_id %}is-invalid{% endif %}">
+                                <option value="">— Vyberte obsah —</option>
+                                {% for content in content_options %}
+                                    <option value="{{ content.id }}" {% if values.content_id == content.id %}selected{% endif %}>
+                                        {{ content.title }} ({{ content.type }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if errors.target_id %}<div class="invalid-feedback">{{ errors.target_id }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-lg-6" data-type="term">
+                            <label class="form-label">Vybrat term</label>
+                            <select name="term_id" id="navTerm" class="form-select {% if errors.target_id %}is-invalid{% endif %}">
+                                <option value="">— Vyberte term —</option>
+                                {% for term in term_options %}
+                                    <option value="{{ term.id }}" {% if values.term_id == term.id %}selected{% endif %}>
+                                        {{ term.name }} ({{ term.type }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if errors.target_id %}<div class="invalid-feedback">{{ errors.target_id }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-lg-6" data-type="archive">
+                            <label class="form-label">Archiv obsahu</label>
+                            <select name="target_key" class="form-select {% if errors.target_key %}is-invalid{% endif %}">
+                                <option value="">— Vyberte typ obsahu —</option>
+                                {% for key, type in content_types %}
+                                    <option value="{{ key }}" {% if values.target_key == key %}selected{% endif %}>
+                                        {{ type.menu_label|default(type.plural_name|default(key)) }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if errors.target_key %}<div class="invalid-feedback">{{ errors.target_key }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-lg-6" data-type="any">
+                            <label class="form-label">Rodič</label>
+                            <select name="parent_id" class="form-select {% if errors.parent_id %}is-invalid{% endif %}">
+                                <option value="">— Bez rodiče —</option>
+                                {% for option in parent_options %}
+                                    <option value="{{ option.id }}" {% if values.parent_id == option.id %}selected{% endif %}>
+                                        {{ option.label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            {% if errors.parent_id %}<div class="invalid-feedback">{{ errors.parent_id }}</div>{% endif %}
+                        </div>
+
+                        <div class="col-lg-6" data-type="any">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" type="checkbox" name="open_in_new_tab" value="1" id="openNewTab"
+                                       {% if values.open_in_new_tab %}checked{% endif %}>
+                                <label class="form-check-label" for="openNewTab">
+                                    Otevřít v novém okně
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">{{ edit_id ? 'Uložit změny' : 'Přidat položku' }}</button>
+                        {% if edit_id %}
+                            <a href="/admin/navigation" class="btn btn-outline-secondary">Zrušit</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% macro render_items(items, level = 0) %}
+    {% for item in items %}
+        <li class="list-group-item">
+            <div class="d-flex align-items-start justify-content-between">
+                <div style="margin-left: {{ level * 12 }}px;">
+                    <div class="fw-semibold">{{ item.label }}</div>
+                    <div class="text-muted small">{{ item.type }}{% if item.url %} · {{ item.url }}{% endif %}</div>
+                    {% if item.open_in_new_tab %}
+                        <div class="text-muted small">Otevírat v novém okně</div>
+                    {% endif %}
+                    {% if not item.is_valid and item.note %}
+                        <div class="text-danger small">{{ item.note }}</div>
+                    {% endif %}
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="/admin/navigation?edit={{ item.id }}" class="btn btn-sm btn-outline-primary">Upravit</a>
+                    <form method="post" action="/admin/navigation/{{ item.id }}/delete" onsubmit="return confirm('Opravdu chcete položku smazat?');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>
+                    </form>
+                </div>
+            </div>
+            {% if item.children %}
+                <ul class="list-group list-group-flush ms-4 mt-2">
+                    {{ _self.render_items(item.children, level + 1) }}
+                </ul>
+            {% endif %}
+        </li>
+    {% endfor %}
+{% endmacro %}
+
+{% block scripts %}
+    {{ parent() }}
+    <script>
+        (function() {
+            const typeSelect = document.getElementById('navType');
+            const quickPick = document.getElementById('navQuickPick');
+            const quickLabel = document.getElementById('navQuickLabel');
+            const labelInput = document.getElementById('navLabel');
+            const contentSelect = document.getElementById('navContent');
+            const termSelect = document.getElementById('navTerm');
+
+            function toggleFields(type) {
+                document.querySelectorAll('[data-type]').forEach((element) => {
+                    const shouldShow = element.dataset.type === 'any' || element.dataset.type === type;
+                    element.classList.toggle('d-none', !shouldShow);
+                });
+            }
+
+            function applySuggestion(suggestionText) {
+                const option = Array.from(document.querySelectorAll('#navSuggestions option')).find(opt => opt.value === suggestionText);
+                if (!option) return;
+
+                const suggestedType = option.dataset.type;
+                const targetId = option.dataset.id;
+
+                if (suggestedType === '{{ constant('App\\Service\\Navigation::TYPE_CONTENT') }}') {
+                    typeSelect.value = suggestedType;
+                    contentSelect.value = targetId;
+                    termSelect.value = '';
+                } else if (suggestedType === '{{ constant('App\\Service\\Navigation::TYPE_TERM') }}') {
+                    typeSelect.value = suggestedType;
+                    termSelect.value = targetId;
+                    contentSelect.value = '';
+                }
+
+                toggleFields(typeSelect.value);
+                if (quickLabel.value.trim() !== '') {
+                    labelInput.value = quickLabel.value.trim();
+                } else if (suggestionText) {
+                    labelInput.value = suggestionText;
+                }
+            }
+
+            typeSelect?.addEventListener('change', (event) => {
+                toggleFields(event.target.value);
+            });
+
+            quickPick?.addEventListener('change', (event) => {
+                applySuggestion(event.target.value);
+            });
+
+            toggleFields(typeSelect?.value || '{{ constant('App\\Service\\Navigation::TYPE_CUSTOM') }}');
+        })();
+    </script>
+{% endblock %}

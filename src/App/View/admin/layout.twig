@@ -157,6 +157,12 @@
                 {% set isEditor = app_user is defined and app_user and app_user.role in ['admin', 'editor'] %}
                 {% if isAdmin %}
                     <li class="nav-item mb-1">
+                        <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'navigation' %}active{% endif %}"
+                           href="/admin/navigation">
+                            <i class="bi bi-signpost-2 me-2"></i> Navigace
+                        </a>
+                    </li>
+                    <li class="nav-item mb-1">
                         <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'users' %}active{% endif %}"
                            href="/admin/users">
                             <i class="bi bi-people me-2"></i> Uživatelé
@@ -350,6 +356,12 @@
                 {% set isAdmin = app_user is defined and app_user and app_user.role == 'admin' %}
                 {% set isEditor = app_user is defined and app_user and app_user.role in ['admin', 'editor'] %}
                 {% if isAdmin %}
+                    <li class="nav-item mb-1">
+                        <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'navigation' %}active{% endif %}"
+                           href="/admin/navigation">
+                            <i class="bi bi-signpost-2 me-2"></i> Navigace
+                        </a>
+                    </li>
                     <li class="nav-item mb-1">
                         <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'users' %}active{% endif %}"
                            href="/admin/users">

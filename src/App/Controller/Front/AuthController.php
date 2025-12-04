@@ -6,7 +6,6 @@ use App\Service\EmailTemplateManager;
 use App\Service\Flash;
 use App\Service\Setting;
 use App\Service\UserProfile;
-use App\Service\Recaptcha;
 use RedBeanPHP\R as R;
 
 class AuthController extends BaseFrontController
@@ -36,16 +35,6 @@ class AuthController extends BaseFrontController
         }
 
         $data = $this->sanitize();
-        $recaptcha = Recaptcha::verify($_POST['recaptcha_token'] ?? null, 'register');
-        if (!$recaptcha['success']) {
-            Flash::addError($recaptcha['message'] ?? 'Ověření reCAPTCHA selhalo.');
-            $this->render('front/register.twig', [
-                'values' => $data,
-                'errors' => [],
-            ]);
-            return;
-        }
-
         $errors = $this->validate($data);
 
         if ($this->emailExists($data['email'])) {
@@ -94,16 +83,6 @@ class AuthController extends BaseFrontController
     {
         $data = $this->sanitizeLogin();
         $errors = [];
-
-        $recaptcha = Recaptcha::verify($_POST['recaptcha_token'] ?? null, 'login');
-        if (!$recaptcha['success']) {
-            Flash::addError($recaptcha['message'] ?? 'Ověření reCAPTCHA selhalo.');
-            $this->render('front/login.twig', [
-                'values' => ['email' => $data['email']],
-                'errors' => [],
-            ]);
-            return;
-        }
 
         if ($data['email'] === '' || !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
             $errors['email'] = 'Zadejte platný e-mail.';

@@ -5,7 +5,6 @@ use App\Service\Auth;
 use App\Service\Comment;
 use App\Service\CommentNotifier;
 use App\Service\Setting;
-use App\Service\Recaptcha;
 use RedBeanPHP\R as R;
 
 class CommentController extends BaseFrontController
@@ -26,13 +25,6 @@ class CommentController extends BaseFrontController
         if (!$content || !$content->id) {
             http_response_code(400);
             echo json_encode(['status' => 'error', 'message' => 'Obsah nebyl nalezen.']);
-            return;
-        }
-
-        $recaptcha = Recaptcha::verify($_POST['recaptcha_token'] ?? null, 'comment');
-        if (!$recaptcha['success']) {
-            http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => $recaptcha['message'] ?? 'Ověření reCAPTCHA selhalo.']);
             return;
         }
 

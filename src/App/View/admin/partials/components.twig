@@ -152,5 +152,70 @@
         {% set actions = actions|merge(options.extra) %}
     {% endif %}
 
-    {{ _self.actions(actions, options.size|default('sm')) }}
+{{ _self.actions(actions, options.size|default('sm')) }}
+{% endmacro %}
+
+{% macro search_form(action, options = {}) %}
+    {% set method = options.method|default('get') %}
+    {% set query = options.query|default('') %}
+    {% set placeholder = options.placeholder|default('Hledat') %}
+    {% set hidden = options.hidden|default({}) %}
+    {% set ajax = options.ajax|default(false) %}
+    {% set button_label = options.button_label|default('Vyhledat') %}
+    {% set extra_classes = options.class|default('mb-3') %}
+    {% set name = options.name|default('q') %}
+
+    <form method="{{ method }}" action="{{ action }}" class="{{ extra_classes }}" {% if ajax %}data-ajax-form{% endif %}>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" name="{{ name }}" value="{{ query }}" class="form-control" placeholder="{{ placeholder }}">
+
+            {% if hidden is not empty %}
+                {% for hiddenName, value in hidden %}
+                    <input type="hidden" name="{{ hiddenName }}" value="{{ value }}">
+                {% endfor %}
+            {% endif %}
+
+            <button class="btn btn-outline-secondary" type="submit">{{ button_label }}</button>
+        </div>
+    </form>
+{% endmacro %}
+
+{% macro status_tabs(baseUrl, tabs, current, queryParams = {}) %}
+    <ul class="nav nav-pills mb-3">
+        {% for tab in tabs %}
+            {% set tabParams = queryParams %}
+            {% if tab.status is defined %}
+                {% set tabParams = tabParams|merge({ status: tab.status }) %}
+            {% endif %}
+            {% if tab.params is defined %}
+                {% set tabParams = tabParams|merge(tab.params) %}
+            {% endif %}
+
+            {% set queryString = [] %}
+            {% for name, value in tabParams %}
+                {% if value is not same as(null) and value is not same as('') %}
+                    {% set queryString = queryString|merge([name ~ '=' ~ value|url_encode]) %}
+                {% endif %}
+            {% endfor %}
+
+            {% set url = baseUrl ~ (queryString ? '?' ~ queryString|join('&') : '') %}
+
+            {% set isActive = false %}
+            {% if tab.status is defined and current == tab.status %}
+                {% set isActive = true %}
+            {% elseif tab.is_default|default(false) and (current is empty or current == 'all') %}
+                {% set isActive = true %}
+            {% endif %}
+
+            <li class="nav-item">
+                <a class="nav-link {% if isActive %}active{% endif %}" href="{{ url }}">
+                    {{ tab.label }}
+                    {% if tab.count is defined %}
+                        <span class="badge text-bg-light ms-1">{{ tab.count }}</span>
+                    {% endif %}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
 {% endmacro %}

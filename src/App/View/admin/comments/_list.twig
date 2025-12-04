@@ -22,34 +22,28 @@
     <form id="emptyCommentsTrash" action="/admin/comments/trash/empty" method="post"></form>
 {% endif %}
 
-<form method="get" action="/admin/comments" class="mb-3" data-ajax-form>
-    <div class="input-group">
-        <span class="input-group-text"><i class="bi bi-search"></i></span>
-        <input type="text" name="q" value="{{ search|default('') }}" class="form-control" placeholder="Hledat podle autora nebo textu">
-        {% if status %}
-            <input type="hidden" name="status" value="{{ status }}">
-        {% endif %}
-        <button class="btn btn-outline-secondary" type="submit">Vyhledat</button>
-    </div>
-</form>
+{% set search_hidden = status ? { status: status } : {} %}
 
-{% set tabs = {
-    'all': 'Vše',
-    'pending': 'Čeká na schválení',
-    'approved': 'Schválené',
-    'trash': 'Koš'
-} %}
+{{ ui.search_form('/admin/comments', {
+    query: search|default(''),
+    placeholder: 'Hledat podle autora nebo textu',
+    hidden: search_hidden,
+    ajax: true
+}) }}
 
-<ul class="nav nav-pills mb-3">
-    {% for key, label in tabs %}
-        <li class="nav-item">
-            <a href="/admin/comments?status={{ key }}{% if search is not empty %}&amp;q={{ search|url_encode }}{% endif %}" class="nav-link {% if status == key %}active{% endif %}">
-                {{ label }}
-                <span class="badge text-bg-light ms-1">{{ counts[key]|default(0) }}</span>
-            </a>
-        </li>
-    {% endfor %}
-</ul>
+{% set tab_params = {} %}
+{% if search is not empty %}
+    {% set tab_params = tab_params|merge({ q: search }) %}
+{% endif %}
+
+{% set tabs = [
+    { status: 'all', label: 'Vše', count: counts.all|default(0) },
+    { status: 'pending', label: 'Čeká na schválení', count: counts.pending|default(0) },
+    { status: 'approved', label: 'Schválené', count: counts.approved|default(0) },
+    { status: 'trash', label: 'Koš', count: counts.trash|default(0) }
+] %}
+
+{{ ui.status_tabs('/admin/comments', tabs, status, tab_params) }}
 
 {% if comments is empty %}
     <div class="alert alert-info">Žádné komentáře pro zvolený filtr.</div>

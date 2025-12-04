@@ -1,12 +1,10 @@
 {% import 'admin/partials/components.twig' as ui %}
 
-<form method="get" action="/admin/terms/type/{{ current_term_type.key }}" class="mb-3" data-ajax-form>
-    <div class="input-group">
-        <span class="input-group-text"><i class="bi bi-search"></i></span>
-        <input type="text" name="q" value="{{ search|default('') }}" class="form-control" placeholder="Hledat podle názvu nebo slugu">
-        <button class="btn btn-outline-secondary" type="submit">Vyhledat</button>
-    </div>
-</form>
+{{ ui.search_form('/admin/terms/type/' ~ current_term_type.key, {
+    query: search|default(''),
+    placeholder: 'Hledat podle názvu nebo slugu',
+    ajax: true
+}) }}
 
 {% if items is empty %}
     <div class="alert alert-info">Zatím zde nejsou žádné termy.</div>

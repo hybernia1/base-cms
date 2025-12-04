@@ -64,7 +64,8 @@
                 'email': {'label': 'E-maily', 'icon': 'bi-envelope', 'url': '/admin/settings/email'},
                 'comments': {'label': 'Komentáře', 'icon': 'bi-chat-dots', 'url': '/admin/settings/comments'},
                 'content-types': {'label': 'Typy obsahu', 'icon': 'bi-journal-text', 'url': '/admin/settings/content-types'},
-                'term-types': {'label': 'Typy termů', 'icon': 'bi-tags', 'url': '/admin/settings/term-types'}
+                'term-types': {'label': 'Typy termů', 'icon': 'bi-tags', 'url': '/admin/settings/term-types'},
+                'seo': {'label': 'SEO', 'icon': 'bi-search', 'url': '/admin/settings/seo'}
             }) %}
             <ul class="nav nav-pills flex-column">
                 <li class="nav-item mb-1">
@@ -218,46 +219,48 @@
                 {% endif %}
                 {% set extraActive = current_menu is defined and current_menu starts with 'extra' %}
                 {% set extraMenuId = 'extra-menu-desktop' %}
-                <li class="nav-item mb-1">
-                    <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#{{ extraMenuId }}"
-                            aria-controls="{{ extraMenuId }}"
-                            aria-expanded="{{ extraActive ? 'true' : 'false' }}">
-                        <i class="bi bi-stars me-2"></i> Extra
-                        <i class="bi bi-chevron-right ms-auto menu-chevron {% if extraActive %}rotate{% endif %}"></i>
-                    </button>
-                    <div class="collapse {% if extraActive %}show{% endif %}" id="{{ extraMenuId }}">
-                        <ul class="nav flex-column ms-3 mt-1 small">
-                            {% set extraInfoActive = current_menu is defined and current_menu == 'extra:info' %}
-                            {% set extraBackupActive = current_menu is defined and current_menu == 'extra:backup' %}
-                            {% set extraDebugActive = current_menu is defined and current_menu == 'extra:debug' %}
-                            {% set extraOptimizeActive = current_menu is defined and current_menu == 'extra:optimize' %}
-                            <li class="nav-item">
-                                <a class="nav-link d-flex align-items-center {% if extraInfoActive %}active{% endif %}" href="/admin/extra/info">
-                                    <i class="bi bi-info-circle me-2"></i> Info o webu
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link d-flex align-items-center {% if extraDebugActive %}active{% endif %}" href="/admin/extra/debug">
-                                    <i class="bi bi-bug me-2"></i> Debug mód
-                                    {% if app_is_debug|default(false) %}<span class="badge bg-warning text-dark ms-auto">Aktivní</span>{% endif %}
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link d-flex align-items-center {% if extraOptimizeActive %}active{% endif %}" href="/admin/extra/optimize">
-                                    <i class="bi bi-collection me-2"></i> Optimalizace databáze
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link d-flex align-items-center {% if extraBackupActive %}active{% endif %}" href="/admin/extra/backup">
-                                    <i class="bi bi-cloud-download me-2"></i> Záloha databáze
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
+                {% if isAdmin %}
+                    <li class="nav-item mb-1">
+                        <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#{{ extraMenuId }}"
+                                aria-controls="{{ extraMenuId }}"
+                                aria-expanded="{{ extraActive ? 'true' : 'false' }}">
+                            <i class="bi bi-stars me-2"></i> Extra
+                            <i class="bi bi-chevron-right ms-auto menu-chevron {% if extraActive %}rotate{% endif %}"></i>
+                        </button>
+                        <div class="collapse {% if extraActive %}show{% endif %}" id="{{ extraMenuId }}">
+                            <ul class="nav flex-column ms-3 mt-1 small">
+                                {% set extraInfoActive = current_menu is defined and current_menu == 'extra:info' %}
+                                {% set extraBackupActive = current_menu is defined and current_menu == 'extra:backup' %}
+                                {% set extraDebugActive = current_menu is defined and current_menu == 'extra:debug' %}
+                                {% set extraOptimizeActive = current_menu is defined and current_menu == 'extra:optimize' %}
+                                <li class="nav-item">
+                                    <a class="nav-link d-flex align-items-center {% if extraInfoActive %}active{% endif %}" href="/admin/extra/info">
+                                        <i class="bi bi-info-circle me-2"></i> Info o webu
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link d-flex align-items-center {% if extraDebugActive %}active{% endif %}" href="/admin/extra/debug">
+                                        <i class="bi bi-bug me-2"></i> Debug mód
+                                        {% if app_is_debug|default(false) %}<span class="badge bg-warning text-dark ms-auto">Aktivní</span>{% endif %}
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link d-flex align-items-center {% if extraOptimizeActive %}active{% endif %}" href="/admin/extra/optimize">
+                                        <i class="bi bi-collection me-2"></i> Optimalizace databáze
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link d-flex align-items-center {% if extraBackupActive %}active{% endif %}" href="/admin/extra/backup">
+                                        <i class="bi bi-cloud-download me-2"></i> Záloha databáze
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                {% endif %}
                 {# další odkazy... #}
             </ul>
     </aside>
@@ -418,46 +421,48 @@
                 {% endif %}
                 {% set extraActive = current_menu is defined and current_menu starts with 'extra' %}
                 {% set extraMenuId = 'extra-menu-mobile' %}
-                <li class="nav-item mb-1">
-                    <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#{{ extraMenuId }}"
-                            aria-controls="{{ extraMenuId }}"
-                            aria-expanded="{{ extraActive ? 'true' : 'false' }}">
-                        <i class="bi bi-stars me-2"></i> Extra
-                        <i class="bi bi-chevron-right ms-auto menu-chevron {% if extraActive %}rotate{% endif %}"></i>
-                    </button>
-                    <div class="collapse {% if extraActive %}show{% endif %}" id="{{ extraMenuId }}">
-                        <ul class="nav flex-column ms-3 mt-1 small">
-                            {% set extraInfoActive = current_menu is defined and current_menu == 'extra:info' %}
-                            {% set extraBackupActive = current_menu is defined and current_menu == 'extra:backup' %}
-                            {% set extraDebugActive = current_menu is defined and current_menu == 'extra:debug' %}
-                            {% set extraOptimizeActive = current_menu is defined and current_menu == 'extra:optimize' %}
-                            <li class="nav-item">
-                                <a class="nav-link d-flex align-items-center {% if extraInfoActive %}active{% endif %}" href="/admin/extra/info">
-                                    <i class="bi bi-info-circle me-2"></i> Info o webu
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link d-flex align-items-center {% if extraDebugActive %}active{% endif %}" href="/admin/extra/debug">
-                                    <i class="bi bi-bug me-2"></i> Debug mód
-                                    {% if app_is_debug|default(false) %}<span class="badge bg-warning text-dark ms-auto">Aktivní</span>{% endif %}
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link d-flex align-items-center {% if extraOptimizeActive %}active{% endif %}" href="/admin/extra/optimize">
-                                    <i class="bi bi-collection me-2"></i> Optimalizace databáze
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link d-flex align-items-center {% if extraBackupActive %}active{% endif %}" href="/admin/extra/backup">
-                                    <i class="bi bi-cloud-download me-2"></i> Záloha databáze
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
+                {% if isAdmin %}
+                    <li class="nav-item mb-1">
+                        <button class="nav-link d-flex align-items-center w-100 text-start menu-toggle"
+                                type="button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#{{ extraMenuId }}"
+                                aria-controls="{{ extraMenuId }}"
+                                aria-expanded="{{ extraActive ? 'true' : 'false' }}">
+                            <i class="bi bi-stars me-2"></i> Extra
+                            <i class="bi bi-chevron-right ms-auto menu-chevron {% if extraActive %}rotate{% endif %}"></i>
+                        </button>
+                        <div class="collapse {% if extraActive %}show{% endif %}" id="{{ extraMenuId }}">
+                            <ul class="nav flex-column ms-3 mt-1 small">
+                                {% set extraInfoActive = current_menu is defined and current_menu == 'extra:info' %}
+                                {% set extraBackupActive = current_menu is defined and current_menu == 'extra:backup' %}
+                                {% set extraDebugActive = current_menu is defined and current_menu == 'extra:debug' %}
+                                {% set extraOptimizeActive = current_menu is defined and current_menu == 'extra:optimize' %}
+                                <li class="nav-item">
+                                    <a class="nav-link d-flex align-items-center {% if extraInfoActive %}active{% endif %}" href="/admin/extra/info">
+                                        <i class="bi bi-info-circle me-2"></i> Info o webu
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link d-flex align-items-center {% if extraDebugActive %}active{% endif %}" href="/admin/extra/debug">
+                                        <i class="bi bi-bug me-2"></i> Debug mód
+                                        {% if app_is_debug|default(false) %}<span class="badge bg-warning text-dark ms-auto">Aktivní</span>{% endif %}
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link d-flex align-items-center {% if extraOptimizeActive %}active{% endif %}" href="/admin/extra/optimize">
+                                        <i class="bi bi-collection me-2"></i> Optimalizace databáze
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link d-flex align-items-center {% if extraBackupActive %}active{% endif %}" href="/admin/extra/backup">
+                                        <i class="bi bi-cloud-download me-2"></i> Záloha databáze
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                {% endif %}
             </ul>
         </div>
     </div>

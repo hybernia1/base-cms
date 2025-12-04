@@ -49,6 +49,14 @@
                                     >
                                         <i class="bi bi-image"></i> Vložit obrázek z knihovny
                                     </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-primary btn-sm"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#shortcodeModal"
+                                    >
+                                        <i class="bi bi-code"></i> Vložit shortcode
+                                    </button>
                                 </div>
                             </div>
                             <textarea name="body" id="body" rows="8" class="form-control">{{ values.body }}</textarea>
@@ -272,6 +280,51 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="shortcodeModal" tabindex="-1" aria-labelledby="shortcodeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="shortcodeModalLabel">Dostupné shortcody</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+                </div>
+                <div class="modal-body">
+                    {% if shortcodes is not empty %}
+                        <div class="list-group" id="shortcodeList">
+                            {% for codeKey, shortcode in shortcodes %}
+                                {% set example = shortcode.example ?: '[' ~ codeKey ~ ']Tvůj obsah[/' ~ codeKey ~ ']' %}
+                                <div class="list-group-item d-flex flex-column flex-sm-row justify-content-between align-items-start gap-3" data-shortcode-key="{{ codeKey }}">
+                                    <div>
+                                        <div class="fw-semibold">[{{ codeKey }}]...[/{{ codeKey }}]</div>
+                                        {% if shortcode.label %}
+                                            <div class="text-muted small">{{ shortcode.label }}</div>
+                                        {% endif %}
+                                        {% if shortcode.description %}
+                                            <div class="small text-muted mt-1">{{ shortcode.description }}</div>
+                                        {% endif %}
+                                        <code class="small bg-light text-body px-2 py-1 d-inline-block mt-2">{{ example }}</code>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm copy-shortcode" data-shortcode-template="{{ example|e('html_attr') }}">
+                                            <i class="bi bi-clipboard"></i> Zkopírovat
+                                        </button>
+                                        <button type="button" class="btn btn-primary btn-sm insert-shortcode" data-shortcode-key="{{ codeKey }}" data-shortcode-template="{{ example|e('html_attr') }}">
+                                            <i class="bi bi-code"></i> Vložit do editoru
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info mb-0">Zatím nejsou definovány žádné shortcody.</div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zavřít</button>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block scripts %}
@@ -308,6 +361,8 @@
         const mediaActionButtons = document.querySelectorAll('[data-media-action]');
         let currentMediaAction = 'thumbnail';
         const $bodyEditor = window.jQuery ? window.jQuery('#body') : null;
+        const shortcodeDefinitions = {{ shortcodes|json_encode|raw }};
+        const shortcodeModalEl = document.getElementById('shortcodeModal');
 
         const ensureBodyMediaInputs = () => {
             if (!bodyMediaInputs) return;
@@ -418,6 +473,40 @@
                     modalInstance.hide();
                 }
             }
+        };
+
+        const insertShortcodeToEditor = (template) => {
+            if (!template) {
+                return;
+            }
+
+            if ($bodyEditor && typeof $bodyEditor.summernote === 'function') {
+                $bodyEditor.summernote('pasteHTML', template);
+                $bodyEditor.summernote('focus');
+                return;
+            }
+
+            const bodyTextarea = document.getElementById('body');
+            if (!bodyTextarea) {
+                return;
+            }
+
+            const start = typeof bodyTextarea.selectionStart === 'number'
+                ? bodyTextarea.selectionStart
+                : bodyTextarea.value.length;
+            const end = typeof bodyTextarea.selectionEnd === 'number'
+                ? bodyTextarea.selectionEnd
+                : start;
+
+            const before = bodyTextarea.value.substring(0, start);
+            const after = bodyTextarea.value.substring(end);
+            bodyTextarea.value = before + template + after;
+
+            const cursor = start + template.length;
+            if (bodyTextarea.setSelectionRange) {
+                bodyTextarea.setSelectionRange(cursor, cursor);
+            }
+            bodyTextarea.focus();
         };
 
         if ($bodyEditor && typeof $bodyEditor.summernote === 'function') {
@@ -560,6 +649,56 @@
                 </div>
             `;
             mediaGrid.prepend(col);
+        }
+
+        if (shortcodeModalEl) {
+            shortcodeModalEl.addEventListener('click', (event) => {
+                const insertBtn = event.target.closest('.insert-shortcode');
+                const copyBtn = event.target.closest('.copy-shortcode');
+
+                if (insertBtn) {
+                    const shortcodeKey = insertBtn.dataset.shortcodeKey || '';
+                    const template = insertBtn.dataset.shortcodeTemplate
+                        || (shortcodeDefinitions && shortcodeDefinitions[shortcodeKey] ? shortcodeDefinitions[shortcodeKey].example : '')
+                        || (shortcodeKey ? `[${shortcodeKey}]Tvůj obsah[/${shortcodeKey}]` : '');
+
+                    insertShortcodeToEditor(template);
+
+                    const modalInstance = bootstrap.Modal.getInstance(shortcodeModalEl);
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+
+                    return;
+                }
+
+                if (copyBtn) {
+                    const template = copyBtn.dataset.shortcodeTemplate || '';
+                    if (!template) {
+                        return;
+                    }
+
+                    const showCopyNotice = (message, variant = 'success') => {
+                        if (typeof adminNotify !== 'undefined' && adminNotify && typeof adminNotify.show === 'function') {
+                            adminNotify.show({
+                                message,
+                                title: variant === 'success' ? 'Hotovo' : 'Chyba',
+                                variant,
+                                autohide: variant === 'success',
+                            });
+                        }
+                    };
+
+                    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                        navigator.clipboard.writeText(template)
+                            .then(() => showCopyNotice('Shortcode byl zkopírován do schránky.'))
+                            .catch(() => showCopyNotice('Zkopírování se nezdařilo.', 'danger'));
+                        return;
+                    }
+
+                    window.prompt('Zkopíruj shortcode', template);
+                }
+            });
         }
 
         const termTypeLabels = {

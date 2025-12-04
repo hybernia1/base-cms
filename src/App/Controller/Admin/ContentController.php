@@ -10,6 +10,7 @@ use DateTime;
 use RedBeanPHP\R as R;
 use App\Service\Upload;
 use App\Service\TermType;
+use App\Service\Shortcode;
 
 class ContentController extends AjaxController
 {
@@ -190,6 +191,7 @@ class ContentController extends AjaxController
             'term_types' => TermType::definitions(),
             'current_type' => $definition,
             'allowed_term_types' => $allowedTermTypes,
+            'shortcodes' => Shortcode::definitions(),
         ]);
     }
 
@@ -226,6 +228,7 @@ class ContentController extends AjaxController
                 'term_types' => TermType::definitions(),
                 'current_type' => $definition,
                 'allowed_term_types' => $this->allowedTermTypes($typeKey),
+                'shortcodes' => Shortcode::definitions(),
             ]);
             return;
         }
@@ -310,6 +313,7 @@ class ContentController extends AjaxController
             'current_type' => $definition,
             'allowed_term_types' => $allowedTermTypes,
             'view_url' => $viewUrl,
+            'shortcodes' => Shortcode::definitions(),
         ]);
     }
 
@@ -357,6 +361,7 @@ class ContentController extends AjaxController
                 'current_type' => $definition,
                 'allowed_term_types' => $this->allowedTermTypes($content->type),
                 'view_url' => $data['slug'] !== '' ? '/' . ContentType::slug($content->type) . '/' . $data['slug'] : null,
+                'shortcodes' => Shortcode::definitions(),
             ]);
             return;
         }

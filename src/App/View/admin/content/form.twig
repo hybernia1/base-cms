@@ -87,6 +87,24 @@
                             <button type="submit" class="btn btn-success w-100 status-submit" data-status-action="published">Publikovat</button>
                         </div>
 
+                        {% set publishValue = values.publish_at ? values.publish_at|date('Y-m-d\\TH:i') : '' %}
+                        <div class="mb-3">
+                            <label for="publish_at" class="form-label">Čas publikace</label>
+                            <input
+                                type="datetime-local"
+                                class="form-control {% if errors.publish_at %}is-invalid{% endif %}"
+                                id="publish_at"
+                                name="publish_at"
+                                value="{{ publishValue }}"
+                                step="900"
+                            >
+                            {% if errors.publish_at %}
+                                <div class="invalid-feedback">{{ errors.publish_at }}</div>
+                            {% else %}
+                                <div class="form-text">Můžeš nastavit i budoucí datum, obsah se na webu zobrazí až po tomto čase.</div>
+                            {% endif %}
+                        </div>
+
                         {% if errors.status %}
                             <div class="invalid-feedback d-block mt-2">{{ errors.status }}</div>
                         {% endif %}

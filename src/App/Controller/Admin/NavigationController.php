@@ -173,7 +173,11 @@ class NavigationController extends BaseAdminController
             'current_menu' => 'navigation',
             'items' => Navigation::tree(false),
             'parent_options' => Navigation::flatList(),
-            'content_options' => R::findAll('content', ' status = ? AND deleted_at IS NULL ORDER BY created_at DESC ', ['published']),
+            'content_options' => R::findAll(
+                'content',
+                ' status = ? AND publish_at <= ? AND deleted_at IS NULL ORDER BY publish_at DESC ',
+                ['published', date('Y-m-d H:i:s')]
+            ),
             'term_options' => R::findAll('term', ' ORDER BY name ASC '),
             'content_types' => ContentType::definitions(),
             'types' => Navigation::typeOptions(),

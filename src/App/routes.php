@@ -156,9 +156,11 @@ $router->get('/admin/extra/info', 'App\\Controller\\Admin\\ExtraController@info'
 $router->get('/admin/extra/debug', 'App\\Controller\\Admin\\ExtraController@debug');
 $router->get('/admin/extra/backup', 'App\\Controller\\Admin\\ExtraController@backup');
 $router->get('/admin/extra/optimize', 'App\\Controller\\Admin\\ExtraController@optimize');
+$router->get('/admin/extra/integrations', 'App\\Controller\\Admin\\ExtraController@integrations');
 $router->post('/admin/extra/debug', 'App\\Controller\\Admin\\ExtraController@debug');
 $router->post('/admin/extra/backup', 'App\\Controller\\Admin\\ExtraController@backup');
 $router->post('/admin/extra/optimize', 'App\\Controller\\Admin\\ExtraController@optimize');
+$router->post('/admin/extra/integrations', 'App\\Controller\\Admin\\ExtraController@integrations');
 
 $router->get('/admin/search', 'App\\Controller\\Admin\\SearchController@index');
 

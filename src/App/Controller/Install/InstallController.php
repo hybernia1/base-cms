@@ -314,6 +314,21 @@ class InstallController
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
 
+        R::exec(
+            "CREATE TABLE IF NOT EXISTS `log` (
+                `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `type` VARCHAR(100) NOT NULL,
+                `message` TEXT NOT NULL,
+                `ip_address` VARCHAR(45) DEFAULT NULL,
+                `path` VARCHAR(255) DEFAULT NULL,
+                `user_agent` VARCHAR(255) DEFAULT NULL,
+                `context` TEXT DEFAULT NULL,
+                `created_at` DATETIME NOT NULL,
+                KEY `idx_type` (`type`),
+                KEY `idx_created_at` (`created_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
         if (R::count('navigationitem') === 0) {
             $now = date('Y-m-d H:i:s');
             R::exec(

@@ -54,7 +54,8 @@
 {% endmacro %}
 
 {% macro actions(actions, size = 'sm') %}
-    <div class="btn-{{ size }}" role="group">
+    {% set size_class = size ? 'btn-group-' ~ size : '' %}
+    <div class="btn-group {{ size_class }}" role="group">
         {% for action in actions %}
             {% set tooltip = action.title ?: action.label %}
 
@@ -62,7 +63,8 @@
                 <a href="{{ action.href }}"
                    class="btn btn-outline-{{ action.variant|default('secondary') }} btn-icon"
                    title="{{ tooltip }}"
-                   aria-label="{{ tooltip }}">
+                   aria-label="{{ tooltip }}"
+                   {% if action.attributes is defined %}{% for name, value in action.attributes %} {{ name }}="{{ value }}"{% endfor %}{% endif %}>
                     {% if action.icon %}<i class="bi {{ action.icon }}"></i>{% endif %}
                 </a>
 
@@ -71,7 +73,8 @@
                       action="{{ action.action }}"
                       class="d-inline"
                       {% if action.ajax %}data-ajax-delete="1"{% endif %}
-                      {% if action.confirm %}data-confirm="{{ action.confirm }}"{% endif %}>
+                      {% if action.confirm %}data-confirm="{{ action.confirm }}"{% endif %}
+                      {% if action.attributes is defined %}{% for name, value in action.attributes %} {{ name }}="{{ value }}"{% endfor %}{% endif %}>
 
                     {% if action.hidden is defined %}
                         {% for name, value in action.hidden %}
@@ -86,9 +89,34 @@
                         {% if action.icon %}<i class="bi {{ action.icon }}"></i>{% endif %}
                     </button>
                 </form>
+
+            {% elseif action.type == 'button' %}
+                <button type="{{ action.button_type|default('button') }}"
+                        class="btn btn-outline-{{ action.variant|default('secondary') }} btn-icon"
+                        title="{{ tooltip }}"
+                        aria-label="{{ tooltip }}"
+                        {% if action.form %}form="{{ action.form }}"{% endif %}
+                        {% if action.confirm %}data-confirm="{{ action.confirm }}"{% endif %}
+                        {% if action.attributes is defined %}{% for name, value in action.attributes %} {{ name }}="{{ value }}"{% endfor %}{% endif %}>
+                    {% if action.icon %}<i class="bi {{ action.icon }}"></i>{% endif %}
+                </button>
             {% endif %}
         {% endfor %}
     </div>
+{% endmacro %}
+
+{% macro back_button(href, options = {}) %}
+    {% set label = options.label|default('Zpět') %}
+    {% set icon = options.icon|default('bi-arrow-left') %}
+    {% set variant = options.variant|default('secondary') %}
+    {% set size = options.size|default('sm') %}
+
+    <a href="{{ href }}"
+       class="btn btn-outline-{{ variant }} btn-icon btn-{{ size }}"
+       title="{{ label }}"
+       aria-label="{{ label }}">
+        <i class="bi {{ icon }}"></i>
+    </a>
 {% endmacro %}
 
 {% macro view_button(href, options = {}) %}

@@ -5,6 +5,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{{ site.name|default('Můj web') }}{% endblock %}</title>
+    {% if seo is defined and not seo.indexing_enabled %}
+        <meta name="robots" content="noindex, nofollow">
+    {% endif %}
     {% if site.favicon and site.favicon.url %}
         <link rel="icon" href="{{ site.favicon.url }}" type="{{ site.favicon.mime_type ?: 'image/x-icon' }}">
     {% endif %}

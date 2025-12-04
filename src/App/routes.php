@@ -17,6 +17,7 @@ if (!$isInstalled) {
 }
 
 // FRONT
+$router->get('/robots\\.txt', 'App\\Controller\\Front\\RobotsController@index');
 $router->get('/sitemap\\.xml', 'App\\Controller\\Front\\SitemapController@index');
 $router->get('/([\\w-]+)-content(?:-(\\d+))?\\.xml', 'App\\Controller\\Front\\SitemapController@content');
 $router->get('/([\\w-]+)-term(?:-(\\d+))?\\.xml', 'App\\Controller\\Front\\SitemapController@term');

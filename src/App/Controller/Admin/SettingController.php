@@ -20,6 +20,7 @@ class SettingController extends AjaxController
         'content-types' => ['label' => 'Typy obsahu', 'icon' => 'bi-journal-text'],
         'term-types' => ['label' => 'Typy termů', 'icon' => 'bi-tags'],
         'comments' => ['label' => 'Komentáře', 'icon' => 'bi-chat-dots'],
+        'seo' => ['label' => 'SEO', 'icon' => 'bi-search'],
     ];
 
     public function index($section = 'main')
@@ -88,6 +89,9 @@ class SettingController extends AjaxController
                 break;
             case 'term-types':
                 $this->updateTermTypes();
+                break;
+            case 'seo':
+                $this->updateSeoSettings();
                 break;
             case 'themes':
                 $this->updateThemeSettings();
@@ -200,6 +204,15 @@ class SettingController extends AjaxController
         Setting::set('term_types', json_encode($termTypes ?: TermType::defaults()));
 
         Flash::addSuccess('Typy termů byly uloženy.');
+    }
+
+    private function updateSeoSettings(): void
+    {
+        $indexingEnabled = isset($_POST['indexing_enabled']) ? '1' : '0';
+
+        Setting::set('indexing_enabled', $indexingEnabled);
+
+        Flash::addSuccess('Nastavení SEO bylo uloženo.');
     }
 
     private function updateThemeSettings(): void

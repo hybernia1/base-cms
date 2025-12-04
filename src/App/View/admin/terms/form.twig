@@ -1,5 +1,7 @@
 {% extends 'admin/layout.twig' %}
 
+{% import 'admin/partials/components.twig' as ui %}
+
 {% set current_menu = 'terms' %}
 
 {% block title %}{{ heading }} | Administrace{% endblock %}
@@ -7,7 +9,7 @@
 {% block body %}
     <h1 class="h3 mb-4">{{ heading }}</h1>
 
-    <form method="post" action="{{ form_action }}" class="card shadow-sm mb-3">
+    <form method="post" action="{{ form_action }}" class="card shadow-sm mb-3" id="termForm">
         <div class="card-body p-4">
             <input type="hidden" name="type" value="{{ values.type }}">
 
@@ -34,15 +36,32 @@
                 <textarea name="description" id="description" rows="5" class="form-control">{{ values.description }}</textarea>
             </div>
         </div>
-        <div class="card-footer bg-light d-flex justify-content-between align-items-center">
-            <a href="/admin/terms/type/{{ values.type }}" class="btn btn-outline-secondary">Zpět</a>
-            <button class="btn btn-primary" type="submit">Uložit</button>
+        <div class="card-footer bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
+            {{ ui.back_button('/admin/terms/type/' ~ values.type, { label: 'Zpět' }) }}
+            {{ ui.actions([
+                {
+                    type: 'button',
+                    button_type: 'submit',
+                    label: 'Uložit',
+                    variant: 'primary',
+                    icon: 'bi-save'
+                }
+            ]) }}
         </div>
     </form>
 
     {% if term_id is defined %}
-        <form action="/admin/terms/{{ term_id }}/delete" method="post" data-confirm="Opravdu smazat tento term?">
-            <button class="btn btn-outline-danger" type="submit">Smazat</button>
-        </form>
+        <div class="text-end">
+            {{ ui.actions([
+                {
+                    type: 'form',
+                    action: '/admin/terms/' ~ term_id ~ '/delete',
+                    label: 'Smazat',
+                    variant: 'danger',
+                    icon: 'bi-trash',
+                    confirm: 'Opravdu smazat tento term?'
+                }
+            ]) }}
+        </div>
     {% endif %}
 {% endblock %}

@@ -1,16 +1,18 @@
 {% extends 'admin/layout.twig' %}
 
+{% import 'admin/partials/components.twig' as ui %}
+
 {% set current_menu = 'email_templates' %}
 
 {% block title %}Upravit šablonu | Administrace{% endblock %}
 
 {% block body %}
-    <div class="d-flex align-items-center mb-3">
+    <div class="d-flex align-items-center mb-3 gap-2">
         <h1 class="h4 mb-0">Upravit šablonu: {{ template.event }}</h1>
-        <a href="/admin/email-templates" class="btn btn-outline-secondary ms-auto">Zpět</a>
+        {{ ui.back_button('/admin/email-templates', { label: 'Zpět' }) }}
     </div>
 
-    <form method="post" action="/admin/email-templates/{{ template.event }}" class="card shadow-sm">
+    <form method="post" action="/admin/email-templates/{{ template.event }}" class="card shadow-sm" id="emailTemplateForm">
         <div class="card-body p-4">
             <div class="mb-3">
                 <label class="form-label">Předmět</label>
@@ -42,9 +44,17 @@
                 </ul>
             </div>
         </div>
-        <div class="card-footer bg-light d-flex justify-content-between align-items-center">
-            <a href="/admin/email-templates" class="btn btn-outline-secondary">Zpět</a>
-            <button class="btn btn-primary" type="submit">Uložit</button>
+        <div class="card-footer bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
+            {{ ui.back_button('/admin/email-templates', { label: 'Zpět' }) }}
+            {{ ui.actions([
+                {
+                    type: 'button',
+                    button_type: 'submit',
+                    label: 'Uložit',
+                    variant: 'primary',
+                    icon: 'bi-save'
+                }
+            ]) }}
         </div>
     </form>
 {% endblock %}

@@ -193,7 +193,7 @@
         </div>
 
         <div class="d-flex justify-content-between align-items-center mt-3">
-            <a href="/admin/content/{{ current_type.slug }}" class="btn btn-outline-secondary">Zpět</a>
+            {{ components.back_button('/admin/content/' ~ current_type.slug, { label: 'Zpět' }) }}
             {# tlačítka pro uložení jsou v boxu Publikace #}
         </div>
     </form>

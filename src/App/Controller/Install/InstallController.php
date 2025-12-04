@@ -259,13 +259,6 @@ class InstallController
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
 
-        $emailColumns = R::inspect('emailtemplate');
-        if (!isset($emailColumns['enabled'])) {
-            R::exec("ALTER TABLE `emailtemplate` ADD COLUMN `enabled` TINYINT(1) NOT NULL DEFAULT 1 AFTER `event`");
-        }
-
-        R::exec('UPDATE emailtemplate SET enabled = 1 WHERE enabled IS NULL');
-
         R::exec(
             "CREATE TABLE IF NOT EXISTS `comment` (
                 `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -284,115 +277,6 @@ class InstallController
                 KEY `idx_parent` (`parent_id`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
-
-        $contentColumns = R::inspect('content');
-        if (!isset($contentColumns['thumbnail_id'])) {
-            R::exec("ALTER TABLE `content` ADD COLUMN `thumbnail_id` INT UNSIGNED DEFAULT NULL AFTER `body`");
-        }
-
-        if (!isset($contentColumns['thumbnail_alt'])) {
-            R::exec("ALTER TABLE `content` ADD COLUMN `thumbnail_alt` VARCHAR(255) DEFAULT '' AFTER `thumbnail_id`");
-        }
-
-        $settingColumns = R::inspect('setting');
-        if (!isset($settingColumns['created_at'])) {
-            R::exec("ALTER TABLE `setting` ADD COLUMN `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `value`");
-        }
-
-        if (isset($settingColumns['updated_at'])) {
-            R::exec(
-                "ALTER TABLE `setting` MODIFY COLUMN `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
-            );
-        }
-
-        if (!isset($contentColumns['status'])) {
-            R::exec("ALTER TABLE `content` ADD COLUMN `status` VARCHAR(20) NOT NULL DEFAULT 'published' AFTER `type`");
-        }
-
-        if (!isset($contentColumns['allow_comments'])) {
-            R::exec("ALTER TABLE `content` ADD COLUMN `allow_comments` TINYINT(1) NOT NULL DEFAULT 1 AFTER `status`");
-        }
-
-        if (!isset($contentColumns['author_id'])) {
-            R::exec("ALTER TABLE `content` ADD COLUMN `author_id` INT UNSIGNED DEFAULT NULL AFTER `type`");
-            R::exec("CREATE INDEX idx_author ON content (author_id)");
-        }
-
-        $contentMediaColumns = R::inspect('content_media');
-
-        if (!isset($contentMediaColumns['relation'])) {
-            R::exec("ALTER TABLE `content_media` ADD COLUMN `relation` VARCHAR(50) NOT NULL DEFAULT 'body' AFTER `media_id`");
-        }
-
-        if (!isset($contentMediaColumns['created_at'])) {
-            R::exec("ALTER TABLE `content_media` ADD COLUMN `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `relation`");
-        }
-
-        $navigationColumns = R::inspect('navigationitem');
-        if ($navigationColumns) {
-            if (!isset($navigationColumns['target_key'])) {
-                R::exec("ALTER TABLE `navigationitem` ADD COLUMN `target_key` VARCHAR(191) DEFAULT NULL AFTER `target_id`");
-            }
-            if (!isset($navigationColumns['open_in_new_tab'])) {
-                R::exec("ALTER TABLE `navigationitem` ADD COLUMN `open_in_new_tab` TINYINT(1) NOT NULL DEFAULT 0 AFTER `position`");
-            }
-        }
-
-        R::exec(
-            "INSERT IGNORE INTO content_media (content_id, media_id, relation, created_at)
-             SELECT id, thumbnail_id, 'thumbnail', NOW()
-             FROM content
-             WHERE thumbnail_id IS NOT NULL"
-        );
-
-        $termColumns = R::inspect('term');
-        if (!isset($termColumns['content_types'])) {
-            R::exec("ALTER TABLE `term` ADD COLUMN `content_types` TEXT AFTER `description`");
-        }
-
-        $userColumns = R::inspect('user');
-        if (!isset($userColumns['nickname'])) {
-            R::exec("ALTER TABLE `user` ADD COLUMN `nickname` VARCHAR(191) NOT NULL DEFAULT '' AFTER `email`");
-        }
-        if (!isset($userColumns['is_banned'])) {
-            R::exec("ALTER TABLE `user` ADD COLUMN `is_banned` TINYINT(1) NOT NULL DEFAULT 0 AFTER `role`");
-        }
-        if (!isset($userColumns['is_profile_public'])) {
-            R::exec("ALTER TABLE `user` ADD COLUMN `is_profile_public` TINYINT(1) NOT NULL DEFAULT 1 AFTER `role`");
-        }
-        if (!isset($userColumns['ban_reason'])) {
-            R::exec("ALTER TABLE `user` ADD COLUMN `ban_reason` TEXT DEFAULT NULL AFTER `is_banned`");
-        }
-        if (!isset($userColumns['banned_at'])) {
-            R::exec("ALTER TABLE `user` ADD COLUMN `banned_at` DATETIME DEFAULT NULL AFTER `ban_reason`");
-        }
-        if (!isset($userColumns['failed_attempts'])) {
-            R::exec("ALTER TABLE `user` ADD COLUMN `failed_attempts` INT UNSIGNED NOT NULL DEFAULT 0 AFTER `banned_at`");
-        }
-        if (!isset($userColumns['locked_until'])) {
-            R::exec("ALTER TABLE `user` ADD COLUMN `locked_until` DATETIME DEFAULT NULL AFTER `failed_attempts`");
-        }
-        if (!isset($userColumns['last_login_at'])) {
-            R::exec("ALTER TABLE `user` ADD COLUMN `last_login_at` DATETIME DEFAULT NULL AFTER `locked_until`");
-        }
-        if (!isset($userColumns['last_login_ip'])) {
-            R::exec("ALTER TABLE `user` ADD COLUMN `last_login_ip` VARCHAR(45) DEFAULT NULL AFTER `last_login_at`");
-        }
-
-        $mediaColumns = R::inspect('media');
-        if (!isset($mediaColumns['webp_filename'])) {
-            R::exec("ALTER TABLE `media` ADD COLUMN `webp_filename` VARCHAR(255) DEFAULT NULL AFTER `filename`");
-        }
-        if (!isset($mediaColumns['original_name'])) {
-            R::exec("ALTER TABLE `media` ADD COLUMN `original_name` VARCHAR(255) DEFAULT '' AFTER `is_image`");
-        }
-        if (!isset($mediaColumns['alt'])) {
-            R::exec("ALTER TABLE `media` ADD COLUMN `alt` VARCHAR(255) DEFAULT '' AFTER `original_name`");
-        }
-        if (!isset($mediaColumns['uploaded_by'])) {
-            R::exec("ALTER TABLE `media` ADD COLUMN `uploaded_by` INT UNSIGNED DEFAULT NULL AFTER `id`");
-            R::exec("CREATE INDEX idx_uploaded_by ON media (uploaded_by)");
-        }
 
         foreach (EmailTemplateManager::defaults() as $event => $template) {
             if (!R::findOne('emailtemplate', ' event = ? ', [$event])) {

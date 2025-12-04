@@ -28,17 +28,6 @@ abstract class BaseFrontController
         $siteLogo = Setting::mediaDetails((int) Setting::get('site_logo_id', 0));
         $siteFavicon = Setting::mediaDetails((int) Setting::get('site_favicon_id', 0));
         $navigation = Navigation::tree();
-        $themeOptions = [
-            'show_logo' => Setting::get('theme_show_logo', Setting::DEFAULTS['theme_show_logo']) === '1',
-            'show_title' => Setting::get('theme_show_title', Setting::DEFAULTS['theme_show_title']) === '1',
-            'logo_width' => (int) Setting::get('theme_logo_width', 0),
-            'homepage_id' => (int) Setting::get('theme_homepage_id', 0),
-            'footer_text' => (string) Setting::get('theme_footer_text', ''),
-        ];
-
-        if (!$themeOptions['show_logo'] && !$themeOptions['show_title']) {
-            $themeOptions['show_title'] = true;
-        }
 
         if ($currentUser) {
             $contentTypes = ContentType::definitions();
@@ -61,7 +50,6 @@ abstract class BaseFrontController
 
             $adminBar = [
                 'dashboard_url' => Auth::hasRole(['admin', 'editor']) ? '/admin' : null,
-                'customizer_url' => Auth::hasRole(['admin', 'editor']) ? '/admin/customizer' : null,
                 'create_links' => $createLinks,
                 'user_label' => $currentUser->nickname ?: ($currentUser->email ?? 'Uživatel'),
                 'user_role' => $currentUser->role ?? 'user',
@@ -85,7 +73,6 @@ abstract class BaseFrontController
                 'favicon' => $siteFavicon,
             ],
             'navigation' => $navigation,
-            'theme_options' => $themeOptions,
         ], $context);
 
         if ($adminBar || isset($context['admin_bar'])) {

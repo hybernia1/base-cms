@@ -5,7 +5,7 @@
 {% block body %}
     <h1>Upravit profil</h1>
 
-    <form method="post" action="/profile/edit" class="card p-4 shadow-sm">
+    <form method="post" action="/profile/edit" class="card p-4 shadow-sm" data-recaptcha-action="profile_update">
         <div class="mb-3">
             <label class="form-label">E-mail</label>
             <input type="email" class="form-control" value="{{ values.email }}" disabled>
@@ -45,6 +45,8 @@
                 <div class="text-danger small mt-1">{{ errors.password_confirm }}</div>
             {% endif %}
         </div>
+
+        <div class="alert alert-danger d-none mt-3" data-recaptcha-alert></div>
 
         <button type="submit" class="btn btn-primary">Uložit změny</button>
         <a href="/profile" class="btn btn-link">Zpět na profil</a>

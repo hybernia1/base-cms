@@ -210,6 +210,12 @@
                             <div class="form-text">Při vypnutí bude web označen jako <strong>noindex</strong> a robots.txt zakáže procházení.</div>
                         </div>
 
+                        <div class="mb-3">
+                            <label for="google_analytics_id" class="form-label">Google Analytics ID měření</label>
+                            <input type="text" class="form-control" id="google_analytics_id" name="google_analytics_id" value="{{ values.google_analytics_id|default('') }}" placeholder="Např. G-XXXXXXX">
+                            <div class="form-text">Zadejte pouze měřicí ID (např. G-XXXXXXX). Skript se vloží automaticky do hlavičky webu.</div>
+                        </div>
+
                         <div class="alert alert-light">
                             Robots.txt automaticky obsahuje odkaz na sitemap.xml a respektuje toto nastavení indexace.
                         </div>

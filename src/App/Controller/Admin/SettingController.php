@@ -209,8 +209,15 @@ class SettingController extends AjaxController
     private function updateSeoSettings(): void
     {
         $indexingEnabled = isset($_POST['indexing_enabled']) ? '1' : '0';
+        $googleAnalyticsId = trim($_POST['google_analytics_id'] ?? '');
+
+        if ($googleAnalyticsId !== '' && !preg_match('/^[A-Za-z0-9\-]+$/', $googleAnalyticsId)) {
+            Flash::addError('Neplatné Google Analytics ID. Použijte formát například G-XXXXXXX.');
+            return;
+        }
 
         Setting::set('indexing_enabled', $indexingEnabled);
+        Setting::set('google_analytics_id', $googleAnalyticsId);
 
         Flash::addSuccess('Nastavení SEO bylo uloženo.');
     }

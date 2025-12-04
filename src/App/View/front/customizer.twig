@@ -1,0 +1,85 @@
+{% extends 'admin/layout.twig' %}
+{% import 'admin/partials/components.twig' as ui %}
+
+{% block title %}Přizpůsobení šablony | Administrace{% endblock %}
+
+{% block body %}
+    {{ ui.page_header('Přizpůsobení šablony') }}
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Vzhled a značky</h2>
+                    <form method="post" action="/admin/customizer">
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="theme_show_logo" id="showLogo"
+                                           {% if values.theme_show_logo %}checked{% endif %}>
+                                    <label class="form-check-label" for="showLogo">Zobrazit logo</label>
+                                    <div class="form-text">Logo musí být nahrané v Základním nastavení.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="theme_show_title" id="showTitle"
+                                           {% if values.theme_show_title %}checked{% endif %}>
+                                    <label class="form-check-label" for="showTitle">Zobrazit název webu</label>
+                                    <div class="form-text">Pokud je vypnuté logo i název, název webu se zobrazí automaticky.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label" for="logoWidth">Maximální šířka loga (px)</label>
+                                <input type="number" min="0" max="600" step="1" name="theme_logo_width" id="logoWidth"
+                                       class="form-control" value="{{ values.theme_logo_width }}">
+                                <div class="form-text">0 ponechá výchozí velikost motivu.</div>
+                            </div>
+                        </div>
+
+                        <h2 class="h5 mb-3">Obsah</h2>
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <label class="form-label" for="homepage">Úvodní stránka</label>
+                                <select name="theme_homepage_id" id="homepage" class="form-select">
+                                    <option value="">Výpis novinek (výchozí)</option>
+                                    {% for page in homepage_options %}
+                                        <option value="{{ page.id }}" {% if values.theme_homepage_id == page.id %}selected{% endif %}>
+                                            {{ page.title }} ({{ page.type_label }})
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Vyberte publikovanou stránku, která se zobrazí na úvodní adrese.</div>
+                            </div>
+                        </div>
+
+                        <h2 class="h5 mb-3">Patička</h2>
+                        <div class="mb-4">
+                            <label class="form-label" for="footerText">Text v patičce</label>
+                            <textarea class="form-control" id="footerText" name="theme_footer_text" rows="3"
+                                      placeholder="Výchozí text" maxlength="500">{{ values.theme_footer_text }}</textarea>
+                            <div class="form-text">Krátký text nebo poznámka v patičce. HTML se automaticky odstraní.</div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">Uložit přizpůsobení</button>
+                            <a href="/" class="btn btn-outline-secondary" target="_blank" rel="noopener">Otevřít web</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h2 class="h6 text-muted text-uppercase mb-3">Tipy</h2>
+                    <ul class="mb-0 text-muted small ps-3">
+                        <li>Jakékoliv změny platí pro všechny motivy, které podporují brand a patičku.</li>
+                        <li>Pro úvodní stránku vybírejte pouze publikované a nearchivované stránky.</li>
+                        <li>Velikost loga nastavujte podle skutečných proporcí obrázku, aby nedošlo k deformaci.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

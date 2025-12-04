@@ -136,6 +136,8 @@ $router->get('/admin/settings', function () {
 });
 $router->get('/admin/settings/([\\w-]+)', 'App\\Controller\\Admin\\SettingController@index');
 $router->post('/admin/settings/([\\w-]+)', 'App\\Controller\\Admin\\SettingController@update');
+$router->get('/admin/customizer', 'App\\Controller\\Admin\\CustomizerController@index');
+$router->post('/admin/customizer', 'App\\Controller\\Admin\\CustomizerController@update');
 $router->get('/admin/email-templates', 'App\\Controller\\Admin\\EmailTemplateController@index');
 $router->get('/admin/email-templates/(.+)', 'App\\Controller\\Admin\\EmailTemplateController@editForm');
 $router->post('/admin/email-templates/(.+)/toggle', 'App\\Controller\\Admin\\EmailTemplateController@toggle');

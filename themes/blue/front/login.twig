@@ -5,7 +5,7 @@
 {% block body %}
     <h1>Přihlášení</h1>
 
-    <form method="post" action="/login" class="card p-4 shadow-sm" data-recaptcha-action="login">
+    <form method="post" action="/login" class="card p-4 shadow-sm">
         <div class="mb-3">
             <label class="form-label" for="email">E-mail</label>
             <input type="email" name="email" id="email" class="form-control" value="{{ values.email }}" required>
@@ -21,8 +21,6 @@
                 <div class="text-danger small mt-1">{{ errors.password }}</div>
             {% endif %}
         </div>
-
-        <div class="alert alert-danger d-none mt-3" data-recaptcha-alert></div>
 
         <button type="submit" class="btn btn-primary">Přihlásit se</button>
         <a href="/register" class="btn btn-link">Nemáte účet? Registrujte se</a>

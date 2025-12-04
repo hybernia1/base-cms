@@ -3,50 +3,31 @@
 {% set df = app_settings.date_format|default('d.m.Y') %}
 {% set tf = app_settings.time_format|default('H:i') %}
 
-<form method="get"
-      action="/admin/content/{{ current_type.slug }}"
-      class="mb-3"
-      data-ajax-form>
-    <div class="input-group">
-        <span class="input-group-text"><i class="bi bi-search"></i></span>
-        <input type="text" name="q" value="{{ search|default('') }}" class="form-control" placeholder="Hledat v názvu, slugu nebo textu">
-        {% if current_status and current_status != 'all' %}
-            <input type="hidden" name="status" value="{{ current_status }}">
-        {% endif %}
-        <button class="btn btn-outline-secondary" type="submit">Vyhledat</button>
-    </div>
-</form>
+{% set search_hidden = {} %}
+{% if current_status and current_status != 'all' %}
+    {% set search_hidden = search_hidden|merge({ status: current_status }) %}
+{% endif %}
 
-<ul class="nav nav-pills mb-3">
-    <li class="nav-item">
-        <a class="nav-link {% if current_status == 'published' %}active{% endif %}"
-           href="/admin/content/{{ current_type.slug }}?status=published{% if search is not empty %}&amp;q={{ search|url_encode }}{% endif %}">
-            Publikované
-            <span class="badge text-bg-light ms-1">{{ counts.published|default(0) }}</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link {% if current_status == 'draft' %}active{% endif %}"
-           href="/admin/content/{{ current_type.slug }}?status=draft{% if search is not empty %}&amp;q={{ search|url_encode }}{% endif %}">
-            Koncepty
-            <span class="badge text-bg-light ms-1">{{ counts.draft|default(0) }}</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link {% if current_status == 'trash' %}active{% endif %}"
-           href="/admin/content/{{ current_type.slug }}?status=trash{% if search is not empty %}&amp;q={{ search|url_encode }}{% endif %}">
-            Koš
-            <span class="badge text-bg-light ms-1">{{ counts.trash|default(0) }}</span>
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link {% if current_status not in ['published','draft','trash'] %}active{% endif %}"
-           href="/admin/content/{{ current_type.slug }}{% if search is not empty %}?q={{ search|url_encode }}{% endif %}">
-            Vše
-            <span class="badge text-bg-light ms-1">{{ counts.all|default(0) }}</span>
-        </a>
-    </li>
-</ul>
+{{ ui.search_form('/admin/content/' ~ current_type.slug, {
+    query: search|default(''),
+    placeholder: 'Hledat v názvu, slugu nebo textu',
+    hidden: search_hidden,
+    ajax: true
+}) }}
+
+{% set tab_params = {} %}
+{% if search is not empty %}
+    {% set tab_params = tab_params|merge({ q: search }) %}
+{% endif %}
+
+{% set tabs = [
+    { status: 'published', label: 'Publikované', count: counts.published|default(0) },
+    { status: 'draft', label: 'Koncepty', count: counts.draft|default(0) },
+    { status: 'trash', label: 'Koš', count: counts.trash|default(0) },
+    { label: 'Vše', count: counts.all|default(0), is_default: true }
+] %}
+
+{{ ui.status_tabs('/admin/content/' ~ current_type.slug, tabs, current_status, tab_params) }}
 
 {% if items is empty %}
     <div class="alert alert-info">

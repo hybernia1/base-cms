@@ -1,7 +1,6 @@
 {% extends 'admin/layout.twig' %}
 
 {% set current_menu = 'email_templates' %}
-{% import 'admin/partials/components.twig' as ui %}
 
 {% block title %}E-mailové šablony | Administrace{% endblock %}
 
@@ -27,26 +26,15 @@
                         <td>{{ template.event }}</td>
                         <td>{{ template.subject }}</td>
                         <td class="text-center">
-                            <form method="post" action="/admin/email-templates/{{ template.event }}/toggle" class="d-inline">
+                            <form method="post" action="/admin/email-templates/{{ template.event }}/toggle">
                                 <input type="hidden" name="enabled" value="{{ template.enabled ? '0' : '1' }}">
-                                <button type="submit"
-                                        class="btn btn-sm btn-icon {{ template.enabled ? 'btn-success' : 'btn-outline-secondary' }}"
-                                        title="{{ template.enabled ? 'Vypnout odesílání' : 'Zapnout odesílání' }}"
-                                        aria-label="{{ template.enabled ? 'Vypnout odesílání' : 'Zapnout odesílání' }}">
-                                    <i class="bi {{ template.enabled ? 'bi-check-lg' : 'bi-slash-circle' }}"></i>
+                                <button type="submit" class="btn btn-sm {{ template.enabled ? 'btn-success' : 'btn-outline-secondary' }}">
+                                    {{ template.enabled ? 'Zapnuto' : 'Vypnuto' }}
                                 </button>
                             </form>
                         </td>
                         <td class="text-end">
-                            {{ ui.actions([
-                                {
-                                    type: 'link',
-                                    href: '/admin/email-templates/' ~ template.event,
-                                    label: 'Upravit',
-                                    variant: 'secondary',
-                                    icon: 'bi-pencil'
-                                }
-                            ], 'sm') }}
+                            <a href="/admin/email-templates/{{ template.event }}" class="btn btn-sm btn-outline-secondary">Upravit</a>
                         </td>
                     </tr>
                 {% else %}
@@ -58,15 +46,7 @@
                                 <span class="badge bg-secondary">Neuloženo</span>
                             </td>
                             <td class="text-end">
-                                {{ ui.actions([
-                                    {
-                                        type: 'link',
-                                        href: '/admin/email-templates/' ~ event,
-                                        label: 'Upravit',
-                                        variant: 'secondary',
-                                        icon: 'bi-pencil'
-                                    }
-                                ], 'sm') }}
+                                <a href="/admin/email-templates/{{ event }}" class="btn btn-sm btn-outline-secondary">Upravit</a>
                             </td>
                         </tr>
                     {% endfor %}

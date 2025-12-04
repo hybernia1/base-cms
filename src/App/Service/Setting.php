@@ -33,11 +33,6 @@ class Setting
         'theme' => 'blue',
         'indexing_enabled' => '1',
         'google_analytics_id' => '',
-        'recaptcha_enabled' => '0',
-        'recaptcha_site_key' => '',
-        'recaptcha_secret_key' => '',
-        'abuseipdb_api_key' => '',
-        'abuseipdb_report_recaptcha' => '0',
     ];
 
     public static function mediaDetails(?int $mediaId): ?array

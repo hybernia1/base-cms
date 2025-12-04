@@ -3,7 +3,6 @@
 use Bramus\Router\Router;
 use App\Service\Auth;
 use App\Service\ContentType;
-use App\Service\SecurityIntegration;
 
 /** @var Router $router */
 $router = $router ?? new Router();
@@ -16,11 +15,6 @@ if (!$isInstalled) {
     $router->post('/install', 'App\\Controller\\Install\\InstallController@handle');
     return;
 }
-
-// Ochrana front-end POST požadavků reCAPTCHA
-$router->before('POST', '/(?!admin).*', function () {
-    SecurityIntegration::enforceForFrontRequest();
-});
 
 // FRONT
 $router->get('/robots\\.txt', 'App\\Controller\\Front\\RobotsController@index');
@@ -159,11 +153,9 @@ $router->post('/admin/comments/(\\d+)/restore', 'App\\Controller\\Admin\\Comment
 $router->post('/admin/comments/(\\d+)/delete', 'App\\Controller\\Admin\\CommentController@delete');
 $router->post('/admin/comments/trash/empty', 'App\\Controller\\Admin\\CommentController@emptyTrash');
 $router->get('/admin/extra/info', 'App\\Controller\\Admin\\ExtraController@info');
-$router->get('/admin/extra/integration', 'App\\Controller\\Admin\\ExtraController@integration');
 $router->get('/admin/extra/debug', 'App\\Controller\\Admin\\ExtraController@debug');
 $router->get('/admin/extra/backup', 'App\\Controller\\Admin\\ExtraController@backup');
 $router->get('/admin/extra/optimize', 'App\\Controller\\Admin\\ExtraController@optimize');
-$router->post('/admin/extra/integration', 'App\\Controller\\Admin\\ExtraController@integration');
 $router->post('/admin/extra/debug', 'App\\Controller\\Admin\\ExtraController@debug');
 $router->post('/admin/extra/backup', 'App\\Controller\\Admin\\ExtraController@backup');
 $router->post('/admin/extra/optimize', 'App\\Controller\\Admin\\ExtraController@optimize');

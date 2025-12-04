@@ -32,6 +32,7 @@ class Setting
         'site_favicon_id' => '',
         'theme' => 'blue',
         'indexing_enabled' => '1',
+        'google_analytics_code' => '',
     ];
 
     public static function mediaDetails(?int $mediaId): ?array

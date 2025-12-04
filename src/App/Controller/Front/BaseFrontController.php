@@ -5,7 +5,6 @@ use App\Service\Flash;
 use App\Service\ContentType;
 use App\Service\Auth;
 use App\Service\Setting;
-use App\Service\Navigation;
 use RedBeanPHP\R as R;
 
 abstract class BaseFrontController
@@ -27,7 +26,6 @@ abstract class BaseFrontController
         $siteName = Setting::get('site_name', Setting::DEFAULTS['site_name']);
         $siteLogo = Setting::mediaDetails((int) Setting::get('site_logo_id', 0));
         $siteFavicon = Setting::mediaDetails((int) Setting::get('site_favicon_id', 0));
-        $navigation = Navigation::tree();
 
         if ($currentUser) {
             $contentTypes = ContentType::definitions();
@@ -72,7 +70,6 @@ abstract class BaseFrontController
                 'logo' => $siteLogo,
                 'favicon' => $siteFavicon,
             ],
-            'navigation' => $navigation,
         ], $context);
 
         if ($adminBar || isset($context['admin_bar'])) {

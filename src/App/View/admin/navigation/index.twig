@@ -46,7 +46,10 @@
                         <div class="text-muted small">Zvolte typ odkazu a doplňte detaily. Nepovinná pole se zobrazí až po výběru typu.</div>
                     </div>
                     {% if edit_id %}
-                        <a href="/admin/navigation" class="btn btn-outline-secondary btn-sm">Zrušit úpravy</a>
+                        <a href="/admin/navigation" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-x-lg"></i>
+                            <span>Zrušit úpravy</span>
+                        </a>
                     {% endif %}
                 </div>
 
@@ -166,9 +169,15 @@
                     </div>
 
                 <div class="d-flex gap-2 mt-4">
-                    <button type="submit" class="btn btn-primary">{{ edit_id ? 'Uložit změny' : 'Přidat položku' }}</button>
+                    <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-save"></i>
+                        <span>{{ edit_id ? 'Uložit změny' : 'Přidat položku' }}</span>
+                    </button>
                     {% if edit_id %}
-                        <a href="/admin/navigation" class="btn btn-outline-secondary">Zrušit</a>
+                        <a href="/admin/navigation" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-x-lg"></i>
+                            <span>Zrušit</span>
+                        </a>
                     {% endif %}
                 </div>
             </form>
@@ -212,10 +221,14 @@
                         <div class="text-danger small">{{ item.note }}</div>
                     {% endif %}
                 </div>
-                <div class="d-flex gap-2">
-                    <a href="/admin/navigation?edit={{ item.id }}" class="btn btn-sm btn-outline-primary">Upravit</a>
-                    <form method="post" action="/admin/navigation/{{ item.id }}/delete" onsubmit="return confirm('Opravdu chcete položku smazat?');">
-                        <button type="submit" class="btn btn-sm btn-outline-danger">Smazat</button>
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="/admin/navigation?edit={{ item.id }}" class="btn btn-outline-primary btn-icon" title="Upravit" aria-label="Upravit">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <form method="post" action="/admin/navigation/{{ item.id }}/delete" onsubmit="return confirm('Opravdu chcete položku smazat?');" class="d-inline">
+                        <button type="submit" class="btn btn-outline-danger btn-icon" title="Smazat" aria-label="Smazat">
+                            <i class="bi bi-trash"></i>
+                        </button>
                     </form>
                 </div>
             </div>

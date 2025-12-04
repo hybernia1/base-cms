@@ -15,6 +15,12 @@
                 </a>
             {% endif %}
 
+            {% if bar.customizer_url is defined and bar.customizer_url %}
+                <a class="admin-pill" href="{{ bar.customizer_url }}">
+                    <i class="bi bi-sliders"></i><span class="label">{{ bar.customizer_label|default('Přizpůsobit') }}</span>
+                </a>
+            {% endif %}
+
             {% if bar.open_site_url is defined and bar.open_site_url %}
                 <a href="{{ bar.open_site_url }}" class="admin-pill" target="{{ bar.open_site_target|default('_blank') }}" rel="noopener">
                     <i class="bi bi-box-arrow-up-right"></i><span class="label">{{ bar.open_site_label|default('Otevřít web') }}</span>

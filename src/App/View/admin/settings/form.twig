@@ -201,6 +201,19 @@
                             <div class="form-text">Při vypnutí tohoto nastavení se komentáře povolí pouze přihlášeným účtům a schvalování se nevyužije.</div>
                         </div>
 
+                    {% elseif active_section == 'seo' %}
+                        <h2 class="h5 mb-3">SEO</h2>
+
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" role="switch" id="indexing_enabled" name="indexing_enabled" value="1" {% if values.indexing_enabled|default('1') == '1' %}checked{% endif %}>
+                            <label class="form-check-label" for="indexing_enabled">Povolit indexaci webu</label>
+                            <div class="form-text">Při vypnutí bude web označen jako <strong>noindex</strong> a robots.txt zakáže procházení.</div>
+                        </div>
+
+                        <div class="alert alert-light">
+                            Robots.txt automaticky obsahuje odkaz na sitemap.xml a respektuje toto nastavení indexace.
+                        </div>
+
                     {% elseif active_section == 'themes' %}
                         <h2 class="h5 mb-3">Šablony</h2>
                         <p>Vyberte aktivní šablonu, nebo nahrajte novou ve formátu ZIP. Šablony se ukládají do složky <code>themes/</code>.</p>

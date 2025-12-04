@@ -27,6 +27,7 @@ abstract class BaseFrontController
         $siteName = Setting::get('site_name', Setting::DEFAULTS['site_name']);
         $siteLogo = Setting::mediaDetails((int) Setting::get('site_logo_id', 0));
         $siteFavicon = Setting::mediaDetails((int) Setting::get('site_favicon_id', 0));
+        $indexingEnabled = Setting::get('indexing_enabled', Setting::DEFAULTS['indexing_enabled']) === '1';
         $navigation = Navigation::tree();
 
         if ($currentUser) {
@@ -73,6 +74,9 @@ abstract class BaseFrontController
                 'favicon' => $siteFavicon,
             ],
             'navigation' => $navigation,
+            'seo' => [
+                'indexing_enabled' => $indexingEnabled,
+            ],
         ], $context);
 
         if ($adminBar || isset($context['admin_bar'])) {

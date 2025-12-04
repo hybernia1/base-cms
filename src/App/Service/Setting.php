@@ -31,6 +31,7 @@ class Setting
         'site_logo_id' => '',
         'site_favicon_id' => '',
         'theme' => 'blue',
+        'indexing_enabled' => '1',
     ];
 
     public static function mediaDetails(?int $mediaId): ?array

@@ -81,7 +81,7 @@
                                 <div class="alert alert-info">Komentáře jsou povoleny pouze pro přihlášené uživatele.</div>
                             {% endif %}
 
-                            <form method="post" action="/comments" class="mt-3" id="commentForm" data-recaptcha="manual" data-recaptcha-action="comment">
+                            <form method="post" action="/comments" class="mt-3" id="commentForm">
                                 <input type="hidden" name="content_id" value="{{ item.id }}">
                                 <input type="hidden" name="parent_id" value="">
 
@@ -174,29 +174,6 @@
                             alertBox.classList.remove('d-none');
                         }
                         return;
-                    }
-
-                    if (window.cmsRecaptcha && window.cmsRecaptcha.siteKey) {
-                        const token = await window.cmsRecaptcha.getToken('comment');
-                        if (!token) {
-                            if (alertBox) {
-                                alertBox.textContent = 'Ověření reCAPTCHA se nezdařilo. Zkuste to prosím znovu.';
-                                alertBox.className = 'alert alert-danger mt-3';
-                                alertBox.classList.remove('d-none');
-                            }
-                            return;
-                        }
-
-                        const existingToken = form.querySelector('input[name="recaptcha_token"]');
-                        if (existingToken) {
-                            existingToken.remove();
-                        }
-
-                        const tokenInput = document.createElement('input');
-                        tokenInput.type = 'hidden';
-                        tokenInput.name = 'recaptcha_token';
-                        tokenInput.value = token;
-                        form.appendChild(tokenInput);
                     }
 
                     const formData = new FormData(form);

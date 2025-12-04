@@ -15,13 +15,21 @@ class SitemapController extends BaseFrontController
         $items = [];
 
         foreach (ContentType::definitions() as $typeKey => $definition) {
-            $count = (int) R::count('content', ' type = ? AND status = ? AND deleted_at IS NULL ', [$typeKey, 'published']);
+            $count = (int) R::count(
+                'content',
+                ' type = ? AND status = ? AND publish_at <= ? AND deleted_at IS NULL ',
+                [$typeKey, 'published', date('Y-m-d H:i:s')]
+            );
             if ($count === 0) {
                 continue;
             }
 
             $pages = (int) ceil($count / self::PAGE_LIMIT);
-            $lastMod = $this->lastModified('content', ' type = ? AND status = ? AND deleted_at IS NULL ', [$typeKey, 'published']);
+            $lastMod = $this->lastModified(
+                'content',
+                ' type = ? AND status = ? AND publish_at <= ? AND deleted_at IS NULL ',
+                [$typeKey, 'published', date('Y-m-d H:i:s')]
+            );
 
             for ($page = 1; $page <= $pages; $page++) {
                 $items[] = [
@@ -73,7 +81,11 @@ class SitemapController extends BaseFrontController
         }
 
         $pageNumber = max(1, (int) ($page ?? 1));
-        $count = (int) R::count('content', ' type = ? AND status = ? AND deleted_at IS NULL ', [$typeKey, 'published']);
+        $count = (int) R::count(
+            'content',
+            ' type = ? AND status = ? AND publish_at <= ? AND deleted_at IS NULL ',
+            [$typeKey, 'published', date('Y-m-d H:i:s')]
+        );
         if ($count === 0 || $this->isOutOfRange($count, $pageNumber)) {
             $this->renderNotFoundXml();
             return;
@@ -120,9 +132,9 @@ class SitemapController extends BaseFrontController
         $offset = ($page - 1) * self::PAGE_LIMIT;
         $rows = R::getAll(
             'SELECT slug, COALESCE(updated_at, created_at) AS last_change '
-            . 'FROM content WHERE type = ? AND status = ? AND deleted_at IS NULL '
-            . 'ORDER BY created_at DESC LIMIT ? OFFSET ?',
-            [$typeKey, 'published', self::PAGE_LIMIT, $offset]
+            . 'FROM content WHERE type = ? AND status = ? AND publish_at <= ? AND deleted_at IS NULL '
+            . 'ORDER BY publish_at DESC LIMIT ? OFFSET ?',
+            [$typeKey, 'published', date('Y-m-d H:i:s'), self::PAGE_LIMIT, $offset]
         );
 
         return array_map(function ($row) use ($typeSlug) {

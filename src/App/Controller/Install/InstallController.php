@@ -156,6 +156,7 @@ class InstallController
                 `body` TEXT,
                 `thumbnail_id` INT UNSIGNED DEFAULT NULL,
                 `thumbnail_alt` VARCHAR(255) DEFAULT '',
+                `publish_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 `created_at` DATETIME NOT NULL,
                 `updated_at` DATETIME NOT NULL,
                 `deleted_at` DATETIME DEFAULT NULL,

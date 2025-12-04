@@ -53,8 +53,8 @@ class TermController extends BaseFrontController
 
     private function loadTermContent($term): array
     {
-        $conditions = [' ct.term_id = ? ', ' c.status = ? ', ' c.deleted_at IS NULL '];
-        $params = [$term->id, 'published'];
+        $conditions = [' ct.term_id = ? ', ' c.status = ? ', ' c.publish_at <= ? ', ' c.deleted_at IS NULL '];
+        $params = [$term->id, 'published', date('Y-m-d H:i:s')];
 
         $allowedTypes = TermType::contentTypesFor($term->type);
         if (!empty($allowedTypes)) {
@@ -65,7 +65,7 @@ class TermController extends BaseFrontController
 
         $rows = R::getAll(
             'SELECT c.* FROM content c INNER JOIN content_term ct ON c.id = ct.content_id ' .
-            'WHERE ' . implode(' AND ', $conditions) . ' ORDER BY c.created_at DESC',
+            'WHERE ' . implode(' AND ', $conditions) . ' ORDER BY c.publish_at DESC',
             $params
         );
 

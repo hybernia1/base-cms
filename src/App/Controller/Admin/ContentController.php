@@ -6,6 +6,7 @@ use App\Service\ContentType;
 use App\Service\Flash;
 use App\Service\Slugger;
 use App\Service\Comment;
+use DateTime;
 use RedBeanPHP\R as R;
 use App\Service\Upload;
 use App\Service\TermType;
@@ -137,6 +138,7 @@ class ContentController extends AjaxController
             'body' => $content->body,
             'thumbnail_id' => $content->thumbnail_id ? (int) $content->thumbnail_id : null,
             'media_ids' => $this->loadMediaIdsForContent((int) $content->id),
+            'publish_at' => $content->publish_at,
             'created_at' => $content->created_at,
             'updated_at' => $content->updated_at,
             'terms' => $this->loadTermIdsForContent((int) $content->id),
@@ -176,6 +178,7 @@ class ContentController extends AjaxController
                 'status' => 'draft',
                 'thumbnail_id' => '',
                 'media_ids' => [],
+                'publish_at' => date('Y-m-d H:i:s'),
             ],
             'errors' => [],
             'heading' => $this->newContentHeading($definition),
@@ -236,6 +239,7 @@ class ContentController extends AjaxController
         $bean->body = $data['body'];
         $bean->thumbnail_id = $data['thumbnail_id'] ?: null;
         $bean->thumbnail_alt = null;
+        $bean->publish_at = $data['publish_at'] ?? date('Y-m-d H:i:s');
         $currentUser = Auth::user();
         $bean->author_id = $currentUser ? (int) $currentUser->id : null;
         $bean->created_at = date('Y-m-d H:i:s');
@@ -292,6 +296,7 @@ class ContentController extends AjaxController
                 'allow_comments' => (string) $content->allow_comments,
                 'thumbnail_id' => $content->thumbnail_id,
                 'media_ids' => $this->loadMediaIdsForContent((int) $content->id),
+                'publish_at' => $content->publish_at ?: $content->created_at,
             ],
             'errors' => [],
             'heading' => $this->editContentHeading($definition),
@@ -364,6 +369,7 @@ class ContentController extends AjaxController
         $content->body = $data['body'];
         $content->thumbnail_id = $data['thumbnail_id'] ?: null;
         $content->thumbnail_alt = null;
+        $content->publish_at = $data['publish_at'] ?? date('Y-m-d H:i:s');
         $currentUser = Auth::user();
         $content->author_id = $content->author_id ?: ($currentUser ? (int) $currentUser->id : null);
         $content->updated_at = date('Y-m-d H:i:s');
@@ -556,6 +562,7 @@ class ContentController extends AjaxController
             'media_ids' => $this->filterIds($_POST['media_ids'] ?? []),
             'terms' => $this->extractTermIds($_POST['terms'] ?? []),
             'allow_comments' => isset($_POST['allow_comments']) ? '1' : '0',
+            'publish_at' => trim($_POST['publish_at'] ?? ''),
         ];
     }
 
@@ -613,7 +620,28 @@ class ContentController extends AjaxController
             }
         }
 
+        $data['publish_at'] = $this->normalizePublishAt($data['publish_at']);
+        if ($data['publish_at'] === null) {
+            $errors['publish_at'] = 'Zadej platný datum a čas publikace.';
+        }
+
         return $errors;
+    }
+
+    private function normalizePublishAt(string $input): ?string
+    {
+        $value = $input !== '' ? $input : date('Y-m-d H:i:s');
+
+        $dateTime = DateTime::createFromFormat('Y-m-d H:i', str_replace('T', ' ', substr($value, 0, 16)));
+        if ($dateTime === false) {
+            $dateTime = DateTime::createFromFormat('Y-m-d H:i:s', str_replace('T', ' ', $value));
+        }
+
+        if ($dateTime === false) {
+            return null;
+        }
+
+        return $dateTime->format('Y-m-d H:i:s');
     }
 
     private function findContent($id, bool $withTrashed = false)

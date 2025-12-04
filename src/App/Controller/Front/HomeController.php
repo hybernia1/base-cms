@@ -9,7 +9,11 @@ class HomeController extends BaseFrontController
 
     public function index()
     {
-        $posts = R::findAll('content', ' type = ? AND status = ? ORDER BY created_at DESC ', ['post', 'published']);
+        $posts = R::findAll(
+            'content',
+            ' type = ? AND status = ? AND publish_at <= ? ORDER BY publish_at DESC ',
+            ['post', 'published', date('Y-m-d H:i:s')]
+        );
         $posts = $this->attachAuthors($posts);
 
         $this->render('front/home.twig', [
@@ -31,7 +35,11 @@ class HomeController extends BaseFrontController
             return;
         }
 
-        $items = R::findAll('content', ' type = ? AND status = ? ORDER BY created_at DESC ', [$typeKey, 'published']);
+        $items = R::findAll(
+            'content',
+            ' type = ? AND status = ? AND publish_at <= ? ORDER BY publish_at DESC ',
+            [$typeKey, 'published', date('Y-m-d H:i:s')]
+        );
         $items = $this->attachAuthors($items);
         $typeDef = $definitions[$typeKey];
 

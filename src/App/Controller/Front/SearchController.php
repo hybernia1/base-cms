@@ -18,8 +18,8 @@ class SearchController extends BaseFrontController
             $likeQuery = '%' . $query . '%';
             $found = R::findAll(
                 'content',
-                ' status = ? AND deleted_at IS NULL AND (title LIKE ? OR body LIKE ?) ORDER BY created_at DESC ',
-                ['published', $likeQuery, $likeQuery]
+                ' status = ? AND publish_at <= ? AND deleted_at IS NULL AND (title LIKE ? OR body LIKE ?) ORDER BY publish_at DESC ',
+                ['published', date('Y-m-d H:i:s'), $likeQuery, $likeQuery]
             );
 
             $posts = $this->attachAuthors($found);

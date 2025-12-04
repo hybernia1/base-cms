@@ -197,8 +197,8 @@ class Navigation
                 if ($contentId > 0) {
                     $content = R::findOne(
                         'content',
-                        ' id = ? AND status = ? AND deleted_at IS NULL ',
-                        [$contentId, 'published']
+                        ' id = ? AND status = ? AND publish_at <= ? AND deleted_at IS NULL ',
+                        [$contentId, 'published', date('Y-m-d H:i:s')]
                     );
                     if ($content) {
                         $typeSlug = ContentType::slug($content->type ?? '');

@@ -24,8 +24,8 @@ class ContentController extends BaseFrontController
 
         $item = R::findOne(
             'content',
-            ' slug = ? AND type = ? AND status = ? AND deleted_at IS NULL ',
-            [$contentSlug, $typeKey, 'published']
+            ' slug = ? AND type = ? AND status = ? AND publish_at <= ? AND deleted_at IS NULL ',
+            [$contentSlug, $typeKey, 'published', date('Y-m-d H:i:s')]
         );
 
         $terms = [];

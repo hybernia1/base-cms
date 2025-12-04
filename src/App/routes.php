@@ -17,6 +17,10 @@ if (!$isInstalled) {
 }
 
 // FRONT
+$router->get('/sitemap\\.xml', 'App\\Controller\\Front\\SitemapController@index');
+$router->get('/([\\w-]+)-content(?:-(\\d+))?\\.xml', 'App\\Controller\\Front\\SitemapController@content');
+$router->get('/([\\w-]+)-term(?:-(\\d+))?\\.xml', 'App\\Controller\\Front\\SitemapController@term');
+$router->get('/users-sitemap(?:-(\\d+))?\\.xml', 'App\\Controller\\Front\\SitemapController@users');
 $router->get('/', 'App\\Controller\\Front\\HomeController@index');
 $router->get('/login', 'App\\Controller\\Front\\AuthController@loginForm');
 $router->post('/login', 'App\\Controller\\Front\\AuthController@login');

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+{% for item in items %}
+    <sitemap>
+        <loc>{{ item.loc }}</loc>
+        {% if item.lastmod %}<lastmod>{{ item.lastmod }}</lastmod>{% endif %}
+    </sitemap>
+{% endfor %}
+</sitemapindex>

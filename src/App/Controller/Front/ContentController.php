@@ -5,6 +5,7 @@ use App\Service\ContentType;
 use App\Service\Comment;
 use App\Service\Setting;
 use App\Service\Auth;
+use App\Service\ContentProtection;
 use RedBeanPHP\R as R;
 
 class ContentController extends BaseFrontController
@@ -40,6 +41,7 @@ class ContentController extends BaseFrontController
         ];
         $currentUser = Auth::user();
         $adminBarContext = [];
+        $renderedBody = null;
         if ($item) {
             $termIds = R::getCol('SELECT term_id FROM content_term WHERE content_id = ?', [$item->id]);
             if ($termIds) {
@@ -60,6 +62,8 @@ class ContentController extends BaseFrontController
             }
 
             $author = $this->loadAuthor((int) ($item->author_id ?? 0));
+
+            $renderedBody = ContentProtection::render((string) ($item->body ?? ''));
 
             if (Auth::hasRole(['admin', 'editor'])) {
                 $adminBarContext['edit_url'] = '/admin/content/' . $typeDef['slug'] . '/' . $item->id . '/edit';
@@ -86,6 +90,7 @@ class ContentController extends BaseFrontController
             'commenting_enabled' => $commentingEnabled,
             'author' => $author,
             'admin_bar' => $adminBarContext,
+            'rendered_body' => $renderedBody,
         ]);
     }
 

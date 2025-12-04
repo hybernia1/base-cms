@@ -16,7 +16,7 @@
         header { background: #0d6efd; color: #fff; }
         header a { color: #fff; text-decoration: none; }
         .site-brand { font-weight: 700; letter-spacing: .5px; }
-        .site-logo { height: auto; max-height: 48px; width: auto; }
+        .site-logo { height: 32px; width: auto; }
         main { padding: 2rem 0 3rem; }
         footer { padding: 2rem 0; color: #6c757d; }
         .content-body p { margin-bottom: 1rem; }
@@ -34,7 +34,6 @@
     {{ admin_ui.admin_bar({
         dashboard_url: admin_bar.dashboard_url,
         edit_url: admin_bar.edit_url|default(null),
-        customizer_url: admin_bar.customizer_url|default(null),
         create_links: admin_bar.create_links|default([]),
         user_role_label: admin_bar.user_role_label,
         user_label: admin_bar.user_label,
@@ -45,23 +44,10 @@
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand site-brand d-flex align-items-center gap-2" href="/">
-                {% set theme = theme_options|default({}) %}
-                {% set show_logo = theme.show_logo|default(true) and site.logo and site.logo.url %}
-                {% set show_title = theme.show_title|default(true) %}
-                {% if not show_logo and not show_title %}
-                    {% set show_title = true %}
+                {% if site.logo and site.logo.url %}
+                    <img src="{{ site.logo.url }}" alt="{{ site.logo.alt ?: site.name }}" class="site-logo">
                 {% endif %}
-                {% set logo_style = '' %}
-                {% if show_logo and theme.logo_width|default(0) > 0 %}
-                    {% set logo_style = 'width:' ~ theme.logo_width ~ 'px;' %}
-                {% endif %}
-
-                {% if show_logo %}
-                    <img src="{{ site.logo.url }}" alt="{{ site.logo.alt ?: site.name }}" class="site-logo" style="{{ logo_style }}">
-                {% endif %}
-                {% if show_title %}
-                    <span>{{ site.name|default('Base CMS') }}</span>
-                {% endif %}
+                <span>{{ site.name|default('Base CMS') }}</span>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Přepnout navigaci">
                 <span class="navbar-toggler-icon"></span>
@@ -115,13 +101,7 @@
     {% block body %}{% endblock %}
 </main>
 
-<footer class="container">
-    {% if theme_options.footer_text|default('') %}
-        {{ theme_options.footer_text }}
-    {% else %}
-        © {{ "now"|date('Y') }} {{ site.name|default('Base CMS') }}
-    {% endif %}
-</footer>
+<footer class="container">© {{ "now"|date('Y') }} {{ site.name|default('Base CMS') }}</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 {% block scripts %}{% endblock %}

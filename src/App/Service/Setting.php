@@ -31,11 +31,6 @@ class Setting
         'site_logo_id' => '',
         'site_favicon_id' => '',
         'theme' => 'blue',
-        'theme_show_logo' => '1',
-        'theme_show_title' => '1',
-        'theme_logo_width' => '0',
-        'theme_homepage_id' => '',
-        'theme_footer_text' => '',
     ];
 
     public static function mediaDetails(?int $mediaId): ?array

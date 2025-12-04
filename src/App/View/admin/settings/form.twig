@@ -210,6 +210,12 @@
                             <div class="form-text">Při vypnutí bude web označen jako <strong>noindex</strong> a robots.txt zakáže procházení.</div>
                         </div>
 
+                        <div class="mb-3">
+                            <label for="google_analytics_code" class="form-label">Google Analytics měřicí kód</label>
+                            <textarea class="form-control" id="google_analytics_code" name="google_analytics_code" rows="6" placeholder="Vložte kompletní měřicí kód včetně &lt;script&gt;…&lt;/script&gt; tagů">{{ values.google_analytics_code|default('') }}</textarea>
+                            <div class="form-text">Kód se automaticky vloží do hlavičky webu. Vkládejte pouze ověřený kód z Google Analytics.</div>
+                        </div>
+
                         <div class="alert alert-light">
                             Robots.txt automaticky obsahuje odkaz na sitemap.xml a respektuje toto nastavení indexace.
                         </div>

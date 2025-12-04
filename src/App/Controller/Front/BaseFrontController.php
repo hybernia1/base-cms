@@ -28,7 +28,17 @@ abstract class BaseFrontController
         $siteLogo = Setting::mediaDetails((int) Setting::get('site_logo_id', 0));
         $siteFavicon = Setting::mediaDetails((int) Setting::get('site_favicon_id', 0));
         $indexingEnabled = Setting::get('indexing_enabled', Setting::DEFAULTS['indexing_enabled']) === '1';
+        $googleAnalyticsCode = Setting::get('google_analytics_code', '');
         $navigation = Navigation::tree();
+
+        $hooks = [
+            'head' => [],
+            'footer' => [],
+        ];
+
+        if ($googleAnalyticsCode !== '') {
+            $hooks['head'][] = $googleAnalyticsCode;
+        }
 
         if ($currentUser) {
             $contentTypes = ContentType::definitions();
@@ -77,6 +87,7 @@ abstract class BaseFrontController
             'seo' => [
                 'indexing_enabled' => $indexingEnabled,
             ],
+            'hooks' => $hooks,
         ], $context);
 
         if ($adminBar || isset($context['admin_bar'])) {

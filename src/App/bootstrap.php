@@ -7,6 +7,7 @@ use Twig\Environment;
 use App\Service\Setting;
 use App\Service\MediaHelper;
 use App\Service\ThemeManager;
+use App\Service\Auth;
 use Twig\TwigFunction;
 
 session_start();
@@ -52,6 +53,17 @@ try {
 
     $twig->addFunction(new TwigFunction('file_icon', fn (?string $mime) => MediaHelper::mimeToIcon($mime)));
     $twig->addFunction(new TwigFunction('human_size', fn ($bytes) => MediaHelper::humanSize($bytes)));
+    $twig->addFunction(new TwigFunction('protected_content', function ($html, string $fallback = '') {
+        if (Auth::user()) {
+            return $html;
+        }
+
+        if ($fallback !== '') {
+            return $fallback;
+        }
+
+        return '<a href="/login">Přihlaste se pro zobrazení obsahu</a>';
+    }, ['is_safe' => ['html']]));
 
     $appSettings = [
         'timezone' => Setting::DEFAULTS['timezone'],

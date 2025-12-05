@@ -67,6 +67,7 @@
                             <div class="fw-semibold">{{ comment.author_name ?: 'Anonym' }}</div>
                             <div class="text-muted small">{{ comment.author_email }}</div>
                             <div class="text-muted small">{{ comment.created_at|date('j. n. Y H:i') }}</div>
+                            <div class="text-muted small">IP: {{ comment.ip_address ?: 'Neznámá' }}</div>
                         </td>
                         <td>{{ comment.body|slice(0, 180) }}{% if comment.body|length > 180 %}…{% endif %}</td>
                         <td class="text-muted small">

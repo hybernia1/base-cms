@@ -1,0 +1,44 @@
+{% extends 'front/layout.twig' %}
+
+{% block title %}Úvod | Můj web{% endblock %}
+
+{% block body %}
+    <div class="mb-4">
+        <h1 class="display-6 mb-1">{{ heading|default('Aktuální příspěvky') }}</h1>
+        <p class="text-muted mb-0">Nejnovější články a novinky z vašeho webu.</p>
+    </div>
+
+    {% if posts is empty %}
+        <p class="text-muted">{{ empty_message|default('Žádné příspěvky zatím nejsou publikovány.') }}</p>
+    {% else %}
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+            {% for post in posts %}
+                {% set type_def = content_types[post.type]|default({'slug': post.type, 'name': post.type}) %}
+                <div class="col">
+                    <article class="card h-100 shadow-sm">
+                        <div class="card-body">
+                            <div class="text-muted small mb-1">
+                                {{ post.created_at|date('j. n. Y') }} · {{ type_def.name }}
+                                {% if post.author %}
+                                    ·
+                                    {% if post.author.profile_url %}
+                                        <a href="{{ post.author.profile_url }}" class="text-decoration-none">{{ post.author.nickname }}</a>
+                                    {% else %}
+                                        {{ post.author.nickname }}
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            <h2 class="h5 card-title">
+                                <a href="/{{ type_def.slug }}/{{ post.slug }}" class="stretched-link text-decoration-none">{{ post.title }}</a>
+                            </h2>
+                            {% set preview = post.excerpt ?: post.body %}
+                            {% if preview %}
+                                <p class="card-text text-muted">{{ preview|striptags|slice(0, 180) }}{% if preview|striptags|length > 180 %}…{% endif %}</p>
+                            {% endif %}
+                        </div>
+                    </article>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

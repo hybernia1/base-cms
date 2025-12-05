@@ -1,0 +1,29 @@
+{% extends 'front/layout.twig' %}
+
+{% block title %}Přihlášení | Můj web{% endblock %}
+
+{% block body %}
+    <h1>Přihlášení</h1>
+
+    <form method="post" action="/login" class="card p-4 shadow-sm">
+        <div class="mb-3">
+            <label class="form-label" for="email">E-mail</label>
+            <input type="email" name="email" id="email" class="form-control" value="{{ values.email }}" required>
+            {% if errors.email %}
+                <div class="text-danger small mt-1">{{ errors.email }}</div>
+            {% endif %}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="password">Heslo</label>
+            <input type="password" name="password" id="password" class="form-control" required>
+            {% if errors.password %}
+                <div class="text-danger small mt-1">{{ errors.password }}</div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Přihlásit se</button>
+        <a href="/register" class="btn btn-link">Nemáte účet? Registrujte se</a>
+        <a href="/password-reset" class="btn btn-link">Zapomněli jste heslo?</a>
+    </form>
+{% endblock %}

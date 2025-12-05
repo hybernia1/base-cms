@@ -55,7 +55,7 @@
 
 {% macro actions(actions, size = 'sm') %}
     {% set size_class = size ? 'btn-group-' ~ size : '' %}
-    <div class="btn-group {{ size_class }}" role="group">
+    <div class="{{ size_class }}" role="group">
         {% for action in actions %}
             {% set tooltip = action.title ?: action.label %}
 

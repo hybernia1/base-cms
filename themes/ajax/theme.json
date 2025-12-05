@@ -1,7 +1,0 @@
-{
-  "key": "ajax",
-  "name": "Ajax",
-  "version": "1.0.0",
-  "description": "Jednostránková šablona s Ajax navigací bez plného refreshe.",
-  "author": "Base CMS"
-}

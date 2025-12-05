@@ -2,6 +2,7 @@
 namespace App\Controller\Front;
 
 use App\Service\Auth;
+use App\Service\Csrf;
 use App\Service\EmailTemplateManager;
 use App\Service\Flash;
 use App\Service\Setting;
@@ -31,6 +32,12 @@ class AuthController extends BaseFrontController
         if (!$this->isRegistrationEnabled()) {
             Flash::addError('Registrace jsou aktuálně vypnuté.');
             header('Location: /');
+            exit;
+        }
+
+        if (!Csrf::validate('front_register', $_POST['_csrf'] ?? null)) {
+            Flash::addError('Formulář vypršel, zkuste to prosím znovu.');
+            header('Location: /register');
             exit;
         }
 
@@ -81,6 +88,12 @@ class AuthController extends BaseFrontController
 
     public function login()
     {
+        if (!Csrf::validate('front_login', $_POST['_csrf'] ?? null)) {
+            Flash::addError('Formulář vypršel, zkuste to prosím znovu.');
+            header('Location: /login');
+            exit;
+        }
+
         $data = $this->sanitizeLogin();
         $errors = [];
 

@@ -433,6 +433,7 @@ class ContentController extends AjaxController
             $this->forceDeleteContent($content);
             $message = 'Obsah byl nenávratně smazán.';
         } else {
+            Meta::deleteForTarget(Meta::TARGET_CONTENT, (int) $content->id);
             $content->deleted_at = date('Y-m-d H:i:s');
             R::store($content);
             $message = 'Obsah byl přesunut do koše.';
@@ -937,6 +938,7 @@ class ContentController extends AjaxController
 
     private function forceDeleteContent($content): void
     {
+        Meta::deleteForTarget(Meta::TARGET_CONTENT, (int) $content->id);
         R::exec('DELETE FROM content_term WHERE content_id = ?', [(int) $content->id]);
         R::exec('DELETE FROM content_media WHERE content_id = ?', [(int) $content->id]);
         Comment::deleteForContent((int) $content->id);

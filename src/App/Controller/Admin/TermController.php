@@ -211,6 +211,7 @@ class TermController extends AjaxController
             exit;
         }
 
+        Meta::deleteForTarget(Meta::TARGET_TERM, (int) $term->id);
         R::trash($term);
 
         if ($this->wantsJson()) {

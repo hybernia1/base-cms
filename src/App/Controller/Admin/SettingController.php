@@ -178,14 +178,17 @@ class SettingController extends AjaxController
         $maxDepth = (int) ($_POST['comments_max_depth'] ?? Setting::DEFAULTS['comments_max_depth']);
         $moderation = isset($_POST['comments_moderation']) ? '1' : '0';
         $allowAnonymous = isset($_POST['comments_allow_anonymous']) ? '1' : '0';
+        $rateLimitSeconds = (int) ($_POST['comments_rate_limit_seconds'] ?? Setting::DEFAULTS['comments_rate_limit_seconds']);
 
         $maxDepth = max(0, min(5, $maxDepth));
+        $rateLimitSeconds = max(0, min(86400, $rateLimitSeconds));
 
         Setting::set('comments_enabled', $commentsEnabled);
         Setting::set('comments_allow_replies', $allowReplies);
         Setting::set('comments_max_depth', (string) $maxDepth);
         Setting::set('comments_moderation', $moderation);
         Setting::set('comments_allow_anonymous', $allowAnonymous);
+        Setting::set('comments_rate_limit_seconds', (string) $rateLimitSeconds);
 
         Flash::addSuccess('Nastavení komentářů bylo uloženo.');
     }

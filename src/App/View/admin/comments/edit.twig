@@ -19,6 +19,7 @@
                 <div class="text-muted small">
                     <div>Vytvořeno: {{ comment.created_at|date('j. n. Y H:i') }}</div>
                     <div>Upraveno: {{ comment.updated_at|date('j. n. Y H:i') }}</div>
+                    <div>IP adresa: {{ comment.ip_address ?: 'Neznámá' }}</div>
                 </div>
                 <div class="text-end">
                     {{ ui.back_button('/admin/comments', { label: 'Zpět na přehled' }) }}

@@ -1,0 +1,71 @@
+{% extends 'front/layout.twig' %}
+
+{% block title %}Profil | Můj web{% endblock %}
+
+{% block body %}
+    {% if not user %}
+        <div class="alert alert-warning mt-4">Profil nenalezen.</div>
+    {% else %}
+    <div class="d-flex align-items-center gap-3 mt-3">
+        <div>
+            <h1 class="mb-1">{{ user.nickname ?: 'Uživatel' }}</h1>
+            <div class="text-muted">Registrován: {{ user.created_at|date('j. n. Y') }}</div>
+        </div>
+        <span class="badge {% if is_public %}text-bg-success{% else %}text-bg-secondary{% endif %}">
+            {{ is_public ? 'Veřejný profil' : 'Skrytý profil' }}
+        </span>
+        {% if is_owner %}
+            <a href="/profile/edit" class="btn btn-outline-primary ms-auto">Upravit profil</a>
+        {% endif %}
+    </div>
+
+    {% if is_banned %}
+        <div class="alert alert-danger mt-3" role="alert">
+            Tento účet je deaktivován.
+            {% if ban_reason %}
+                <div class="small text-muted">Důvod: {{ ban_reason }}</div>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    {% if not is_public and not is_owner %}
+        <div class="alert alert-info mt-4">Tento profil je skrytý. Uživatel se rozhodl nezveřejňovat své informace.</div>
+    {% else %}
+
+    {% if is_owner %}
+        <div class="alert alert-secondary mt-4">
+            Přihlášený e-mail: <strong>{{ user.email }}</strong>
+        </div>
+    {% endif %}
+
+    <section class="card shadow-sm mt-4">
+        <div class="card-body p-4">
+            <h2 class="h5 mb-3">Komentáře</h2>
+            {% if comments %}
+                <div class="list-group">
+                    {% for comment in comments %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <div class="fw-semibold">{{ comment.content_title }}</div>
+                                    <div class="text-muted small">{{ comment.created_at|date('j. n. Y H:i') }}</div>
+                                </div>
+                                {% if is_owner and comment.status != 'approved' %}
+                                    <span class="badge text-bg-warning">Čeká na schválení</span>
+                                {% endif %}
+                            </div>
+                            <p class="mt-2 mb-1">{{ comment.body|nl2br }}</p>
+                            {% if comment.content_url %}
+                                <a href="{{ comment.content_url }}" class="small">Zobrazit obsah</a>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">Zatím žádné komentáře.</p>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+    {% endif %}
+{% endblock %}

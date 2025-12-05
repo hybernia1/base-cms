@@ -1,0 +1,52 @@
+{% extends 'front/layout.twig' %}
+
+{% block title %}Upravit profil | Můj web{% endblock %}
+
+{% block body %}
+    <h1>Upravit profil</h1>
+
+    <form method="post" action="/profile/edit" class="card p-4 shadow-sm">
+        <div class="mb-3">
+            <label class="form-label">E-mail</label>
+            <input type="email" class="form-control" value="{{ values.email }}" disabled>
+            <div class="form-text">E-mail nelze měnit.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="nickname">Přezdívka</label>
+            <input type="text" name="nickname" id="nickname" class="form-control" value="{{ values.nickname }}" required>
+            {% if errors.nickname %}
+                <div class="text-danger small mt-1">{{ errors.nickname }}</div>
+            {% endif %}
+        </div>
+
+        <div class="mb-3 form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="is_profile_public" name="is_profile_public" value="1" {% if values.is_profile_public %}checked{% endif %}>
+            <label class="form-check-label" for="is_profile_public">Veřejný profil</label>
+            <div class="form-text">Pokud profil skryjete, ostatní uvidí jen vaše komentáře bez možnosti otevřít profil.</div>
+        </div>
+
+        <hr>
+        <h2 class="h5">Změna hesla</h2>
+        <p class="text-muted">Pokud nechcete měnit heslo, pole nevyplňujte.</p>
+
+        <div class="mb-3">
+            <label class="form-label" for="password">Nové heslo</label>
+            <input type="password" name="password" id="password" class="form-control" autocomplete="new-password">
+            {% if errors.password %}
+                <div class="text-danger small mt-1">{{ errors.password }}</div>
+            {% endif %}
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="password_confirm">Potvrzení hesla</label>
+            <input type="password" name="password_confirm" id="password_confirm" class="form-control" autocomplete="new-password">
+            {% if errors.password_confirm %}
+                <div class="text-danger small mt-1">{{ errors.password_confirm }}</div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="btn btn-primary">Uložit změny</button>
+        <a href="/profile" class="btn btn-link">Zpět na profil</a>
+    </form>
+{% endblock %}

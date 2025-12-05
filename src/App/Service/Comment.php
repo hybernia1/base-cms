@@ -19,13 +19,18 @@ class Comment
 
         $comment = R::dispense(self::TABLE);
         $comment->content_id = (int) ($data['content_id'] ?? 0);
-        $comment->parent_id = $data['parent_id'] !== '' ? (int) $data['parent_id'] : null;
-        $comment->user_id = $data['user_id'] !== '' ? (int) $data['user_id'] : null;
+
+        $parentId = $data['parent_id'] ?? null;
+        $comment->parent_id = ($parentId === null || $parentId === '') ? null : (int) $parentId;
+
+        $userId = $data['user_id'] ?? null;
+        $comment->user_id = ($userId === null || $userId === '') ? null : (int) $userId;
         $comment->author_name = trim($data['author_name'] ?? '');
         $comment->author_email = trim($data['author_email'] ?? '');
         $comment->body = trim($data['body'] ?? '');
         $comment->status = $data['status'] ?? 'pending';
         $comment->depth = (int) ($data['depth'] ?? 0);
+        $comment->ip_address = trim((string) ($data['ip_address'] ?? ''));
         $comment->created_at = date('Y-m-d H:i:s');
         $comment->updated_at = date('Y-m-d H:i:s');
 

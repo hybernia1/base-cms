@@ -1,0 +1,16 @@
+{
+  "name": "base-cms",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "tailwind:build": "tailwindcss -c tailwind.config.js -i themes/blue/front/styles/tailwind.css -o assets/css/front.css --minify",
+    "tailwind:watch": "tailwindcss -c tailwind.config.js -i themes/blue/front/styles/tailwind.css -o assets/css/front.css --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tailwindcss": "^3.4.13"
+  }
+}

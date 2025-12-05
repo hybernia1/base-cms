@@ -4,13 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "tailwind:build": "tailwindcss -c tailwind.config.js -i themes/blue/front/styles/tailwind.css -o assets/css/front.css --minify",
-    "tailwind:watch": "tailwindcss -c tailwind.config.js -i themes/blue/front/styles/tailwind.css -o assets/css/front.css --watch"
+    "tailwind:build": "tailwindcss -c tailwind.config.js -i assets/styles/app.css -o assets/css/app.css --minify",
+    "tailwind:watch": "tailwindcss -c tailwind.config.js -i assets/styles/app.css -o assets/css/app.css --watch"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@tailwindcss/forms": "^0.5.9",
     "tailwindcss": "^3.4.13"
   }
 }

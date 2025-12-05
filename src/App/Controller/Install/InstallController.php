@@ -231,6 +231,30 @@ class InstallController
         );
 
         R::exec(
+            "CREATE TABLE IF NOT EXISTS `metakey` (
+                `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `name` VARCHAR(191) NOT NULL,
+                `key` VARCHAR(191) NOT NULL UNIQUE,
+                `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
+        R::exec(
+            "CREATE TABLE IF NOT EXISTS `meta` (
+                `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                `metakey_id` INT UNSIGNED NOT NULL,
+                `target_type` VARCHAR(50) NOT NULL,
+                `target_id` INT UNSIGNED NOT NULL,
+                `value` TEXT,
+                `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY `meta_unique` (`metakey_id`, `target_type`, `target_id`),
+                KEY `idx_target` (`target_type`, `target_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
+        R::exec(
             "CREATE TABLE IF NOT EXISTS `navigationitem` (
                 `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                 `label` VARCHAR(255) NOT NULL,

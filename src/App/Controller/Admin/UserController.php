@@ -5,6 +5,7 @@ use App\Service\Auth;
 use App\Service\EmailTemplateManager;
 use App\Service\Flash;
 use App\Service\UserProfile;
+use App\Service\Meta;
 use RedBeanPHP\R as R;
 
 class UserController extends AjaxController
@@ -75,6 +76,8 @@ class UserController extends AjaxController
             'values' => [
                 'nickname' => '',
             ],
+            'meta_keys' => Meta::allKeys(),
+            'meta_values' => [],
         ]);
     }
 
@@ -96,6 +99,8 @@ class UserController extends AjaxController
                 'current_menu' => 'users',
                 'form_action' => '/admin/users/create',
                 'heading' => 'Nový uživatel',
+                'meta_keys' => Meta::allKeys(),
+                'meta_values' => $data['meta'],
             ]);
             return;
         }
@@ -109,6 +114,8 @@ class UserController extends AjaxController
         $user->is_banned = 0;
         $user->ban_reason = '';
         R::store($user);
+
+        Meta::saveValues(Meta::TARGET_USER, (int) $user->id, $data['meta']);
 
         Flash::addSuccess('Uživatel byl vytvořen.');
         header('Location: /admin/users');
@@ -126,6 +133,7 @@ class UserController extends AjaxController
         }
 
         $loginLogs = $this->getLoginLogs((int) $user->id);
+        $metaValues = Meta::valuesFor(Meta::TARGET_USER, (int) $user->id);
 
         $this->render('admin/users/form.twig', [
             'roles' => self::ROLES,
@@ -144,6 +152,8 @@ class UserController extends AjaxController
             'user_id' => $user->id,
             'errors' => [],
             'login_logs' => $loginLogs,
+            'meta_keys' => Meta::allKeys(),
+            'meta_values' => $metaValues,
         ]);
     }
 
@@ -180,6 +190,8 @@ class UserController extends AjaxController
                 'heading' => 'Upravit uživatele',
                 'user_id' => $user->id,
                 'login_logs' => $loginLogs,
+                'meta_keys' => Meta::allKeys(),
+                'meta_values' => $data['meta'],
             ]);
             return;
         }
@@ -195,6 +207,8 @@ class UserController extends AjaxController
             $user->password = password_hash($data['password'], PASSWORD_DEFAULT);
         }
         R::store($user);
+
+        Meta::saveValues(Meta::TARGET_USER, (int) $user->id, $data['meta']);
 
         Flash::addSuccess('Uživatel byl upraven.');
         header('Location: /admin/users');
@@ -314,6 +328,7 @@ class UserController extends AjaxController
             'password' => $_POST['password'] ?? '',
             'role' => trim($_POST['role'] ?? ''),
             'nickname' => trim($_POST['nickname'] ?? ''),
+            'meta' => Meta::sanitizeValues($_POST['meta'] ?? []),
         ];
     }
 

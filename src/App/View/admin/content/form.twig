@@ -1,5 +1,6 @@
 {% extends 'admin/layout.twig' %}
 {% import 'admin/partials/components.twig' as components %}
+{% import 'admin/partials/meta_fields.twig' as meta_fields %}
 
 {% set current_menu = current_type.slug %}
 
@@ -215,6 +216,12 @@
                         {% endif %}
                     </div>
                 </div>
+
+                {{ meta_fields.fields(meta_keys, meta_values, {
+                    title: 'Meta údaje',
+                    help: 'Vyplň hodnoty, které využiješ v šablonách nebo API. Prázdné hodnoty se uloží jako odebrané.',
+                    show_empty: true
+                }) }}
             </div>
         </div>
 

@@ -152,6 +152,9 @@ $router->post('/admin/comments/(\\d+)/edit', 'App\\Controller\\Admin\\CommentCon
 $router->post('/admin/comments/(\\d+)/restore', 'App\\Controller\\Admin\\CommentController@restore');
 $router->post('/admin/comments/(\\d+)/delete', 'App\\Controller\\Admin\\CommentController@delete');
 $router->post('/admin/comments/trash/empty', 'App\\Controller\\Admin\\CommentController@emptyTrash');
+$router->get('/admin/meta', 'App\\Controller\\Admin\\MetaController@index');
+$router->post('/admin/meta/create', 'App\\Controller\\Admin\\MetaController@create');
+$router->post('/admin/meta/(\\d+)/delete', 'App\\Controller\\Admin\\MetaController@delete');
 $router->get('/admin/extra/info', 'App\\Controller\\Admin\\ExtraController@info');
 $router->get('/admin/extra/debug', 'App\\Controller\\Admin\\ExtraController@debug');
 $router->get('/admin/extra/backup', 'App\\Controller\\Admin\\ExtraController@backup');

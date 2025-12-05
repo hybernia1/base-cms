@@ -142,6 +142,15 @@ class Meta
         }
     }
 
+    public static function deleteForTarget(string $targetType, int $targetId): void
+    {
+        if ($targetId <= 0) {
+            return;
+        }
+
+        R::exec('DELETE FROM meta WHERE target_type = ? AND target_id = ?', [$targetType, $targetId]);
+    }
+
     public static function deleteKeyWithValues(int $id): void
     {
         $key = R::load('metakey', $id);

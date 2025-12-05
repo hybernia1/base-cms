@@ -296,6 +296,7 @@ class UserController extends AjaxController
             exit;
         }
 
+        Meta::deleteForTarget(Meta::TARGET_USER, (int) $user->id);
         R::trash($user);
 
         if ($this->wantsJson()) {

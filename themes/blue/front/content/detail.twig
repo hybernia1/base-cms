@@ -37,6 +37,17 @@
                         <div class="content-body">
                             {{ (rendered_body ?? item.body)|raw }}
                         </div>
+                        {% if meta_values %}
+                            <div class="mt-4">
+                                <h2 class="h6 mb-3">Meta údaje</h2>
+                                <dl class="row g-3">
+                                    {% for key, value in meta_values %}
+                                        <dt class="col-sm-4 text-muted">{{ meta_definitions[key].name|default(key) }}</dt>
+                                        <dd class="col-sm-8 mb-0">{{ value }}</dd>
+                                    {% endfor %}
+                                </dl>
+                            </div>
+                        {% endif %}
                     </div>
                 </article>
 

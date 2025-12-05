@@ -1,7 +1,7 @@
 const adminNotify = (() => {
     const container = document.getElementById('toastContainer');
     const template = document.getElementById('toastTemplate');
-    const toastSupported = container && template && typeof bootstrap !== 'undefined' && !!bootstrap.Toast;
+    const toastSupported = container && template;
 
     const createToast = (options = {}) => {
         if (!toastSupported) {
@@ -12,7 +12,7 @@ const adminNotify = (() => {
         toastEl.id = '';
         toastEl.classList.remove('d-none');
         const variant = options.variant || 'primary';
-        toastEl.className = `toast align-items-center text-bg-${variant} border-0`;
+        toastEl.className = `toast toast-${variant}`;
 
         const titleEl = toastEl.querySelector('[data-role="toast-title"]');
         const messageEl = toastEl.querySelector('[data-role="toast-message"]');
@@ -40,21 +40,26 @@ const adminNotify = (() => {
             }
         }
 
-        container.appendChild(toastEl);
-        const toast = new bootstrap.Toast(toastEl, {
-            autohide: options.autohide !== false,
-            delay: options.delay ?? 4000,
-        });
-
-        toastEl.addEventListener('hidden.bs.toast', () => {
+        const closeBtn = toastEl.querySelector('[data-role="toast-close"]');
+        const hide = () => {
             toastEl.remove();
             if (typeof options.onHidden === 'function') {
                 options.onHidden();
             }
-        });
+        };
 
-        toast.show();
-        return {toast, element: toastEl};
+        if (closeBtn) {
+            closeBtn.addEventListener('click', hide);
+        }
+
+        container.appendChild(toastEl);
+
+        if (options.autohide !== false) {
+            const delay = options.delay ?? 4000;
+            setTimeout(hide, delay);
+        }
+
+        return {hide, element: toastEl};
     };
 
     return {
@@ -87,7 +92,7 @@ const adminNotify = (() => {
                         label: options.confirmText || 'Ano',
                         variant: options.variant || 'warning',
                         onClick: () => {
-                            toastData?.toast.hide();
+                            toastData?.hide();
                             cleanup(true);
                         },
                     },
@@ -95,7 +100,7 @@ const adminNotify = (() => {
                         label: options.cancelText || 'Ne',
                         variant: 'secondary',
                         onClick: () => {
-                            toastData?.toast.hide();
+                            toastData?.hide();
                             cleanup(false);
                         },
                     },
@@ -155,18 +160,15 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const collapse = new bootstrap.Collapse(target, {toggle: false});
-
         const updateIcon = () => {
             if (!icon) return;
             icon.classList.toggle('rotate', target.classList.contains('show'));
         };
 
-        target.addEventListener('shown.bs.collapse', updateIcon);
-        target.addEventListener('hidden.bs.collapse', updateIcon);
         toggle.addEventListener('click', (event) => {
             event.preventDefault();
-            collapse.toggle();
+            target.classList.toggle('show');
+            updateIcon();
         });
 
         updateIcon();

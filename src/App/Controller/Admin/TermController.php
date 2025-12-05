@@ -6,6 +6,7 @@ use App\Service\Flash;
 use App\Service\TermType;
 use App\Service\ContentType;
 use App\Service\Slugger;
+use App\Service\Meta;
 use RedBeanPHP\R as R;
 
 class TermController extends AjaxController
@@ -67,6 +68,8 @@ class TermController extends AjaxController
             'heading' => 'Nový ' . $typeLabel,
             'form_action' => '/admin/terms/create',
             'current_menu' => 'terms:' . $preferredType,
+            'meta_keys' => Meta::allKeys(),
+            'meta_values' => [],
         ]);
     }
 
@@ -88,6 +91,8 @@ class TermController extends AjaxController
                 'heading' => 'Nový ' . $typeLabel,
                 'form_action' => '/admin/terms/create',
                 'current_menu' => 'terms:' . $data['type'],
+                'meta_keys' => Meta::allKeys(),
+                'meta_values' => $data['meta'],
             ]);
             return;
         }
@@ -101,6 +106,8 @@ class TermController extends AjaxController
         $term->created_at = date('Y-m-d H:i:s');
         $term->updated_at = date('Y-m-d H:i:s');
         R::store($term);
+
+        Meta::saveValues(Meta::TARGET_TERM, (int) $term->id, $data['meta']);
 
         Flash::addSuccess('Term byl vytvořen.');
         header('Location: ' . $this->redirectToList($term->type, $_POST['redirect'] ?? null));
@@ -120,6 +127,7 @@ class TermController extends AjaxController
 
         $definitions = TermType::definitions();
         $typeLabel = $definitions[$term->type]['label'] ?? $term->type;
+        $metaValues = Meta::valuesFor(Meta::TARGET_TERM, (int) $term->id);
 
         $this->render('admin/terms/form.twig', [
             'types' => TermType::all(),
@@ -136,6 +144,8 @@ class TermController extends AjaxController
             'form_action' => "/admin/terms/{$term->id}/edit",
             'current_menu' => 'terms:' . $term->type,
             'term_id' => $term->id,
+            'meta_keys' => Meta::allKeys(),
+            'meta_values' => $metaValues,
         ]);
     }
 
@@ -165,6 +175,8 @@ class TermController extends AjaxController
                 'form_action' => "/admin/terms/{$term->id}/edit",
                 'current_menu' => 'terms:' . $term->type,
                 'term_id' => $term->id,
+                'meta_keys' => Meta::allKeys(),
+                'meta_values' => $data['meta'],
             ]);
             return;
         }
@@ -176,6 +188,8 @@ class TermController extends AjaxController
         $term->content_types = null;
         $term->updated_at = date('Y-m-d H:i:s');
         R::store($term);
+
+        Meta::saveValues(Meta::TARGET_TERM, (int) $term->id, $data['meta']);
 
         Flash::addSuccess('Term byl upraven.');
         header('Location: ' . $this->redirectToList($term->type, $_POST['redirect'] ?? null));
@@ -287,6 +301,7 @@ class TermController extends AjaxController
             'slug' => trim($_POST['slug'] ?? ''),
             'type' => $forcedType !== null ? $forcedType : trim($_POST['type'] ?? ''),
             'description' => trim($_POST['description'] ?? ''),
+            'meta' => Meta::sanitizeValues($_POST['meta'] ?? []),
         ];
     }
 

@@ -1,0 +1,116 @@
+{% extends 'admin/layout.twig' %}
+
+{% import 'admin/partials/components.twig' as ui %}
+
+{% set current_menu = 'meta' %}
+
+{% block title %}Meta klíče | Administrace{% endblock %}
+
+{% block body %}
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h1 class="h3 mb-1">Meta klíče</h1>
+            <p class="text-muted mb-0">Definuj doplňkové informace, které můžeš připojit k obsahu, termům i uživatelům.</p>
+        </div>
+        {{ ui.back_button('/admin', { label: 'Zpět na dashboard' }) }}
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-header fw-semibold">Nový meta klíč</div>
+                <div class="card-body">
+                    <form method="post" action="/admin/meta/create">
+                        <div class="mb-3">
+                            <label class="form-label" for="name">Název</label>
+                            <input
+                                type="text"
+                                id="name"
+                                name="name"
+                                class="form-control {% if errors.name %}is-invalid{% endif %}"
+                                value="{{ values.name|default('') }}"
+                                placeholder="Např. SEO titulek"
+                                required
+                            >
+                            {% if errors.name %}
+                                <div class="invalid-feedback">{{ errors.name }}</div>
+                            {% else %}
+                                <div class="form-text">Lidský název pole, zobrazí se v editorech.</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label" for="key">Klíč</label>
+                            <input
+                                type="text"
+                                id="key"
+                                name="key"
+                                class="form-control {% if errors.key %}is-invalid{% endif %}"
+                                value="{{ values.key|default('') }}"
+                                placeholder="napr-seo-title"
+                            >
+                            {% if errors.key %}
+                                <div class="invalid-feedback">{{ errors.key }}</div>
+                            {% else %}
+                                <div class="form-text">Slug použij ve Twig šablonách. Pokud necháš prázdné, vytvoří se z názvu.</div>
+                            {% endif %}
+                        </div>
+
+                        {{ ui.actions([
+                            {
+                                type: 'button',
+                                button_type: 'submit',
+                                label: 'Přidat meta klíč',
+                                variant: 'primary',
+                                icon: 'bi-plus-circle'
+                            }
+                        ]) }}
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-header d-flex align-items-center gap-2">
+                    <span class="fw-semibold">Existující klíče</span>
+                    <span class="badge text-bg-light">{{ keys|length }}</span>
+                </div>
+                <div class="card-body">
+                    {% if keys is empty %}
+                        <p class="text-muted mb-0">Zatím nejsou vytvořené žádné meta klíče.</p>
+                    {% else %}
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Název</th>
+                                        <th scope="col">Klíč</th>
+                                        <th scope="col" class="text-end">Akce</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in keys %}
+                                        <tr>
+                                            <td class="fw-semibold">{{ item.name }}</td>
+                                            <td><code>{{ item.key }}</code></td>
+                                            <td class="text-end">
+                                                <form method="post" action="/admin/meta/{{ item.id }}/delete" data-confirm="Smazat meta klíč {{ item.name }}?">
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                        <i class="bi bi-trash"></i>
+                                                        <span class="ms-1">Smazat</span>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-muted small mb-0">Smazáním klíče se odstraní i všechny hodnoty u obsahu, termů i uživatelů.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -175,6 +175,12 @@
                             <i class="bi bi-envelope-paper me-2"></i> E-mailové šablony
                         </a>
                     </li>
+                    <li class="nav-item mb-1">
+                        <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'meta' %}active{% endif %}"
+                           href="/admin/meta">
+                            <i class="bi bi-hash me-2"></i> Meta
+                        </a>
+                    </li>
                 {% endif %}
                 {% if isEditor %}
                     <li class="nav-item mb-1">
@@ -375,6 +381,12 @@
                         <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'email_templates' %}active{% endif %}"
                            href="/admin/email-templates">
                             <i class="bi bi-envelope-paper me-2"></i> E-mailové šablony
+                        </a>
+                    </li>
+                    <li class="nav-item mb-1">
+                        <a class="nav-link d-flex align-items-center {% if current_menu is defined and current_menu == 'meta' %}active{% endif %}"
+                           href="/admin/meta">
+                            <i class="bi bi-hash me-2"></i> Meta
                         </a>
                     </li>
                 {% endif %}

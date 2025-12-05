@@ -6,6 +6,7 @@ use App\Service\ContentType;
 use App\Service\Flash;
 use App\Service\Slugger;
 use App\Service\Comment;
+use App\Service\Meta;
 use DateTime;
 use RedBeanPHP\R as R;
 use App\Service\Upload;
@@ -192,6 +193,8 @@ class ContentController extends AjaxController
             'current_type' => $definition,
             'allowed_term_types' => $allowedTermTypes,
             'shortcodes' => Shortcode::definitions(),
+            'meta_keys' => Meta::allKeys(),
+            'meta_values' => [],
         ]);
     }
 
@@ -229,6 +232,8 @@ class ContentController extends AjaxController
                 'current_type' => $definition,
                 'allowed_term_types' => $this->allowedTermTypes($typeKey),
                 'shortcodes' => Shortcode::definitions(),
+                'meta_keys' => Meta::allKeys(),
+                'meta_values' => $data['meta'],
             ]);
             return;
         }
@@ -251,6 +256,7 @@ class ContentController extends AjaxController
 
         $this->syncTerms((int) $bean->id, $data['terms']);
         $this->syncMediaAttachments((int) $bean->id, $data['media_ids'], $data['thumbnail_id'] ?: null);
+        Meta::saveValues(Meta::TARGET_CONTENT, (int) $bean->id, $data['meta']);
 
         // URL na editaci právě vytvořeného obsahu
         $editUrl = '/admin/content/' . ContentType::slug($bean->type) . '/' . $bean->id . '/edit'; // ← změna
@@ -289,6 +295,7 @@ class ContentController extends AjaxController
         $menuSlug = $definition['slug'] ?? $slug;
         $allowedTermTypes = $this->allowedTermTypes($content->type);
         $viewUrl = $content->slug ? '/' . ContentType::slug($content->type) . '/' . $content->slug : null;
+        $metaValues = Meta::valuesFor(Meta::TARGET_CONTENT, (int) $content->id);
 
         $this->render('admin/content/form.twig', [
             'values' => [
@@ -314,6 +321,8 @@ class ContentController extends AjaxController
             'allowed_term_types' => $allowedTermTypes,
             'view_url' => $viewUrl,
             'shortcodes' => Shortcode::definitions(),
+            'meta_keys' => Meta::allKeys(),
+            'meta_values' => $metaValues,
         ]);
     }
 
@@ -362,6 +371,8 @@ class ContentController extends AjaxController
                 'allowed_term_types' => $this->allowedTermTypes($content->type),
                 'view_url' => $data['slug'] !== '' ? '/' . ContentType::slug($content->type) . '/' . $data['slug'] : null,
                 'shortcodes' => Shortcode::definitions(),
+                'meta_keys' => Meta::allKeys(),
+                'meta_values' => $data['meta'],
             ]);
             return;
         }
@@ -382,6 +393,7 @@ class ContentController extends AjaxController
 
         $this->syncTerms((int) $content->id, $data['terms']);
         $this->syncMediaAttachments((int) $content->id, $data['media_ids'], $data['thumbnail_id'] ?: null);
+        Meta::saveValues(Meta::TARGET_CONTENT, (int) $content->id, $data['meta']);
 
         // URL na editaci právě uloženého obsahu
         $editUrl = '/admin/content/' . ContentType::slug($content->type) . '/' . $content->id . '/edit'; // ← změna
@@ -568,6 +580,7 @@ class ContentController extends AjaxController
             'terms' => $this->extractTermIds($_POST['terms'] ?? []),
             'allow_comments' => isset($_POST['allow_comments']) ? '1' : '0',
             'publish_at' => trim($_POST['publish_at'] ?? ''),
+            'meta' => Meta::sanitizeValues($_POST['meta'] ?? []),
         ];
     }
 

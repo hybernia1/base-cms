@@ -44,8 +44,9 @@
                                 <h2 class="h5 card-title">
                                     <a href="/{{ type_def.slug }}/{{ post.slug }}" class="stretched-link text-decoration-none">{{ post.title }}</a>
                                 </h2>
-                                {% if post.body %}
-                                    <p class="card-text text-muted">{{ post.body|striptags|slice(0, 180) }}{% if post.body|striptags|length > 180 %}…{% endif %}</p>
+                                {% set preview = post.excerpt ?: post.body %}
+                                {% if preview %}
+                                    <p class="card-text text-muted">{{ preview|striptags|slice(0, 180) }}{% if preview|striptags|length > 180 %}…{% endif %}</p>
                                 {% endif %}
                             </div>
                         </article>

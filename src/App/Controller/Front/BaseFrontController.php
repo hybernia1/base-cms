@@ -178,8 +178,11 @@ HTML;
                 'title' => $item->title ?? '',
                 'slug' => $item->slug ?? '',
                 'body' => $item->body ?? '',
+                'excerpt' => $item->excerpt ?? '',
                 'created_at' => $item->created_at ?? null,
                 'type' => $item->type ?? '',
+                'schema_type' => $item->schema_type ?? 'Article',
+                'publish_at' => $item->publish_at ?? null,
                 'author' => $map[$authorId] ?? null,
             ];
         }

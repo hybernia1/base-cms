@@ -19,6 +19,7 @@
             {{ snippet|raw }}
         {% endfor %}
     {% endif %}
+    {% block head_extra %}{% endblock %}
     <style>
         body { background-color: #f8fafc; }
         header { background: #0d6efd; color: #fff; }

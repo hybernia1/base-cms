@@ -10,6 +10,19 @@
         <meta name="description" content="{{ description|striptags }}">
     {% endif %}
 
+    {% set og_image = thumbnail ? base_url ~ '/' ~ thumbnail.path ~ '/' ~ (thumbnail.webp_filename ?: thumbnail.filename) : null %}
+    {% if current_url is defined %}
+        <meta property="og:url" content="{{ current_url }}">
+        <meta property="og:type" content="article">
+    {% endif %}
+    <meta property="og:title" content="{{ item.title }}">
+    {% if description %}<meta property="og:description" content="{{ description|striptags }}">{% endif %}
+    {% if og_image %}<meta property="og:image" content="{{ og_image }}">{% endif %}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ item.title }}">
+    {% if description %}<meta name="twitter:description" content="{{ description|striptags }}">{% endif %}
+    {% if og_image %}<meta name="twitter:image" content="{{ og_image }}">{% endif %}
+
     {% set schema_data = {
         '@context': 'https://schema.org',
         '@type': item.schema_type|default('Article'),
@@ -18,7 +31,7 @@
         'datePublished': item.publish_at is defined and item.publish_at ? item.publish_at|date('c') : null,
         'dateModified': item.updated_at is defined and item.updated_at ? item.updated_at|date('c') : null,
         'author': author ? {'@type': 'Person', 'name': author.nickname} : null,
-        'image': thumbnail ? base_url ~ '/' ~ thumbnail.path ~ '/' ~ (thumbnail.webp_filename ?: thumbnail.filename) : null,
+        'image': og_image,
         'mainEntityOfPage': current_url,
         'url': current_url,
         'publisher': site.name is defined ? {'@type': 'Organization', 'name': site.name} : null
@@ -34,7 +47,7 @@
             {% else %}
                 <article class="card shadow-sm mt-4">
                     {% if thumbnail %}
-                        <img src="/{{ thumbnail.path }}/{{ thumbnail.webp_filename ?: thumbnail.filename }}" class="card-img-top" alt="{{ thumbnail.alt ?: item.title }}">
+                        <img src="/{{ thumbnail.path }}/{{ thumbnail.webp_filename ?: thumbnail.filename }}" class="card-img-top" alt="{{ thumbnail.alt ?: item.title }}" loading="lazy" decoding="async">
                     {% endif %}
                     <div class="card-body p-4">
                         <div class="text-muted mb-2">

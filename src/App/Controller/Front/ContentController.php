@@ -104,7 +104,24 @@ class ContentController extends BaseFrontController
             'rendered_body' => $renderedBody,
             'meta_values' => $metaValues,
             'meta_definitions' => $metaDefinitions,
+            'current_url' => $this->currentUrl(),
+            'base_url' => $this->baseUrl(),
         ]);
+    }
+
+    private function baseUrl(): string
+    {
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+
+        return $scheme . '://' . $host;
+    }
+
+    private function currentUrl(): string
+    {
+        $uri = $_SERVER['REQUEST_URI'] ?? '/';
+
+        return rtrim($this->baseUrl(), '/') . $uri;
     }
 
     private function loadAuthor(int $userId): ?array

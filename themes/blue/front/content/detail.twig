@@ -4,6 +4,28 @@
     {% if item %}{{ item.title }} | {{ type.name|default('Obsah') }}{% else %}Nenalezeno{% endif %}
 {% endblock %}
 
+{% block head_extra %}
+    {% set description = (item.excerpt ?: (item.body|default('')|striptags|slice(0, 240))) %}
+    {% if description %}
+        <meta name="description" content="{{ description|striptags }}">
+    {% endif %}
+
+    {% set schema_data = {
+        '@context': 'https://schema.org',
+        '@type': item.schema_type|default('Article'),
+        'headline': item.title,
+        'description': description,
+        'datePublished': item.publish_at is defined and item.publish_at ? item.publish_at|date('c') : null,
+        'dateModified': item.updated_at is defined and item.updated_at ? item.updated_at|date('c') : null,
+        'author': author ? {'@type': 'Person', 'name': author.nickname} : null,
+        'image': thumbnail ? base_url ~ '/' ~ thumbnail.path ~ '/' ~ (thumbnail.webp_filename ?: thumbnail.filename) : null,
+        'mainEntityOfPage': current_url,
+        'url': current_url,
+        'publisher': site.name is defined ? {'@type': 'Organization', 'name': site.name} : null
+    } %}
+    <script type="application/ld+json">{{ schema_data|json_encode(constant('JSON_UNESCAPED_UNICODE') bitor constant('JSON_UNESCAPED_SLASHES'))|raw }}</script>
+{% endblock %}
+
 {% block body %}
     <div class="row justify-content-center">
         <div class="col-lg-10 col-xl-8">
@@ -33,6 +55,9 @@
                                     <a href="/terms/{{ term.type }}/{{ term.slug }}" class="badge text-bg-light border text-decoration-none">{{ term.name }}</a>
                                 {% endfor %}
                             </div>
+                        {% endif %}
+                        {% if item.excerpt %}
+                            <p class="lead">{{ item.excerpt }}</p>
                         {% endif %}
                         <div class="content-body">
                             {{ (rendered_body ?? item.body)|raw }}

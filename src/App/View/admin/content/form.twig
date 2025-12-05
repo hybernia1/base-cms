@@ -38,6 +38,23 @@
                         </div>
 
                         <div class="mb-3">
+                            <label for="excerpt" class="form-label">Perex</label>
+                            <textarea
+                                name="excerpt"
+                                id="excerpt"
+                                class="form-control {% if errors.excerpt %}is-invalid{% endif %}"
+                                rows="3"
+                                maxlength="500"
+                                placeholder="Krátký úryvek bez HTML"
+                            >{{ values.excerpt }}</textarea>
+                            {% if errors.excerpt %}
+                                <div class="invalid-feedback">{{ errors.excerpt }}</div>
+                            {% else %}
+                                <div class="form-text">Použije se pro SEO a náhledy v archivech. HTML není podporováno.</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <label for="body" class="form-label mb-0">Text</label>
                                 <div class="d-flex gap-2">
@@ -118,6 +135,20 @@
                                 <div class="invalid-feedback">{{ errors.publish_at }}</div>
                             {% else %}
                                 <div class="form-text">Můžeš nastavit i budoucí datum, obsah se na webu zobrazí až po tomto čase.</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="schema_type" class="form-label">Typ obsahu pro strukturovaná data</label>
+                            <select name="schema_type" id="schema_type" class="form-select {% if errors.schema_type %}is-invalid{% endif %}">
+                                {% for key, label in schema_types %}
+                                    <option value="{{ key }}" {% if values.schema_type == key %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if errors.schema_type %}
+                                <div class="invalid-feedback">{{ errors.schema_type }}</div>
+                            {% else %}
+                                <div class="form-text">Vyber formát pro JSON-LD (Schema.org). Pomáhá vyhledávačům lépe pochopit obsah.</div>
                             {% endif %}
                         </div>
 

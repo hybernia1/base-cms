@@ -15,6 +15,13 @@ use App\Service\Shortcode;
 
 class ContentController extends AjaxController
 {
+    private const SCHEMA_TYPES = [
+        'Article' => 'Obecný článek (Article)',
+        'NewsArticle' => 'Zpravodajský článek (NewsArticle)',
+        'BlogPosting' => 'Blogový příspěvek (BlogPosting)',
+        'WebPage' => 'Webová stránka (WebPage)',
+    ];
+
     public function index($slug)
     {
         Auth::requireRole(['admin', 'editor']);
@@ -138,8 +145,10 @@ class ContentController extends AjaxController
             'author' => $author,
             'status' => $content->status,
             'body' => $content->body,
+            'excerpt' => $content->excerpt,
             'thumbnail_id' => $content->thumbnail_id ? (int) $content->thumbnail_id : null,
             'media_ids' => $this->loadMediaIdsForContent((int) $content->id),
+            'schema_type' => $content->schema_type ?: $this->defaultSchemaType(),
             'publish_at' => $content->publish_at,
             'created_at' => $content->created_at,
             'updated_at' => $content->updated_at,
@@ -176,11 +185,13 @@ class ContentController extends AjaxController
             'values' => [
                 'title' => '',
                 'slug'  => '',
+                'excerpt' => '',
                 'body'  => '',
                 'status' => 'draft',
                 'thumbnail_id' => '',
                 'media_ids' => [],
                 'publish_at' => date('Y-m-d H:i:s'),
+                'schema_type' => $this->defaultSchemaType(),
             ],
             'errors' => [],
             'heading' => $this->newContentHeading($definition),
@@ -195,6 +206,7 @@ class ContentController extends AjaxController
             'shortcodes' => Shortcode::definitions(),
             'meta_keys' => Meta::allKeys(),
             'meta_values' => [],
+            'schema_types' => $this->schemaTypes(),
         ]);
     }
 
@@ -234,6 +246,7 @@ class ContentController extends AjaxController
                 'shortcodes' => Shortcode::definitions(),
                 'meta_keys' => Meta::allKeys(),
                 'meta_values' => $data['meta'],
+                'schema_types' => $this->schemaTypes(),
             ]);
             return;
         }
@@ -244,9 +257,11 @@ class ContentController extends AjaxController
         $bean->type = $data['type'];
         $bean->status = $data['status'] ?: 'draft';
         $bean->allow_comments = $data['allow_comments'];
+        $bean->excerpt = $data['excerpt'];
         $bean->body = $data['body'];
         $bean->thumbnail_id = $data['thumbnail_id'] ?: null;
         $bean->thumbnail_alt = null;
+        $bean->schema_type = $data['schema_type'] ?: $this->defaultSchemaType();
         $bean->publish_at = $data['publish_at'] ?? date('Y-m-d H:i:s');
         $currentUser = Auth::user();
         $bean->author_id = $currentUser ? (int) $currentUser->id : null;
@@ -301,12 +316,14 @@ class ContentController extends AjaxController
             'values' => [
                 'title' => $content->title,
                 'slug'  => $content->slug,
+                'excerpt' => $content->excerpt,
                 'body'  => $content->body,
                 'status' => $content->status,
                 'allow_comments' => (string) $content->allow_comments,
                 'thumbnail_id' => $content->thumbnail_id,
                 'media_ids' => $this->loadMediaIdsForContent((int) $content->id),
                 'publish_at' => $content->publish_at ?: $content->created_at,
+                'schema_type' => $content->schema_type ?: $this->defaultSchemaType(),
             ],
             'errors' => [],
             'heading' => $this->editContentHeading($definition),
@@ -323,6 +340,7 @@ class ContentController extends AjaxController
             'shortcodes' => Shortcode::definitions(),
             'meta_keys' => Meta::allKeys(),
             'meta_values' => $metaValues,
+            'schema_types' => $this->schemaTypes(),
         ]);
     }
 
@@ -373,6 +391,7 @@ class ContentController extends AjaxController
                 'shortcodes' => Shortcode::definitions(),
                 'meta_keys' => Meta::allKeys(),
                 'meta_values' => $data['meta'],
+                'schema_types' => $this->schemaTypes(),
             ]);
             return;
         }
@@ -382,9 +401,11 @@ class ContentController extends AjaxController
         $content->type = $data['type'];
         $content->status = $data['status'] ?: 'draft';
         $content->allow_comments = $data['allow_comments'];
+        $content->excerpt = $data['excerpt'];
         $content->body = $data['body'];
         $content->thumbnail_id = $data['thumbnail_id'] ?: null;
         $content->thumbnail_alt = null;
+        $content->schema_type = $data['schema_type'] ?: $this->defaultSchemaType();
         $content->publish_at = $data['publish_at'] ?? date('Y-m-d H:i:s');
         $currentUser = Auth::user();
         $content->author_id = $content->author_id ?: ($currentUser ? (int) $currentUser->id : null);
@@ -568,6 +589,16 @@ class ContentController extends AjaxController
         exit;
     }
 
+    private function schemaTypes(): array
+    {
+        return self::SCHEMA_TYPES;
+    }
+
+    private function defaultSchemaType(): string
+    {
+        return array_key_first(self::SCHEMA_TYPES);
+    }
+
     private function sanitizeInput(string $type): array
     {
         return [
@@ -575,12 +606,14 @@ class ContentController extends AjaxController
             'slug'  => trim($_POST['slug'] ?? ''),
             'type'  => $type,
             'status' => trim($_POST['status'] ?? 'draft'),
+            'excerpt' => trim(strip_tags($_POST['excerpt'] ?? '')),
             'body'  => trim($_POST['body'] ?? ''),
             'thumbnail_id' => (int) ($_POST['thumbnail_id'] ?? 0),
             'media_ids' => $this->filterIds($_POST['media_ids'] ?? []),
             'terms' => $this->extractTermIds($_POST['terms'] ?? []),
             'allow_comments' => isset($_POST['allow_comments']) ? '1' : '0',
             'publish_at' => trim($_POST['publish_at'] ?? ''),
+            'schema_type' => trim($_POST['schema_type'] ?? ''),
             'meta' => Meta::sanitizeValues($_POST['meta'] ?? []),
         ];
     }
@@ -630,6 +663,18 @@ class ContentController extends AjaxController
 
         if (!in_array($data['status'], $allowedStatuses, true)) {
             $errors['status'] = 'Vyber platný stav.';
+        }
+
+        if ($data['excerpt'] !== '' && mb_strlen($data['excerpt']) > 500) {
+            $errors['excerpt'] = 'Perex může mít maximálně 500 znaků.';
+        }
+
+        if ($data['schema_type'] === '') {
+            $data['schema_type'] = $this->defaultSchemaType();
+        }
+
+        if (!array_key_exists($data['schema_type'], $this->schemaTypes())) {
+            $errors['schema_type'] = 'Vyber platný typ obsahu pro strukturovaná data.';
         }
 
         if (!empty($data['terms'])) {

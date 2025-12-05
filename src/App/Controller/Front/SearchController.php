@@ -14,13 +14,13 @@ class SearchController extends BaseFrontController
         $posts = [];
         $emptyMessage = 'Zadejte hledaný výraz.';
 
-        if ($query !== '') {
-            $likeQuery = '%' . $query . '%';
-            $found = R::findAll(
-                'content',
-                ' status = ? AND publish_at <= ? AND deleted_at IS NULL AND (title LIKE ? OR body LIKE ?) ORDER BY publish_at DESC ',
-                ['published', date('Y-m-d H:i:s'), $likeQuery, $likeQuery]
-            );
+            if ($query !== '') {
+                $likeQuery = '%' . $query . '%';
+                $found = R::findAll(
+                    'content',
+                    ' status = ? AND publish_at <= ? AND deleted_at IS NULL AND (title LIKE ? OR excerpt LIKE ? OR body LIKE ?) ORDER BY publish_at DESC ',
+                    ['published', date('Y-m-d H:i:s'), $likeQuery, $likeQuery, $likeQuery]
+                );
 
             $posts = $this->attachAuthors($found);
             $emptyMessage = 'Pro zadaný dotaz se nenašly žádné výsledky.';

@@ -8,6 +8,9 @@
     {% if seo is defined and not seo.indexing_enabled %}
         <meta name="robots" content="noindex, nofollow">
     {% endif %}
+    {% if current_url is defined %}
+        <link rel="canonical" href="{{ current_url }}">
+    {% endif %}
     {% if site.favicon and site.favicon.url %}
         <link rel="icon" href="{{ site.favicon.url }}" type="{{ site.favicon.mime_type ?: 'image/x-icon' }}">
     {% endif %}
@@ -85,8 +88,10 @@
                     <li class="nav-item w-100 w-lg-auto ms-lg-3">
                         <form class="d-flex" role="search" method="get" action="/search">
                             <label class="visually-hidden" for="navSearch">Hledat</label>
-                            <input class="form-control form-control-sm me-2" type="search" name="q" id="navSearch" placeholder="Hledat…" aria-label="Hledat">
-                            <button class="btn btn-outline-light btn-sm" type="submit"><i class="bi bi-search"></i></button>
+                            <input class="form-control form-control-sm me-2" type="search" name="q" id="navSearch" placeholder="Hledat…" aria-label="Hledat" minlength="2" required>
+                            <button class="btn btn-outline-light btn-sm" type="submit" aria-label="Odeslat vyhledávání" title="Hledat">
+                                <i class="bi bi-search" aria-hidden="true"></i>
+                            </button>
                         </form>
                     </li>
                 </ul>

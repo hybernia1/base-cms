@@ -6,6 +6,7 @@
     <h1>Registrace</h1>
 
     <form method="post" action="/register" class="card p-4 shadow-sm">
+        <input type="hidden" name="_csrf" value="{{ csrf_token('front_register') }}">
         <div class="mb-3">
             <label class="form-label" for="email">E-mail</label>
             <input type="email" name="email" id="email" class="form-control" value="{{ values.email }}" required>

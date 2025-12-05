@@ -26,7 +26,6 @@ class Comment
         $comment->body = trim($data['body'] ?? '');
         $comment->status = $data['status'] ?? 'pending';
         $comment->depth = (int) ($data['depth'] ?? 0);
-        $comment->ip_address = trim((string) ($data['ip_address'] ?? ''));
         $comment->created_at = date('Y-m-d H:i:s');
         $comment->updated_at = date('Y-m-d H:i:s');
 

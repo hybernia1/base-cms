@@ -201,12 +201,6 @@
                             <div class="form-text">Při vypnutí tohoto nastavení se komentáře povolí pouze přihlášeným účtům a schvalování se nevyužije.</div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="comments_rate_limit_seconds" class="form-label">Rate limit anonymních komentářů (sekundy)</label>
-                            <input type="number" class="form-control" id="comments_rate_limit_seconds" name="comments_rate_limit_seconds" value="{{ values.comments_rate_limit_seconds|default(60) }}" min="0" max="86400">
-                            <div class="form-text">Omezení platí jen pro nepřihlášené uživatele. Hodnota 0 vypne omezení.</div>
-                        </div>
-
                     {% elseif active_section == 'seo' %}
                         <h2 class="h5 mb-3">SEO</h2>
 

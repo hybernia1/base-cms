@@ -3,7 +3,6 @@ namespace App\Controller\Admin;
 
 use App\Service\Auth;
 use App\Service\Flash;
-use App\Service\Csrf;
 
 class AuthController extends AjaxController
 {
@@ -19,12 +18,6 @@ class AuthController extends AjaxController
 
     public function login()
     {
-        if (!Csrf::validate('admin_login', $_POST['_csrf'] ?? null)) {
-            Flash::addError('Formulář vypršel, zkuste to prosím znovu.');
-            header('Location: /admin/login');
-            exit;
-        }
-
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';
 

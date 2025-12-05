@@ -115,7 +115,7 @@ class Auth
         $user->failed_attempts = 0;
         $user->locked_until = null;
         $user->last_login_at = date('Y-m-d H:i:s');
-        $user->last_login_ip = RequestHelper::clientIp();
+        $user->last_login_ip = self::getIpAddress();
         R::store($user);
 
         $log = R::dispense('loginlog');
@@ -149,5 +149,10 @@ class Auth
         }
 
         return strtotime((string) $user->locked_until) > time();
+    }
+
+    private static function getIpAddress(): string
+    {
+        return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     }
 }

@@ -8,7 +8,6 @@ use App\Service\Setting;
 use App\Service\MediaHelper;
 use App\Service\ThemeManager;
 use App\Service\Auth;
-use App\Service\Csrf;
 use Twig\TwigFunction;
 
 session_start();
@@ -65,7 +64,6 @@ try {
 
         return '<a href="/login">Přihlaste se pro zobrazení obsahu</a>';
     }, ['is_safe' => ['html']]));
-    $twig->addFunction(new TwigFunction('csrf_token', fn (string $key) => Csrf::token($key)));
 
     $appSettings = [
         'timezone' => Setting::DEFAULTS['timezone'],

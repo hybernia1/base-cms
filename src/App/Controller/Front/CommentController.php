@@ -4,8 +4,6 @@ namespace App\Controller\Front;
 use App\Service\Auth;
 use App\Service\Comment;
 use App\Service\CommentNotifier;
-use App\Service\Csrf;
-use App\Service\RequestHelper;
 use App\Service\Setting;
 use RedBeanPHP\R as R;
 
@@ -15,19 +13,12 @@ class CommentController extends BaseFrontController
     {
         header('Content-Type: application/json');
 
-        if (!Csrf::validate('comment_form', $_POST['_csrf'] ?? null)) {
-            http_response_code(400);
-            echo json_encode(['status' => 'error', 'message' => 'Platnost formuláře vypršela. Obnovte stránku a zkuste to znovu.']);
-            return;
-        }
-
         $contentId = (int) ($_POST['content_id'] ?? 0);
         $parentId = $_POST['parent_id'] ?? '';
         $body = trim($_POST['body'] ?? '');
         $authorName = trim($_POST['author_name'] ?? '');
         $authorEmail = trim($_POST['author_email'] ?? '');
         $currentUser = Auth::user();
-        $ipAddress = RequestHelper::clientIp();
         $allowAnonymous = Setting::get('comments_allow_anonymous', '0') === '1';
 
         $content = $contentId ? R::load('content', $contentId) : null;
@@ -68,31 +59,6 @@ class CommentController extends BaseFrontController
             $authorEmail = $currentUser->email ?? '';
         }
 
-        if (!$currentUser) {
-            $rateLimitSeconds = (int) Setting::get(
-                'comments_rate_limit_seconds',
-                Setting::DEFAULTS['comments_rate_limit_seconds'] ?? 60
-            );
-            $rateLimitSeconds = max(0, $rateLimitSeconds);
-
-            if ($rateLimitSeconds > 0) {
-                $recentAnonymousComment = R::findOne(
-                    'comment',
-                    ' ip_address = ? AND user_id IS NULL AND deleted_at IS NULL AND created_at >= ? ',
-                    [$ipAddress, date('Y-m-d H:i:s', time() - $rateLimitSeconds)]
-                );
-
-                if ($recentAnonymousComment) {
-                    http_response_code(429);
-                    echo json_encode([
-                        'status' => 'error',
-                        'message' => 'Píšete příliš rychle. Zkuste to prosím znovu za chvíli.',
-                    ]);
-                    return;
-                }
-            }
-        }
-
         $maxDepth = (int) Setting::get('comments_max_depth', 0);
         $parentDepth = 0;
         if ($parentId) {
@@ -121,7 +87,6 @@ class CommentController extends BaseFrontController
             'body' => $body,
             'status' => $status,
             'depth' => $parentDepth + ($parentId ? 1 : 0),
-            'ip_address' => $ipAddress,
         ]);
 
         if ($status === 'approved') {

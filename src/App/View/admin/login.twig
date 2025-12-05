@@ -83,7 +83,6 @@
 
                 <div class="login-card p-4">
                     <form method="post" action="/admin/login" class="d-flex flex-column gap-3">
-                        <input type="hidden" name="_csrf" value="{{ csrf_token('admin_login') }}">
                         <div>
                             <label class="form-label">E-mail</label>
                             <input type="email" name="email" class="form-control" required>

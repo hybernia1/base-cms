@@ -294,7 +294,6 @@ class InstallController
                 `user_id` INT UNSIGNED DEFAULT NULL,
                 `author_name` VARCHAR(191) DEFAULT '',
                 `author_email` VARCHAR(191) DEFAULT '',
-                `ip_address` VARCHAR(45) DEFAULT '',
                 `body` TEXT NOT NULL,
                 `status` VARCHAR(20) NOT NULL DEFAULT 'pending',
                 `depth` TINYINT UNSIGNED NOT NULL DEFAULT 0,

@@ -152,7 +152,6 @@ class CommentController extends AjaxController
                 'status' => $comment->status,
                 'content_id' => (int) $comment->content_id,
                 'parent_id' => $comment->parent_id ? (int) $comment->parent_id : null,
-                'ip_address' => (string) ($comment->ip_address ?? ''),
                 'created_at' => $comment->created_at,
                 'created_at_formatted' => $comment->created_at ? date($format, strtotime($comment->created_at)) : null,
             ];

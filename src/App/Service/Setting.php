@@ -15,7 +15,6 @@ class Setting
         'comments_max_depth' => '2',
         'comments_moderation' => '1',
         'comments_allow_anonymous' => '0',
-        'comments_rate_limit_seconds' => '60',
         'mail_transport' => 'mail',
         'smtp_host' => '',
         'smtp_port' => '587',

@@ -59,38 +59,6 @@ class CommentController extends BaseFrontController
             $authorEmail = $currentUser->email ?? '';
         }
 
-        $rateLimitSeconds = $currentUser ? 5 : 60;
-        $lastComment = null;
-
-        if ($currentUser) {
-            $lastComment = R::findOne(
-                'comment',
-                ' user_id = ? AND deleted_at IS NULL AND (status = ? OR status = ? OR status IS NULL) ORDER BY created_at DESC ',
-                [$currentUser->id, 'approved', 'pending']
-            );
-        } elseif ($allowAnonymous) {
-            $lastComment = R::findOne(
-                'comment',
-                ' user_id IS NULL AND author_email = ? AND deleted_at IS NULL AND (status = ? OR status = ? OR status IS NULL) ORDER BY created_at DESC ',
-                [$authorEmail, 'approved', 'pending']
-            );
-        }
-
-        if ($lastComment) {
-            $lastCreatedAt = strtotime($lastComment->created_at ?? '');
-            $elapsedSeconds = $lastCreatedAt ? time() - $lastCreatedAt : $rateLimitSeconds;
-
-            if ($elapsedSeconds < $rateLimitSeconds) {
-                $waitFor = $rateLimitSeconds - $elapsedSeconds;
-                http_response_code(429);
-                echo json_encode([
-                    'status' => 'error',
-                    'message' => 'Komentáře můžete odesílat s prodlevou. Zkuste to prosím znovu za ' . $waitFor . ' s.',
-                ]);
-                return;
-            }
-        }
-
         $maxDepth = (int) Setting::get('comments_max_depth', 0);
         $parentDepth = 0;
         if ($parentId) {

@@ -43,11 +43,17 @@ class HomeController extends BaseFrontController
         $items = $this->attachAuthors($items);
         $typeDef = $definitions[$typeKey];
 
+        $breadcrumbs = [
+            ['label' => 'Domů', 'url' => '/'],
+            ['label' => $typeDef['plural_name'] ?? ($typeDef['menu_label'] ?? ($typeDef['name'] ?? $slug))],
+        ];
+
         $this->render('front/home.twig', [
             'posts' => $items,
             'content_types' => $definitions,
             'heading' => $typeDef['plural_name'] ?? ($typeDef['menu_label'] ?? $typeDef['name'] ?? $slug),
             'empty_message' => 'Pro tento typ zatím nic není publikováno.',
+            'breadcrumbs' => $breadcrumbs,
         ]);
     }
 }

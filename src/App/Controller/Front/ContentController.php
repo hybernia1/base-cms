@@ -23,6 +23,7 @@ class ContentController extends BaseFrontController
 
         $definitions = ContentType::definitions();
         $typeDef = $definitions[$typeKey] ?? ['name' => $typeSlug, 'slug' => $typeSlug];
+        $typeSlug = $typeDef['slug'] ?? $typeSlug;
 
         $item = R::findOne(
             'content',
@@ -90,6 +91,15 @@ class ContentController extends BaseFrontController
 
         $commentingEnabled = $commentAllowed && ($commentSettings['allow_anonymous'] || $currentUser);
 
+        $breadcrumbs = [
+            ['label' => 'Domů', 'url' => '/'],
+            [
+                'label' => $typeDef['plural_name'] ?? ($typeDef['menu_label'] ?? ($typeDef['name'] ?? $typeSlug)),
+                'url' => '/' . $typeSlug,
+            ],
+            ['label' => $item->title ?? $typeSlug],
+        ];
+
         $this->render('front/content/detail.twig', [
             'item' => $item,
             'type' => $typeDef,
@@ -106,6 +116,7 @@ class ContentController extends BaseFrontController
             'meta_definitions' => $metaDefinitions,
             'current_url' => $this->currentUrl(),
             'base_url' => $this->baseUrl(),
+            'breadcrumbs' => $breadcrumbs,
         ]);
     }
 

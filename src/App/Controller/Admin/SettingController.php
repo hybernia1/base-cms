@@ -109,6 +109,7 @@ class SettingController extends AjaxController
     {
         $siteName = trim($_POST['site_name'] ?? '');
         $allowRegistration = isset($_POST['allow_registration']) ? '1' : '0';
+        $breadcrumbsEnabled = isset($_POST['breadcrumbs_enabled']) ? '1' : '0';
         $timezone = trim($_POST['timezone'] ?? Setting::DEFAULTS['timezone']);
         $dateFormat = trim($_POST['date_format'] ?? Setting::DEFAULTS['date_format']);
         $timeFormat = trim($_POST['time_format'] ?? Setting::DEFAULTS['time_format']);
@@ -127,6 +128,7 @@ class SettingController extends AjaxController
 
         Setting::set('site_name', $siteName);
         Setting::set('allow_registration', $allowRegistration);
+        Setting::set('breadcrumbs_enabled', $breadcrumbsEnabled);
         Setting::set('timezone', $timezone ?: Setting::DEFAULTS['timezone']);
         Setting::set('date_format', $dateFormat ?: Setting::DEFAULTS['date_format']);
         Setting::set('time_format', $timeFormat ?: Setting::DEFAULTS['time_format']);

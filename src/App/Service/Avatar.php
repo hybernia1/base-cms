@@ -6,6 +6,9 @@ use Verot\Upload\Upload as UploadHandler;
 class Avatar
 {
     private const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'];
+    private const MAX_FILESIZE_BYTES = 50 * 1024;
+    private const MAX_DIMENSION = 200;
+    private const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
     public static function upload(array $file): array
     {
@@ -22,33 +25,57 @@ class Avatar
             return [null, 'Nepodporovaný formát obrázku.'];
         }
 
-        $handler = new UploadHandler($file);
-        if (!$handler->uploaded) {
-            return [null, 'Upload není platný.'];
-        }
-
         $targetDir = rtrim(Upload::baseUploadPath(), '/') . '/avatar/' . date('Y/m');
         if (!is_dir($targetDir)) {
             mkdir($targetDir, 0775, true);
         }
 
-        $handler->allowed = Upload::mimeTypesFor(self::ALLOWED_EXTENSIONS);
-        $handler->file_auto_rename = true;
-        $handler->file_safe_name = true;
-        $handler->file_new_name_body = 'avatar_' . substr(hash('sha256', microtime(true) . ($file['name'] ?? '')), 0, 12);
+        $relativeDir = Upload::relativePath($targetDir);
+        $fileBaseName = 'avatar_' . substr(hash('sha256', microtime(true) . ($file['name'] ?? '')), 0, 12);
+        $qualities = [85, 75, 65, 55];
 
-        $handler->process($targetDir);
-        if (!$handler->processed) {
-            return [null, $handler->error ?? 'Zpracování selhalo.'];
+        foreach ($qualities as $quality) {
+            $handler = new UploadHandler($file);
+            if (!$handler->uploaded) {
+                return [null, 'Upload není platný.'];
+            }
+
+            $handler->allowed = Upload::mimeTypesFor(self::ALLOWED_EXTENSIONS);
+            $handler->file_max_size = self::MAX_UPLOAD_BYTES;
+            $handler->file_auto_rename = false;
+            $handler->file_safe_name = true;
+            $handler->file_overwrite = true;
+            $handler->file_new_name_body = $fileBaseName;
+
+            $handler->image_resize = true;
+            $handler->image_ratio_crop = true;
+            $handler->image_x = self::MAX_DIMENSION;
+            $handler->image_y = self::MAX_DIMENSION;
+            $handler->image_convert = 'webp';
+            $handler->image_quality = $quality;
+            $handler->jpeg_quality = $quality;
+
+            $handler->process($targetDir);
+            if (!$handler->processed) {
+                $handler->clean();
+                continue;
+            }
+
+            $storedFilename = $handler->file_dst_name;
+            $absolutePath = rtrim($targetDir, '/') . '/' . $storedFilename;
+            $handler->clean();
+
+            if (is_file($absolutePath) && filesize($absolutePath) <= self::MAX_FILESIZE_BYTES) {
+                $newPath = trim($relativeDir, '/') . '/' . $storedFilename;
+                return [$newPath, null];
+            }
+
+            if (is_file($absolutePath)) {
+                @unlink($absolutePath);
+            }
         }
 
-        $relativeDir = Upload::relativePath($targetDir);
-        $storedFilename = $handler->file_dst_name;
-        $handler->clean();
-
-        $newPath = trim($relativeDir, '/') . '/' . $storedFilename;
-
-        return [$newPath, null];
+        return [null, 'Avatar musí mít po úpravě maximálně 200x200 px a 50 kB.'];
     }
 
     public static function delete(?string $relativePath): void

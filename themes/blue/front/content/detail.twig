@@ -45,7 +45,7 @@
             {% if not item %}
                 <div class="alert alert-warning mt-4">Obsah nebyl nalezen.</div>
             {% else %}
-                <article class="card shadow-sm border-0 mt-4">
+                <article class="article-shell shadow-sm border-0 mt-4">
                     {% if thumbnail %}
                         <img src="/{{ thumbnail.path }}/{{ thumbnail.webp_filename ?: thumbnail.filename }}" class="card-img-top" alt="{{ thumbnail.alt ?: item.title }}" loading="lazy" decoding="async">
                     {% endif %}

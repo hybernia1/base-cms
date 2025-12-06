@@ -12,6 +12,10 @@
             <div class="d-flex align-items-center gap-3 mt-4 flex-wrap">
                 <div>
                     <h1 class="h4 mb-0">Diskuse: {{ content.title }}</h1>
+                    {% set content_preview = content.excerpt ?: content.body %}
+                    {% if content_preview %}
+                        <p class="article-subtitle text-muted mb-0 mt-2">{{ content_preview|striptags|slice(0, 180) }}{% if content_preview|striptags|length > 180 %}…{% endif %}</p>
+                    {% endif %}
                 </div>
             </div>
 

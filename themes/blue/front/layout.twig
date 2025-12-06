@@ -307,6 +307,8 @@
             position: relative;
             margin-left: calc(var(--comment-indent, 0) * var(--comment-indent-size));
             padding: var(--comment-padding-y) 1rem .75rem;
+            --connector-top: calc(-1 * var(--comment-gap) - var(--comment-padding-y) - (var(--comment-avatar-size) / 2));
+            --connector-bottom: calc(-1 * var(--comment-gap) + var(--comment-padding-y));
         }
         .comment-item.has-parent {
             padding-left: 1.6rem;
@@ -319,14 +321,29 @@
             border-color: var(--comment-connector);
         }
         .comment-item.has-parent::before {
-            top: calc(-1 * var(--comment-gap) - var(--comment-padding-y) - (var(--comment-avatar-size) / 2));
-            bottom: calc(-1 * var(--comment-gap) + var(--comment-padding-y));
+            top: var(--connector-top);
+            bottom: var(--connector-bottom);
             border-left: 2px solid var(--comment-connector);
+            box-shadow: var(--ancestor-shadows, none);
         }
         .comment-item.has-parent::after {
             top: calc(var(--comment-padding-y) + (var(--comment-avatar-size) / 2));
             width: var(--comment-indent-size);
             border-top: 2px solid var(--comment-connector);
+        }
+        .comment-connector-stack {
+            position: absolute;
+            top: var(--connector-top);
+            bottom: calc(-1 * var(--comment-gap) + var(--comment-padding-y));
+            left: calc((var(--comment-avatar-size) / 2) - var(--comment-indent-size));
+            width: 2px;
+            background: transparent;
+            pointer-events: none;
+            box-shadow: var(--stack-shadows, none);
+            display: none;
+        }
+        .comment-connector-stack.has-lines {
+            display: block;
         }
         .comment-inner { display: flex; gap: .95rem; align-items: flex-start; }
         .comment-avatar { flex-shrink: 0; }

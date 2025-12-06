@@ -293,7 +293,12 @@
         .archive-list .article-feature,
         .archive-list .article-row { border: none; border-radius: 0; box-shadow: none; }
         .archive-list .article-row .stretched-link::after { border-radius: 0; }
-        .comment-thread { display: flex; flex-direction: column; gap: 1rem; }
+        .comment-thread {
+            --comment-gap: 1rem;
+            display: flex;
+            flex-direction: column;
+            row-gap: var(--comment-gap);
+        }
         .comment-item {
             position: relative;
             margin-left: calc(var(--comment-indent, 0) * 24px);
@@ -307,8 +312,8 @@
             content: '';
             position: absolute;
             left: -18px;
-            top: 26px;
-            bottom: 26px;
+            top: calc(-1 * var(--comment-gap));
+            bottom: calc(-1 * var(--comment-gap));
             width: 2px;
             background: #e1e8f0;
             border-radius: 999px;

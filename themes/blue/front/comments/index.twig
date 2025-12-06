@@ -1,5 +1,7 @@
 {% extends 'front/layout.twig' %}
 
+{% set breadcrumbs_enabled = false %}
+
 {% block title %}
     Diskuse: {{ content.title }} | {{ type.name|default('Obsah') }}
 {% endblock %}
@@ -9,7 +11,6 @@
         <div class="col-12">
             <div class="d-flex align-items-center gap-3 mt-4 flex-wrap">
                 <div>
-                    <p class="text-muted small mb-1">{{ content.created_at|date('j. n. Y') }} · {{ type.name|default(content.type) }}</p>
                     <h1 class="h4 mb-0">Diskuse: {{ content.title }}</h1>
                 </div>
             </div>

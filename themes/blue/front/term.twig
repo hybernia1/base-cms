@@ -24,7 +24,7 @@
             {% for post in items %}
                 {% set type_def = content_types[post.type]|default({'slug': post.type, 'name': post.type}) %}
                 {% set thumb = post.thumbnail ?? null %}
-                <article class="card border-0 shadow-sm p-3" style="border-radius: 20px;">
+                <article class="card border-0 p-3 article-card">
                     <div class="d-flex align-items-start gap-3">
                         <div class="article-thumb flex-shrink-0 d-flex align-items-center justify-content-center text-uppercase fw-bold" aria-hidden="true">
                             {% if thumb %}
@@ -34,33 +34,14 @@
                             {% endif %}
                         </div>
                         <div class="flex-grow-1">
-                            <div class="d-flex flex-wrap gap-2 text-muted small align-items-center mb-2">
-                                <span class="d-inline-flex align-items-center gap-1">
-                                    <i class="bi bi-calendar-event" aria-hidden="true"></i>
-                                    {{ post.created_at|date('j. n. Y') }}
-                                </span>
-                                <span class="d-inline-flex align-items-center gap-1">
-                                    <i class="bi bi-journal-text" aria-hidden="true"></i>
-                                    {{ type_def.name }}
-                                </span>
-                                {% if post.author %}
-                                    <span class="d-inline-flex align-items-center gap-1">
-                                        <i class="bi bi-person" aria-hidden="true"></i>
-                                        {% if post.author.profile_url %}
-                                            <a href="{{ post.author.profile_url }}" class="text-decoration-none">{{ post.author.nickname }}</a>
-                                        {% else %}
-                                            {{ post.author.nickname }}
-                                        {% endif %}
-                                    </span>
-                                {% endif %}
-                            </div>
                             <h2 class="h5 mb-2">
                                 <a href="/{{ type_def.slug }}/{{ post.slug }}" class="stretched-link text-decoration-none text-dark">{{ post.title }}</a>
                             </h2>
                             {% set preview = post.excerpt ?: post.body %}
                             {% if preview %}
-                                <p class="card-text text-muted mb-0">{{ preview|striptags|slice(0, 170) }}{% if preview|striptags|length > 170 %}…{% endif %}</p>
+                                <p class="card-text text-muted mb-2">{{ preview|striptags|slice(0, 170) }}{% if preview|striptags|length > 170 %}…{% endif %}</p>
                             {% endif %}
+                            <p class="text-muted small mb-0">{{ post.created_at|date('j. n. Y') }}</p>
                         </div>
                     </div>
                 </article>

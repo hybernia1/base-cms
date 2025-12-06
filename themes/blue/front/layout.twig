@@ -160,13 +160,23 @@
         .article-stack .card {
             background: #fdfaf5;
         }
+        .article-card {
+            border-radius: 18px;
+            transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+            box-shadow: 0 16px 30px rgba(34, 26, 16, 0.06);
+        }
+        .article-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 38px rgba(34, 26, 16, 0.08);
+            background-color: #fffaf2;
+        }
         .article-thumb {
-            width: 92px;
-            height: 92px;
+            width: 88px;
+            height: 88px;
             background: radial-gradient(circle at 30% 30%, #e5d7c3, #d1c2ae);
             color: var(--ink);
-            font-size: 1.5rem;
-            border-radius: 18px;
+            font-size: 1.4rem;
+            border-radius: 16px;
             overflow: hidden;
         }
         .article-thumb img {

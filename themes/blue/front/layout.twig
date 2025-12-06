@@ -211,6 +211,7 @@
             border-radius: var(--radius);
         }
         .article-thumb { width: 200px; height: 200px; background: #f1f4f8; color: var(--ink); font-size: 1.4rem; border-radius: 14px; overflow: hidden; }
+        .related-posts-card .article-thumb { width: 100px; height: 100px; }
         .article-thumb img { width: 100%; height: 100%; object-fit: cover; }
         .article-meta { font-size: .95rem; color: var(--muted); letter-spacing: .35px; text-transform: uppercase; }
         .article-title { font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.15; margin-bottom: .85rem; font-weight: 700; }
@@ -269,10 +270,11 @@
             .article-list-body { gap: .75rem; }
             .article-row { padding: 1rem; gap: .85rem; }
             .article-thumb { width: 86px; height: 86px; border-radius: 12px; }
-            .article-feature { box-shadow: none; }
-            .article-feature-body { padding: 1.15rem; }
-            .article-feature-title { margin-bottom: .6rem; }
         }
+        .archive-list { border: none; box-shadow: none; }
+        .archive-list .article-feature,
+        .archive-list .article-row { border: none; border-radius: 0; box-shadow: none; }
+        .archive-list .article-row .stretched-link::after { border-radius: 0; }
     </style>
 </head>
 <body class="{% if admin_bar is defined and admin_bar %}has-admin-bar{% endif %}">

@@ -18,7 +18,7 @@
     {% elseif items is empty %}
         <p class="text-muted">{{ empty_message|default('Tento term zatím nemá žádný obsah.') }}</p>
     {% else %}
-        <div class="article-stack card article-list">
+        <div class="article-stack card article-list archive-list">
             <div class="article-list-body">
                 {% for post in items %}
                     {% set type_def = content_types[post.type]|default({'slug': post.type, 'name': post.type}) %}

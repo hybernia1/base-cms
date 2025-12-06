@@ -20,39 +20,50 @@
     {% elseif items is empty %}
         <p class="text-muted">{{ empty_message|default('Tento term zatím nemá žádný obsah.') }}</p>
     {% else %}
-        <div class="row row-cols-1 row-cols-md-2 g-4">
+        <div class="article-stack d-flex flex-column gap-3">
             {% for post in items %}
                 {% set type_def = content_types[post.type]|default({'slug': post.type, 'name': post.type}) %}
                 {% set thumb = post.thumbnail ?? null %}
-                <div class="col">
-                    <article class="card h-100 shadow-sm">
-                        {% if thumb %}
-                            <div class="ratio ratio-16x9">
-                                <img src="/{{ thumb.path }}/{{ thumb.webp_filename ?: thumb.filename }}" alt="{{ thumb.alt ?: post.title }}" class="card-img-top object-fit-cover" loading="lazy" decoding="async">
-                            </div>
-                        {% endif %}
-                        <div class="card-body">
-                            <div class="text-muted small mb-1">
-                                {{ post.created_at|date('j. n. Y') }} · {{ type_def.name }}
+                <article class="card border-0 shadow-sm p-3" style="border-radius: 20px;">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="article-thumb flex-shrink-0 d-flex align-items-center justify-content-center text-uppercase fw-bold" aria-hidden="true">
+                            {% if thumb %}
+                                <img src="/{{ thumb.path }}/{{ thumb.webp_filename ?: thumb.filename }}" alt="{{ thumb.alt ?: post.title }}" loading="lazy" decoding="async">
+                            {% else %}
+                                {{ post.title|default('A')|slice(0, 1) }}
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex flex-wrap gap-2 text-muted small align-items-center mb-2">
+                                <span class="d-inline-flex align-items-center gap-1">
+                                    <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                                    {{ post.created_at|date('j. n. Y') }}
+                                </span>
+                                <span class="d-inline-flex align-items-center gap-1">
+                                    <i class="bi bi-journal-text" aria-hidden="true"></i>
+                                    {{ type_def.name }}
+                                </span>
                                 {% if post.author %}
-                                    ·
-                                    {% if post.author.profile_url %}
-                                        <a href="{{ post.author.profile_url }}" class="text-decoration-none">{{ post.author.nickname }}</a>
-                                    {% else %}
-                                        {{ post.author.nickname }}
-                                    {% endif %}
+                                    <span class="d-inline-flex align-items-center gap-1">
+                                        <i class="bi bi-person" aria-hidden="true"></i>
+                                        {% if post.author.profile_url %}
+                                            <a href="{{ post.author.profile_url }}" class="text-decoration-none">{{ post.author.nickname }}</a>
+                                        {% else %}
+                                            {{ post.author.nickname }}
+                                        {% endif %}
+                                    </span>
                                 {% endif %}
                             </div>
-                            <h2 class="h5 card-title">
-                                <a href="/{{ type_def.slug }}/{{ post.slug }}" class="stretched-link text-decoration-none">{{ post.title }}</a>
+                            <h2 class="h5 mb-2">
+                                <a href="/{{ type_def.slug }}/{{ post.slug }}" class="stretched-link text-decoration-none text-dark">{{ post.title }}</a>
                             </h2>
                             {% set preview = post.excerpt ?: post.body %}
                             {% if preview %}
-                                <p class="card-text text-muted">{{ preview|striptags|slice(0, 180) }}{% if preview|striptags|length > 180 %}…{% endif %}</p>
+                                <p class="card-text text-muted mb-0">{{ preview|striptags|slice(0, 170) }}{% if preview|striptags|length > 170 %}…{% endif %}</p>
                             {% endif %}
                         </div>
-                    </article>
-                </div>
+                    </div>
+                </article>
             {% endfor %}
         </div>
     {% endif %}

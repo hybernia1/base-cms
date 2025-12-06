@@ -145,30 +145,46 @@ HTML;
     protected function attachAuthors(array $items): array
     {
         $authorIds = [];
+        $thumbnailIds = [];
 
         foreach ($items as $item) {
             $authorId = (int) ($item->author_id ?? 0);
             if ($authorId > 0) {
                 $authorIds[] = $authorId;
             }
+
+            $thumbId = (int) ($item->thumbnail_id ?? 0);
+            if ($thumbId > 0) {
+                $thumbnailIds[] = $thumbId;
+            }
         }
 
         $authorIds = array_values(array_unique($authorIds));
-        if (!$authorIds) {
-            return $items;
+        $thumbnailIds = array_values(array_unique($thumbnailIds));
+
+        $thumbnailMap = [];
+        if ($thumbnailIds) {
+            $thumbPlaceholders = implode(',', array_fill(0, count($thumbnailIds), '?'));
+            $thumbs = R::findAll('media', ' id IN (' . $thumbPlaceholders . ') ', $thumbnailIds);
+
+            foreach ($thumbs as $thumb) {
+                $thumbnailMap[(int) $thumb->id] = $thumb;
+            }
         }
 
-        $placeholders = implode(',', array_fill(0, count($authorIds), '?'));
-        $authors = R::findAll('user', ' id IN (' . $placeholders . ') ', $authorIds);
-
         $map = [];
-        foreach ($authors as $author) {
-            $map[(int) $author->id] = [
-                'id' => (int) $author->id,
-                'email' => $author->email,
-                'nickname' => $author->nickname ?: $author->email,
-                'profile_url' => (int) ($author->is_profile_public ?? 1) === 1 ? '/users/' . $author->id : null,
-            ];
+        if ($authorIds) {
+            $placeholders = implode(',', array_fill(0, count($authorIds), '?'));
+            $authors = R::findAll('user', ' id IN (' . $placeholders . ') ', $authorIds);
+
+            foreach ($authors as $author) {
+                $map[(int) $author->id] = [
+                    'id' => (int) $author->id,
+                    'email' => $author->email,
+                    'nickname' => $author->nickname ?: $author->email,
+                    'profile_url' => (int) ($author->is_profile_public ?? 1) === 1 ? '/users/' . $author->id : null,
+                ];
+            }
         }
 
         $result = [];
@@ -186,6 +202,7 @@ HTML;
                 'schema_type' => $item->schema_type ?? 'Article',
                 'publish_at' => $item->publish_at ?? null,
                 'author' => $map[$authorId] ?? null,
+                'thumbnail' => $thumbnailMap[(int) ($item->thumbnail_id ?? 0)] ?? null,
             ];
         }
 

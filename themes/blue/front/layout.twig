@@ -43,10 +43,12 @@
             font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
         }
         header {
+            position: relative;
             background: #f9f7f3;
             color: var(--ink);
             box-shadow: 0 10px 35px rgba(34, 26, 16, 0.08);
             border-bottom: 1px solid var(--stroke);
+            overflow: hidden;
         }
         header a { color: var(--ink); text-decoration: none; }
         .navbar { padding: .7rem 0; }
@@ -77,9 +79,21 @@
         .nav-item + .nav-item { margin-left: .6rem; }
         .nav-search input { background: #fff; border: 1px solid var(--stroke); border-radius: 12px; }
         .nav-search .btn { border-radius: 12px; border-color: var(--stroke); color: var(--ink); }
-        .search-collapse .nav-search { max-width: 520px; margin-left: auto; margin-right: auto; }
-        .search-collapse { border-top: 1px solid var(--stroke); background: #f9f7f3; }
-        .search-collapse .form-control { background: #fff; }
+        .header-search-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(249, 247, 243, 0.98);
+            backdrop-filter: blur(2px);
+            display: none;
+            align-items: center;
+            z-index: 5;
+            border-bottom: 1px solid var(--stroke);
+            box-shadow: inset 0 -1px 0 var(--stroke);
+        }
+        .header-search-overlay.show { display: flex; }
+        .header-search-overlay .nav-search { width: 100%; max-width: 640px; }
+        .header-search-overlay .nav-search .form-control { background: #fff; }
+        .header-search-overlay .btn-close-search { border: 1px solid var(--stroke); }
         .nav-scroller {
             border-top: 1px solid var(--stroke);
             border-bottom: 1px solid var(--stroke);
@@ -223,7 +237,7 @@
             {% endif %}
 
             <div class="d-flex align-items-center gap-2 nav-actions ms-auto">
-                <button class="btn btn-icon" type="button" data-bs-toggle="collapse" data-bs-target="#navSearchCollapse" aria-expanded="false" aria-controls="navSearchCollapse" aria-label="Otevřít vyhledávání">
+                <button class="btn btn-icon" type="button" data-action="toggle-search" aria-expanded="false" aria-controls="headerSearchOverlay" aria-label="Otevřít vyhledávání">
                     <i class="bi bi-search"></i>
                 </button>
                 <a class="btn btn-icon" href="{{ current_user ? '/profile' : '/login' }}" aria-label="{{ current_user ? 'Přejít na profil' : 'Přihlásit se' }}">
@@ -231,15 +245,18 @@
                 </a>
             </div>
         </div>
-        <div class="collapse search-collapse" id="navSearchCollapse">
-            <div class="container py-3">
-                <form class="d-flex nav-search" role="search" method="get" action="/search">
+        <div class="header-search-overlay" id="headerSearchOverlay" hidden>
+            <div class="container d-flex align-items-center gap-3 py-3 py-lg-0">
+                <form class="d-flex nav-search flex-grow-1" role="search" method="get" action="/search">
                     <label class="visually-hidden" for="navSearch">Hledat</label>
                     <input class="form-control form-control-sm me-2" type="search" name="q" id="navSearch" placeholder="Hledat…" aria-label="Hledat" minlength="2" required>
                     <button class="btn btn-outline-dark btn-sm" type="submit" aria-label="Odeslat vyhledávání" title="Hledat">
                         <i class="bi bi-search" aria-hidden="true"></i>
                     </button>
                 </form>
+                <button class="btn btn-icon btn-close-search" type="button" data-action="close-search" aria-label="Zavřít vyhledávání">
+                    <i class="bi bi-x"></i>
+                </button>
             </div>
         </div>
     </nav>
@@ -290,6 +307,49 @@
 <footer class="container">© {{ "now"|date('Y') }} {{ site.name|default('Base CMS') }}</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    (() => {
+        const overlay = document.getElementById('headerSearchOverlay');
+        const toggleBtn = document.querySelector('[data-action="toggle-search"]');
+        const closeBtn = overlay?.querySelector('[data-action="close-search"]');
+        const input = overlay?.querySelector('input[name="q"]');
+
+        const openOverlay = () => {
+            if (!overlay) return;
+            overlay.classList.add('show');
+            overlay.removeAttribute('hidden');
+            toggleBtn?.setAttribute('aria-expanded', 'true');
+            input?.focus();
+        };
+
+        const closeOverlay = () => {
+            if (!overlay) return;
+            overlay.classList.remove('show');
+            overlay.setAttribute('hidden', 'hidden');
+            toggleBtn?.setAttribute('aria-expanded', 'false');
+        };
+
+        toggleBtn?.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (overlay?.classList.contains('show')) {
+                closeOverlay();
+            } else {
+                openOverlay();
+            }
+        });
+
+        closeBtn?.addEventListener('click', (event) => {
+            event.preventDefault();
+            closeOverlay();
+        });
+
+        document.addEventListener('keyup', (event) => {
+            if (event.key === 'Escape') {
+                closeOverlay();
+            }
+        });
+    })();
+</script>
 {% block scripts %}{% endblock %}
 {% if hooks is defined and hooks.footer is defined %}
     {% for snippet in hooks.footer %}

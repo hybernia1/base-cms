@@ -148,8 +148,6 @@
 
                 const commentBody = document.getElementById('comment_body');
                 const alertBox = document.getElementById('commentAlert');
-                const commentItems = Array.from(document.querySelectorAll('.comment-thread .comment-item'));
-
                 document.querySelectorAll('.reply-button').forEach((btn) => {
                     btn.addEventListener('click', () => {
                         parentField.value = btn.dataset.replyId;
@@ -172,51 +170,62 @@
                     });
                 }
 
-                commentItems.forEach((item, index) => {
-                    if (!item.classList.contains('has-parent')) return;
+                const thread = document.querySelector('.comment-thread');
 
-                    const currentDepth = parseInt(item.dataset.depth || '0', 10);
-                    let hasContinuation = false;
-                    const continuingLevels = new Set();
+                const recalcConnectors = () => {
+                    if (!thread) return;
 
-                    for (let i = index + 1; i < commentItems.length; i += 1) {
-                        const nextDepth = parseInt(commentItems[i].dataset.depth || '0', 10);
+                    const threadRect = thread.getBoundingClientRect();
+                    const styles = getComputedStyle(thread);
+                    const indentSize = parseFloat(styles.getPropertyValue('--comment-indent-size')) || 0;
+                    const avatarSize = parseFloat(styles.getPropertyValue('--comment-avatar-size')) || 0;
+                    const paddingY = parseFloat(styles.getPropertyValue('--comment-padding-y')) || 0;
 
-                        for (let level = 1; level <= currentDepth; level += 1) {
-                            if (nextDepth >= level) {
-                                continuingLevels.add(level);
-                                if (level === currentDepth) {
-                                    hasContinuation = true;
-                                }
-                            }
+                    const items = Array.from(thread.querySelectorAll('.comment-item'));
+                    const centersByDepth = new Map();
+
+                    const getAvatarCenter = (element) => {
+                        const avatar = element.querySelector('.comment-avatar');
+                        if (!avatar) return 0;
+
+                        const rect = avatar.getBoundingClientRect();
+                        return (rect.top - threadRect.top) + (rect.height / 2);
+                    };
+
+                    items.forEach((item) => {
+                        const depth = parseInt(item.dataset.depth || '0', 10);
+                        const center = getAvatarCenter(item);
+
+                        if (!centersByDepth.has(depth)) {
+                            centersByDepth.set(depth, []);
                         }
-                    }
 
-                    const stackOffsets = Array.from(continuingLevels)
-                        .filter((level) => level < currentDepth)
-                        .sort((a, b) => a - b)
-                        .map((level) => `calc(-1 * var(--comment-indent-size) * ${currentDepth - level}) 0 0 0 var(--comment-connector)`);
+                        centersByDepth.get(depth).push(center);
+                    });
 
-                    let stackEl = item.querySelector('.comment-connector-stack');
-                    if (!stackEl) {
-                        stackEl = document.createElement('span');
-                        stackEl.className = 'comment-connector-stack';
-                        item.prepend(stackEl);
-                    }
+                    thread.querySelectorAll('.comment-depth-line').forEach((line) => line.remove());
 
-                    if (stackOffsets.length) {
-                        stackEl.style.setProperty('--stack-shadows', stackOffsets.join(', '));
-                        stackEl.classList.add('has-lines');
-                    } else {
-                        stackEl.style.removeProperty('--stack-shadows');
-                        stackEl.classList.remove('has-lines');
-                    }
+                    centersByDepth.forEach((centers, depth) => {
+                        if (depth === 0 || centers.length === 0) return;
 
-                    item.style.setProperty('--connector-top', 'calc(-1 * var(--comment-gap) - var(--comment-padding-y) - (var(--comment-avatar-size) / 2))');
-                    item.style.setProperty('--connector-bottom', hasContinuation
-                        ? 'calc(-1 * var(--comment-gap) + var(--comment-padding-y))'
-                        : 'calc(var(--comment-padding-y) + (var(--comment-avatar-size) / 2))');
-                });
+                        const minCenter = Math.min(...centers);
+                        const maxCenter = Math.max(...centers);
+
+                        const line = document.createElement('span');
+                        line.className = 'comment-depth-line';
+                        line.dataset.depth = depth;
+
+                        const left = (depth * indentSize) + (avatarSize / 2 - indentSize);
+                        line.style.left = `${left}px`;
+                        line.style.top = `${minCenter - paddingY}px`;
+                        line.style.height = `${(maxCenter - minCenter) + (paddingY * 2)}px`;
+
+                        thread.appendChild(line);
+                    });
+                };
+
+                recalcConnectors();
+                window.addEventListener('resize', recalcConnectors);
 
                 form.addEventListener('submit', async (event) => {
                     event.preventDefault();

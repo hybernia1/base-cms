@@ -172,51 +172,87 @@
                     });
                 }
 
-                commentItems.forEach((item, index) => {
-                    if (!item.classList.contains('has-parent')) return;
+                const thread = document.querySelector('.comment-thread');
 
-                    const currentDepth = parseInt(item.dataset.depth || '0', 10);
-                    let hasContinuation = false;
-                    const continuingLevels = new Set();
+                const recalcConnectors = () => {
+                    if (!thread) return;
 
-                    for (let i = index + 1; i < commentItems.length; i += 1) {
-                        const nextDepth = parseInt(commentItems[i].dataset.depth || '0', 10);
+                    const threadRect = thread.getBoundingClientRect();
+                    const items = Array.from(thread.querySelectorAll('.comment-item'));
 
-                        for (let level = 1; level <= currentDepth; level += 1) {
-                            if (nextDepth >= level) {
-                                continuingLevels.add(level);
-                                if (level === currentDepth) {
-                                    hasContinuation = true;
-                                }
+                    const getAvatarCenter = (element) => {
+                        const avatar = element.querySelector('.comment-avatar');
+                        if (!avatar) return 0;
+
+                        const rect = avatar.getBoundingClientRect();
+                        return (rect.top - threadRect.top) + (rect.height / 2);
+                    };
+
+                    const centers = new Map();
+                    items.forEach((item) => {
+                        centers.set(item, getAvatarCenter(item));
+                    });
+
+                    items.forEach((item, index) => {
+                        if (!item.classList.contains('has-parent')) return;
+
+                        const currentDepth = parseInt(item.dataset.depth || '0', 10);
+                        const currentCenter = centers.get(item) || 0;
+
+                        const ancestor = [...items.slice(0, index)]
+                            .reverse()
+                            .find((candidate) => parseInt(candidate.dataset.depth || '0', 10) === currentDepth - 1);
+
+                        if (ancestor) {
+                            const ancestorCenter = centers.get(ancestor) || 0;
+                            item.style.setProperty('--connector-top', `${ancestorCenter - currentCenter}px`);
+                        } else {
+                            item.style.setProperty('--connector-top', `calc(-1 * var(--comment-gap) - var(--comment-padding-y) - (var(--comment-avatar-size) / 2))`);
+                        }
+
+                        const nextRelevant = items.slice(index + 1)
+                            .find((candidate) => parseInt(candidate.dataset.depth || '0', 10) >= currentDepth);
+
+                        if (nextRelevant) {
+                            const nextCenter = centers.get(nextRelevant) || 0;
+                            const connectorBottom = nextCenter - currentCenter + (nextRelevant.getBoundingClientRect().top - threadRect.top) - (item.getBoundingClientRect().top - threadRect.top);
+                            item.style.setProperty('--connector-bottom', `${connectorBottom}px`);
+                        } else {
+                            item.style.setProperty('--connector-bottom', 'calc(var(--comment-padding-y) + (var(--comment-avatar-size) / 2))');
+                        }
+
+                        const continuingLevels = [];
+                        for (let level = 1; level < currentDepth; level += 1) {
+                            const hasContinuation = items.slice(index + 1)
+                                .some((candidate) => parseInt(candidate.dataset.depth || '0', 10) >= level);
+                            if (hasContinuation) {
+                                continuingLevels.push(level);
                             }
                         }
-                    }
 
-                    const stackOffsets = Array.from(continuingLevels)
-                        .filter((level) => level < currentDepth)
-                        .sort((a, b) => a - b)
-                        .map((level) => `calc(-1 * var(--comment-indent-size) * ${currentDepth - level}) 0 0 0 var(--comment-connector)`);
+                        const stackOffsets = continuingLevels
+                            .sort((a, b) => a - b)
+                            .map((level) => `calc(-1 * var(--comment-indent-size) * ${currentDepth - level}) 0 0 0 var(--comment-connector)`);
 
-                    let stackEl = item.querySelector('.comment-connector-stack');
-                    if (!stackEl) {
-                        stackEl = document.createElement('span');
-                        stackEl.className = 'comment-connector-stack';
-                        item.prepend(stackEl);
-                    }
+                        let stackEl = item.querySelector('.comment-connector-stack');
+                        if (!stackEl) {
+                            stackEl = document.createElement('span');
+                            stackEl.className = 'comment-connector-stack';
+                            item.prepend(stackEl);
+                        }
 
-                    if (stackOffsets.length) {
-                        stackEl.style.setProperty('--stack-shadows', stackOffsets.join(', '));
-                        stackEl.classList.add('has-lines');
-                    } else {
-                        stackEl.style.removeProperty('--stack-shadows');
-                        stackEl.classList.remove('has-lines');
-                    }
+                        if (stackOffsets.length) {
+                            stackEl.style.setProperty('--stack-shadows', stackOffsets.join(', '));
+                            stackEl.classList.add('has-lines');
+                        } else {
+                            stackEl.style.removeProperty('--stack-shadows');
+                            stackEl.classList.remove('has-lines');
+                        }
+                    });
+                };
 
-                    item.style.setProperty('--connector-top', 'calc(-1 * var(--comment-gap) - var(--comment-padding-y) - (var(--comment-avatar-size) / 2))');
-                    item.style.setProperty('--connector-bottom', hasContinuation
-                        ? 'calc(-1 * var(--comment-gap) + var(--comment-padding-y))'
-                        : 'calc(var(--comment-padding-y) + (var(--comment-avatar-size) / 2))');
-                });
+                recalcConnectors();
+                window.addEventListener('resize', recalcConnectors);
 
                 form.addEventListener('submit', async (event) => {
                     event.preventDefault();

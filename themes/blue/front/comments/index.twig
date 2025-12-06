@@ -83,22 +83,19 @@
                         <hr class="my-4">
 
                         {% if comments %}
-                            <div class="comment-thread" role="list">
+                            <div class="list-group">
                                 {% for comment in comments %}
-                                    {% set has_parent = comment.depth > 0 %}
-                                    <article class="comment-item{% if has_parent %} has-parent{% endif %}" id="comment-{{ comment.id }}" style="--comment-indent: {{ comment.depth }}" role="listitem">
-                                        <div class="comment-inner">
-                                            <div class="comment-avatar">
-                                                <span class="avatar avatar-sm bg-primary-subtle text-primary fw-bold flex-shrink-0">
-                                                    {% if comment.avatar.url %}
-                                                        <img src="{{ comment.avatar.url }}" alt="Avatar {{ comment.author_name ?: 'Anonym' }}" class="rounded-circle" loading="lazy">
-                                                    {% else %}
-                                                        {{ comment.avatar.initials }}
-                                                    {% endif %}
-                                                </span>
+                                    <div class="list-group-item border-0 border-bottom" id="comment-{{ comment.id }}" style="margin-left: {{ comment.depth * 1.5 }}rem;">
+                                        <div class="d-flex gap-3">
+                                            <div class="avatar avatar-sm bg-primary-subtle text-primary fw-bold flex-shrink-0">
+                                                {% if comment.avatar.url %}
+                                                    <img src="{{ comment.avatar.url }}" alt="Avatar {{ comment.author_name ?: 'Anonym' }}" class="rounded-circle" loading="lazy">
+                                                {% else %}
+                                                    {{ comment.avatar.initials }}
+                                                {% endif %}
                                             </div>
-                                            <div class="comment-body">
-                                                <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex justify-content-between align-items-center">
                                                     <div>
                                                         <div class="fw-semibold">
                                                             {% if comment.profile_url %}
@@ -110,15 +107,15 @@
                                                         <div class="text-muted small">{{ comment.created_at|date('j. n. Y H:i') }}</div>
                                                     </div>
                                                 </div>
-                                                <div class="mt-2 comment-text">{{ comment.body|nl2br }}</div>
+                                                <div class="mt-2">{{ comment.body|nl2br }}</div>
                                                 {% if comment_settings.allow_replies and comment_settings.max_depth > comment.depth and commenting_enabled %}
-                                                    <button type="button" class="btn btn-sm btn-link text-decoration-none px-0 reply-button" data-reply-id="{{ comment.id }}" data-reply-author="{{ comment.author_name ?: 'Anonym' }}">
+                                                    <button type="button" class="btn btn-sm btn-link text-decoration-none ps-0 reply-button" data-reply-id="{{ comment.id }}" data-reply-author="{{ comment.author_name ?: 'Anonym' }}">
                                                         Odpovědět
                                                     </button>
                                                 {% endif %}
                                             </div>
                                         </div>
-                                    </article>
+                                    </div>
                                 {% endfor %}
                             </div>
                         {% else %}

@@ -198,6 +198,9 @@
             box-shadow: 0 20px 45px rgba(34, 26, 16, 0.07);
             overflow: hidden;
         }
+        .article-shell .card-img-top {
+            border-radius: 0;
+        }
         .article-shell .card-body {
             padding: 1.5rem 1.6rem;
         }
@@ -205,6 +208,19 @@
             .navbar { padding: .8rem 0; }
             main { padding: 2rem 0 3rem; }
             .card-body { padding: 1.25rem 1.5rem; }
+        }
+        @media (max-width: 767.98px) {
+            .article-shell {
+                border-radius: 0;
+                overflow: visible;
+            }
+            .article-shell .card-img-top {
+                display: block;
+                width: 100vw;
+                max-width: none;
+                margin-left: calc(50% - 50vw);
+                margin-right: calc(50% - 50vw);
+            }
         }
     </style>
 </head>

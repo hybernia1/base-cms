@@ -12,6 +12,7 @@ class Upload
         'png' => ['image/png'],
         'gif' => ['image/gif'],
         'webp' => ['image/webp'],
+        'avif' => ['image/avif'],
         'pdf' => ['application/pdf'],
         'zip' => ['application/zip', 'application/x-zip-compressed'],
         'txt' => ['text/plain'],
@@ -94,7 +95,7 @@ class Upload
         return [$media, null];
     }
 
-    private static function mimeTypesFor(array $extensions): array
+    public static function mimeTypesFor(array $extensions): array
     {
         $allowed = [];
 

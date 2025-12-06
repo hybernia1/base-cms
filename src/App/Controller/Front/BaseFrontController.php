@@ -6,6 +6,7 @@ use App\Service\ContentType;
 use App\Service\Auth;
 use App\Service\Setting;
 use App\Service\Navigation;
+use App\Service\Avatar;
 use RedBeanPHP\R as R;
 
 abstract class BaseFrontController
@@ -23,6 +24,7 @@ abstract class BaseFrontController
 
         $currentUser = Auth::user();
         $adminBar = [];
+        $currentUserAvatar = null;
 
         $siteName = Setting::get('site_name', Setting::DEFAULTS['site_name']);
         $siteLogo = Setting::mediaDetails((int) Setting::get('site_logo_id', 0));
@@ -54,6 +56,8 @@ HTML;
         if ($currentUser) {
             $contentTypes = ContentType::definitions();
             $createLinks = [];
+
+            $currentUserAvatar = Avatar::forUser($currentUser);
 
             if (Auth::hasRole(['admin', 'editor'])) {
                 foreach ($contentTypes as $type) {
@@ -89,6 +93,7 @@ HTML;
             'flash_error'   => $flash['error'],
             'post_archive_slug' => ContentType::defaultSlug('post'),
             'current_user' => $currentUser,
+            'current_user_avatar' => $currentUserAvatar,
             'site' => [
                 'name' => $siteName,
                 'logo' => $siteLogo,

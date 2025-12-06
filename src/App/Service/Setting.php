@@ -8,7 +8,7 @@ class Setting
     public const DEFAULTS = [
         'site_name' => 'CMS',
         'allow_webp' => '0',
-        'allowed_upload_types' => 'jpg,jpeg,png,gif,webp,pdf,zip',
+        'allowed_upload_types' => 'jpg,jpeg,png,gif,webp,avif,pdf,zip',
         'allow_registration' => '1',
         'breadcrumbs_enabled' => '1',
         'comments_enabled' => '1',

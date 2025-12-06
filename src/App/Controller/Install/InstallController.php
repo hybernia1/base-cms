@@ -129,6 +129,7 @@ class InstallController
                 `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                 `email` VARCHAR(191) NOT NULL UNIQUE,
                 `nickname` VARCHAR(191) NOT NULL DEFAULT '',
+                `avatar_path` VARCHAR(255) DEFAULT NULL,
                 `password` VARCHAR(255) NOT NULL,
                 `role` VARCHAR(50) NOT NULL DEFAULT 'editor',
                 `is_profile_public` TINYINT(1) NOT NULL DEFAULT 1,

@@ -32,7 +32,7 @@
                             </h2>
                             {% set preview = post.excerpt ?: post.body %}
                             {% if preview %}
-                                <p class="article-subtitle mb-0 d-none d-md-block">{{ preview|striptags|slice(0, 170) }}{% if preview|striptags|length > 170 %}…{% endif %}</p>
+                                <p class="article-subtitle mb-0">{{ preview|striptags|slice(0, 170) }}{% if preview|striptags|length > 170 %}…{% endif %}</p>
                             {% endif %}
                         </div>
                     </article>

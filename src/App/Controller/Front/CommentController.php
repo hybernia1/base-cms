@@ -12,14 +12,21 @@ use RedBeanPHP\R as R;
 
 class CommentController extends BaseFrontController
 {
-    public function index(): void
+    public function index(string $typeSlug, string $contentSlug): void
     {
-        $contentId = (int) ($_GET['content_id'] ?? 0);
-        $content = $contentId ? R::findOne(
+        $typeKey = ContentType::keyFromSlug($typeSlug);
+        if (!$typeKey) {
+            $this->renderNotFound([
+                'message' => 'Zvolený typ obsahu neexistuje.',
+            ]);
+            return;
+        }
+
+        $content = R::findOne(
             'content',
-            ' id = ? AND status = ? AND publish_at <= ? AND deleted_at IS NULL ',
-            [$contentId, 'published', date('Y-m-d H:i:s')]
-        ) : null;
+            ' slug = ? AND type = ? AND status = ? AND publish_at <= ? AND deleted_at IS NULL ',
+            [$contentSlug, $typeKey, 'published', date('Y-m-d H:i:s')]
+        );
 
         if (!$content || !$content->id) {
             $this->renderNotFound([

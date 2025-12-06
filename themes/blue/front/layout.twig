@@ -297,6 +297,7 @@
             --comment-gap: 1.25rem;
             --comment-indent-size: 52px;
             --comment-avatar-size: 44px;
+            --comment-padding-y: .85rem;
             --comment-connector: var(--stroke, #edf1f6);
             display: flex;
             flex-direction: column;
@@ -305,7 +306,7 @@
         .comment-item {
             position: relative;
             margin-left: calc(var(--comment-indent, 0) * var(--comment-indent-size));
-            padding: .85rem 1rem .75rem;
+            padding: var(--comment-padding-y) 1rem .75rem;
         }
         .comment-item.has-parent {
             padding-left: 1.6rem;
@@ -318,12 +319,12 @@
             border-color: var(--comment-connector);
         }
         .comment-item.has-parent::before {
-            top: calc(var(--comment-avatar-size) / -2);
-            bottom: calc(-1 * var(--comment-gap));
+            top: calc(-1 * var(--comment-gap) - var(--comment-padding-y) - (var(--comment-avatar-size) / 2));
+            bottom: calc(-1 * var(--comment-gap) + var(--comment-padding-y));
             border-left: 2px solid var(--comment-connector);
         }
         .comment-item.has-parent::after {
-            top: calc(var(--comment-avatar-size) / 2);
+            top: calc(var(--comment-padding-y) + (var(--comment-avatar-size) / 2));
             width: var(--comment-indent-size);
             border-top: 2px solid var(--comment-connector);
         }

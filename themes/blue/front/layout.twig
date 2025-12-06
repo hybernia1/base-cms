@@ -293,41 +293,6 @@
         .archive-list .article-feature,
         .archive-list .article-row { border: none; border-radius: 0; box-shadow: none; }
         .archive-list .article-row .stretched-link::after { border-radius: 0; }
-        .comment-thread { display: flex; flex-direction: column; gap: 1rem; }
-        .comment-item {
-            position: relative;
-            margin-left: calc(var(--comment-indent, 0) * 24px);
-            border: 1px solid var(--stroke);
-            border-radius: var(--radius);
-            background: #fff;
-            padding: 1rem 1.1rem;
-        }
-        .comment-item.has-parent::before {
-            content: '';
-            position: absolute;
-            left: -18px;
-            top: 26px;
-            bottom: 26px;
-            width: 2px;
-            background: var(--stroke);
-            border-radius: 999px;
-        }
-        .comment-item.has-parent::after {
-            content: '';
-            position: absolute;
-            left: -18px;
-            top: 32px;
-            width: 18px;
-            height: 2px;
-            background: var(--stroke);
-            border-radius: 999px;
-        }
-        .comment-inner { display: flex; gap: .85rem; align-items: flex-start; }
-        .comment-avatar { flex-shrink: 0; }
-        .comment-text { line-height: 1.7; }
-        .comment-body .btn-link { color: var(--accent); }
-        .comment-body .btn-link:hover,
-        .comment-body .btn-link:focus { color: #365fa5; text-decoration: none; }
     </style>
 </head>
 <body class="{% if admin_bar is defined and admin_bar %}has-admin-bar{% endif %}">

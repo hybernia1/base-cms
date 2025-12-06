@@ -161,10 +161,10 @@
             background: transparent;
         }
         .article-list {
-            background: #fdfaf5;
-            border-radius: 18px;
-            box-shadow: 0 16px 30px rgba(34, 26, 16, 0.06);
-            border: 1px solid var(--stroke);
+            background: #fff;
+            border-radius: 0;
+            box-shadow: none;
+            border: none;
             padding: 0;
         }
         .article-list-body {
@@ -225,6 +225,10 @@
             .article-thumb { width: 78px; height: 78px; }
         }
         @media (max-width: 767.98px) {
+            .article-list {
+                margin-left: -1rem;
+                margin-right: -1rem;
+            }
             .article-shell {
                 border-radius: 0;
                 overflow: visible;

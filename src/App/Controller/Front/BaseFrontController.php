@@ -29,6 +29,7 @@ abstract class BaseFrontController
         $siteFavicon = Setting::mediaDetails((int) Setting::get('site_favicon_id', 0));
         $indexingEnabled = Setting::get('indexing_enabled', Setting::DEFAULTS['indexing_enabled']) === '1';
         $googleAnalyticsId = Setting::get('google_analytics_id', '');
+        $breadcrumbsEnabled = Setting::get('breadcrumbs_enabled', Setting::DEFAULTS['breadcrumbs_enabled'] ?? '1') === '1';
         $navigation = Navigation::tree();
 
         $hooks = [
@@ -98,6 +99,7 @@ HTML;
                 'indexing_enabled' => $indexingEnabled,
             ],
             'hooks' => $hooks,
+            'breadcrumbs_enabled' => $breadcrumbsEnabled,
         ], $context);
 
         if ($adminBar || isset($context['admin_bar'])) {

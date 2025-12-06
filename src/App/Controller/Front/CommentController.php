@@ -51,6 +51,17 @@ class CommentController extends BaseFrontController
         $contentUrl = '/' . ContentType::slug((string) $content->type) . '/' . $content->slug;
         $typeDefinitions = ContentType::definitions();
         $type = $typeDefinitions[$content->type] ?? ['name' => (string) $content->type, 'slug' => (string) $content->type];
+        $typeSlug = $type['slug'] ?? ContentType::slug((string) $content->type);
+
+        $breadcrumbs = [
+            ['label' => 'Domů', 'url' => '/'],
+            [
+                'label' => $type['plural_name'] ?? ($type['menu_label'] ?? ($type['name'] ?? $typeSlug)),
+                'url' => '/' . $typeSlug,
+            ],
+            ['label' => $content->title, 'url' => $contentUrl],
+            ['label' => 'Komentáře'],
+        ];
 
         $this->render('front/comments/index.twig', [
             'content' => $content,
@@ -61,6 +72,7 @@ class CommentController extends BaseFrontController
             'comment_settings' => $commentSettings,
             'commenting_enabled' => $commentingEnabled,
             'current_user' => $currentUser,
+            'breadcrumbs' => $breadcrumbs,
         ]);
     }
 

@@ -40,6 +40,12 @@ class TermController extends BaseFrontController
             ];
         }
 
+        $breadcrumbs = [
+            ['label' => 'Domů', 'url' => '/'],
+            ['label' => $termTypes[$typeKey]['label'] ?? $typeKey],
+            ['label' => $term->name],
+        ];
+
         $this->render('front/term.twig', [
             'term' => $term,
             'items' => $content,
@@ -48,6 +54,7 @@ class TermController extends BaseFrontController
             'heading' => $term->name,
             'empty_message' => 'Tento term zatím nemá žádný obsah.',
             'admin_bar' => $adminBar,
+            'breadcrumbs' => $breadcrumbs,
         ]);
     }
 

@@ -112,6 +112,20 @@
         {% endfor %}
     {% endif %}
 
+    {% if breadcrumbs_enabled and breadcrumbs is defined and breadcrumbs %}
+        <nav aria-label="Drobečková navigace" class="mb-3">
+            <ol class="breadcrumb mb-0 bg-transparent p-0">
+                {% for crumb in breadcrumbs %}
+                    {% if crumb.url is defined and crumb.url and not loop.last %}
+                        <li class="breadcrumb-item"><a href="{{ crumb.url }}">{{ crumb.label }}</a></li>
+                    {% else %}
+                        <li class="breadcrumb-item active" aria-current="page">{{ crumb.label }}</li>
+                    {% endif %}
+                {% endfor %}
+            </ol>
+        </nav>
+    {% endif %}
+
     {% block body %}{% endblock %}
 </main>
 

@@ -10,6 +10,7 @@ class Setting
         'allow_webp' => '0',
         'allowed_upload_types' => 'jpg,jpeg,png,gif,webp,pdf,zip',
         'allow_registration' => '1',
+        'breadcrumbs_enabled' => '1',
         'comments_enabled' => '1',
         'comments_allow_replies' => '1',
         'comments_max_depth' => '2',

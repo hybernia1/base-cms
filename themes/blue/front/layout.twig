@@ -24,19 +24,49 @@
     {% endif %}
     {% block head_extra %}{% endblock %}
     <style>
-        body { background-color: #f8fafc; }
-        header { background: #0d6efd; color: #fff; }
+        :root {
+            --surface: #ffffff;
+            --muted: #6c757d;
+            --stroke: #e5e7eb;
+            --radius: 14px;
+        }
+        body {
+            background-color: #f5f7fb;
+            color: #1f2933;
+            font-size: 16px;
+        }
+        header {
+            background: #0d6efd;
+            color: #fff;
+            box-shadow: 0 6px 24px rgba(13, 110, 253, 0.12);
+        }
         header a { color: #fff; text-decoration: none; }
-        .site-brand { font-weight: 700; letter-spacing: .5px; }
-        .site-logo { height: 32px; width: auto; }
-        main { padding: 2rem 0 3rem; }
-        footer { padding: 2rem 0; color: #6c757d; }
-        .content-body p { margin-bottom: 1rem; }
+        .navbar { padding: .6rem 0; }
+        .site-brand { font-weight: 700; letter-spacing: .3px; font-size: 1rem; }
+        .site-logo { height: 28px; width: auto; }
+        .nav-search { gap: .5rem; }
+        .nav-search .form-control,
+        .nav-search .btn { padding: .45rem .75rem; }
+        @media (max-width: 991.98px) {
+            .nav-search { width: 100%; }
+        }
+        main { padding: 1.25rem 0 2rem; }
+        footer { padding: 1.5rem 0; color: var(--muted); font-size: .95rem; }
+        .card { border: 1px solid var(--stroke); border-radius: var(--radius); }
+        .card-body { padding: 1rem 1.25rem; }
+        .content-body p { margin-bottom: .9rem; line-height: 1.6; }
+        .breadcrumb { font-size: .95rem; }
         .dropdown-submenu .dropdown-menu {
             position: static;
         }
+        .dropdown-menu { border-radius: 10px; }
         .dropdown-menu .dropdown-menu {
             margin-left: 0.5rem;
+        }
+        @media (min-width: 768px) {
+            .navbar { padding: .8rem 0; }
+            main { padding: 2rem 0 3rem; }
+            .card-body { padding: 1.25rem 1.5rem; }
         }
     </style>
 </head>
@@ -86,7 +116,7 @@
                         {{ nav.nav_item(item) }}
                     {% endfor %}
                     <li class="nav-item w-100 w-lg-auto ms-lg-3">
-                        <form class="d-flex" role="search" method="get" action="/search">
+                        <form class="d-flex nav-search" role="search" method="get" action="/search">
                             <label class="visually-hidden" for="navSearch">Hledat</label>
                             <input class="form-control form-control-sm me-2" type="search" name="q" id="navSearch" placeholder="Hledat…" aria-label="Hledat" minlength="2" required>
                             <button class="btn btn-outline-light btn-sm" type="submit" aria-label="Odeslat vyhledávání" title="Hledat">

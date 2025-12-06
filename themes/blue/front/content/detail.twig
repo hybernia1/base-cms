@@ -45,20 +45,29 @@
             {% if not item %}
                 <div class="alert alert-warning mt-4">Obsah nebyl nalezen.</div>
             {% else %}
-                <article class="card shadow-sm mt-4">
+                <article class="card shadow-sm border-0 mt-4">
                     {% if thumbnail %}
                         <img src="/{{ thumbnail.path }}/{{ thumbnail.webp_filename ?: thumbnail.filename }}" class="card-img-top" alt="{{ thumbnail.alt ?: item.title }}" loading="lazy" decoding="async">
                     {% endif %}
-                    <div class="card-body p-4">
-                        <div class="text-muted mb-2">
-                            {{ item.created_at|date('j. n. Y') }} · {{ type.name|default(type.slug|default('Obsah')) }}
+                    <div class="card-body p-3 p-md-4">
+                        <div class="text-muted d-flex flex-wrap gap-2 small mb-2 align-items-center">
+                            <span class="d-inline-flex align-items-center gap-1">
+                                <i class="bi bi-calendar-event" aria-hidden="true"></i>
+                                {{ item.created_at|date('j. n. Y') }}
+                            </span>
+                            <span class="d-inline-flex align-items-center gap-1">
+                                <i class="bi bi-journal-text" aria-hidden="true"></i>
+                                {{ type.name|default(type.slug|default('Obsah')) }}
+                            </span>
                             {% if author %}
-                                ·
-                                {% if author.profile_url %}
-                                    <a href="{{ author.profile_url }}" class="text-decoration-none">{{ author.nickname }}</a>
-                                {% else %}
-                                    {{ author.nickname }}
-                                {% endif %}
+                                <span class="d-inline-flex align-items-center gap-1">
+                                    <i class="bi bi-person" aria-hidden="true"></i>
+                                    {% if author.profile_url %}
+                                        <a href="{{ author.profile_url }}" class="text-decoration-none">{{ author.nickname }}</a>
+                                    {% else %}
+                                        {{ author.nickname }}
+                                    {% endif %}
+                                </span>
                             {% endif %}
                         </div>
                         <h1 class="card-title">{{ item.title }}</h1>

@@ -364,6 +364,25 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="unsavedChangesModal" tabindex="-1" aria-labelledby="unsavedChangesLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="unsavedChangesLabel">Neuložené změny</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">Vypadá to, že máš rozepsané změny. Chceš je uložit jako koncept, nebo odejít a ponechat poslední uloženou verzi?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="unsavedStayBtn">Pokračovat v editaci</button>
+                    <button type="button" class="btn btn-outline-danger" id="unsavedLeaveBtn">Odejít bez uložení</button>
+                    <button type="button" class="btn btn-primary" id="unsavedSaveBtn">Uložit koncept</button>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}
 
 {% block scripts %}
@@ -400,8 +419,55 @@
         const mediaActionButtons = document.querySelectorAll('[data-media-action]');
         let currentMediaAction = 'thumbnail';
         const $bodyEditor = window.jQuery ? window.jQuery('#body') : null;
+        let isInitializingEditor = true;
         const shortcodeDefinitions = {{ shortcodes|json_encode|raw }};
         const shortcodeModalEl = document.getElementById('shortcodeModal');
+        const contentForm = document.getElementById('contentForm');
+        const unsavedModalEl = document.getElementById('unsavedChangesModal');
+        const unsavedSaveBtn = document.getElementById('unsavedSaveBtn');
+        const unsavedLeaveBtn = document.getElementById('unsavedLeaveBtn');
+        const unsavedStayBtn = document.getElementById('unsavedStayBtn');
+        const unsavedModal = unsavedModalEl ? bootstrap.Modal.getOrCreateInstance(unsavedModalEl) : null;
+        let pendingNavigationUrl = null;
+        let hasUnsavedChanges = false;
+
+        const markUnsaved = () => {
+            hasUnsavedChanges = true;
+        };
+
+        const resetUnsaved = () => {
+            hasUnsavedChanges = false;
+        };
+
+        const handleBeforeUnload = (event) => {
+            if (!hasUnsavedChanges) {
+                return;
+            }
+
+            event.preventDefault();
+            event.returnValue = '';
+        };
+
+        const unblockNavigation = () => {
+            resetUnsaved();
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+
+        if (contentForm) {
+            const watchedFields = contentForm.querySelectorAll('input, textarea, select');
+            watchedFields.forEach((field) => {
+                const eventName = (field.type === 'checkbox' || field.type === 'radio' || field.tagName === 'SELECT')
+                    ? 'change'
+                    : 'input';
+                field.addEventListener(eventName, markUnsaved);
+            });
+
+            contentForm.addEventListener('submit', () => {
+                unblockNavigation();
+            });
+
+            window.addEventListener('beforeunload', handleBeforeUnload);
+        }
 
         const ensureBodyMediaInputs = () => {
             if (!bodyMediaInputs) return;
@@ -470,6 +536,8 @@
             if (removeThumbnailBtn) {
                 removeThumbnailBtn.classList.toggle('d-none', !hasThumbnail);
             }
+
+            markUnsaved();
         }
 
         function openMediaModalFor(action) {
@@ -505,6 +573,8 @@
             } else {
                 setSelectedThumbnail(id, url, label);
             }
+
+            markUnsaved();
 
             if (mediaModalEl) {
                 const modalInstance = bootstrap.Modal.getInstance(mediaModalEl);
@@ -576,9 +646,17 @@
                         if (!Number.isNaN(mediaId)) {
                             removeBodyMediaId(mediaId);
                         }
+
+                        markUnsaved();
+                    },
+                    onChange() {
+                        if (!isInitializingEditor) {
+                            markUnsaved();
+                        }
                     },
                 },
             });
+            isInitializingEditor = false;
         }
 
         if (removeThumbnailBtn) {
@@ -598,6 +676,7 @@
 
                 const confirmed = await confirmFn(message, {variant: 'danger'});
                 if (confirmed) {
+                    unblockNavigation();
                     deleteContentForm.submit();
                 }
             });
@@ -840,6 +919,7 @@
             if (!input || typeof Tagify === 'undefined') return;
 
             const whitelist = termOptionsByType[typeKey] || [];
+            let isInitializingTags = true;
             const tagify = new Tagify(input, {
                 whitelist,
                 enforceWhitelist: false,
@@ -871,7 +951,12 @@
                 syncHiddenTerms(typeKey, tagify.value);
             }
 
+            isInitializingTags = false;
+
             tagify.on('add', async (event) => {
+                if (!isInitializingTags) {
+                    markUnsaved();
+                }
                 showTermError(typeKey);
                 const tagData = enhanceTagData(event.detail.data || {}, typeKey);
 
@@ -894,6 +979,7 @@
             });
 
             tagify.on('remove', () => {
+                markUnsaved();
                 syncHiddenTerms(typeKey, tagify.value);
             });
 
@@ -911,14 +997,17 @@
 
             const statusButtons = document.querySelectorAll('.status-submit');
 
-            const setStatus = (status) => {
+            const setStatus = (status, markChange = false) => {
                 statusInput.value = status || 'draft';
+                if (markChange) {
+                    markUnsaved();
+                }
             };
 
             statusButtons.forEach((button) => {
                 button.addEventListener('click', () => {
                     const desiredStatus = button.getAttribute('data-status-action') || 'draft';
-                    setStatus(desiredStatus);
+                    setStatus(desiredStatus, true);
                 });
             });
 
@@ -926,5 +1015,69 @@
                 setStatus('draft');
             }
         })();
+
+        const triggerNavigationModal = (url) => {
+            if (!unsavedModal || !unsavedModalEl) return;
+            pendingNavigationUrl = url || null;
+            unsavedModal.show();
+        };
+
+        document.addEventListener('click', (event) => {
+            if (!hasUnsavedChanges || !contentForm) return;
+
+            const link = event.target.closest('a[href]');
+            if (!link) return;
+
+            const href = link.getAttribute('href');
+            const target = link.getAttribute('target');
+            const isExternal = target === '_blank' || (href && href.startsWith('http'));
+
+            if (!href || href.startsWith('#') || isExternal) {
+                return;
+            }
+
+            event.preventDefault();
+            triggerNavigationModal(link.href);
+        });
+
+        if (unsavedModalEl) {
+            unsavedModalEl.addEventListener('hidden.bs.modal', () => {
+                pendingNavigationUrl = null;
+            });
+        }
+
+        if (unsavedStayBtn) {
+            unsavedStayBtn.addEventListener('click', () => {
+                pendingNavigationUrl = null;
+            });
+        }
+
+        if (unsavedLeaveBtn) {
+            unsavedLeaveBtn.addEventListener('click', () => {
+                const targetUrl = pendingNavigationUrl || '/admin';
+                unblockNavigation();
+                if (unsavedModal) unsavedModal.hide();
+                if (targetUrl) {
+                    window.location.href = targetUrl;
+                }
+            });
+        }
+
+        if (unsavedSaveBtn && contentForm) {
+            unsavedSaveBtn.addEventListener('click', () => {
+                const statusInput = document.getElementById('statusField');
+                if (statusInput && !statusInput.value) {
+                    statusInput.value = 'draft';
+                }
+
+                if (typeof contentForm.reportValidity === 'function' && !contentForm.reportValidity()) {
+                    return;
+                }
+
+                unblockNavigation();
+                if (unsavedModal) unsavedModal.hide();
+                contentForm.submit();
+            });
+        }
     </script>
 {% endblock %}

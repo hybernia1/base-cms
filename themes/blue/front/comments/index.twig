@@ -71,24 +71,35 @@
                             <div class="list-group">
                                 {% for comment in comments %}
                                     <div class="list-group-item border-0 border-bottom" id="comment-{{ comment.id }}" style="margin-left: {{ comment.depth * 1.5 }}rem;">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div class="fw-semibold">
-                                                    {% if comment.profile_url %}
-                                                        <a href="{{ comment.profile_url }}" class="text-decoration-none">{{ comment.author_name ?: 'Anonym' }}</a>
-                                                    {% else %}
-                                                        {{ comment.author_name ?: 'Anonym' }}
-                                                    {% endif %}
+                                        <div class="d-flex gap-3">
+                                            <div class="avatar avatar-sm bg-primary-subtle text-primary fw-bold flex-shrink-0">
+                                                {% if comment.avatar.url %}
+                                                    <img src="{{ comment.avatar.url }}" alt="Avatar {{ comment.author_name ?: 'Anonym' }}" class="rounded-circle" loading="lazy">
+                                                {% else %}
+                                                    {{ comment.avatar.initials }}
+                                                {% endif %}
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <div class="fw-semibold">
+                                                            {% if comment.profile_url %}
+                                                                <a href="{{ comment.profile_url }}" class="text-decoration-none">{{ comment.author_name ?: 'Anonym' }}</a>
+                                                            {% else %}
+                                                                {{ comment.author_name ?: 'Anonym' }}
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="text-muted small">{{ comment.created_at|date('j. n. Y H:i') }}</div>
+                                                    </div>
                                                 </div>
-                                                <div class="text-muted small">{{ comment.created_at|date('j. n. Y H:i') }}</div>
+                                                <div class="mt-2">{{ comment.body|nl2br }}</div>
+                                                {% if comment_settings.allow_replies and comment_settings.max_depth > comment.depth and commenting_enabled %}
+                                                    <button type="button" class="btn btn-sm btn-link text-decoration-none ps-0 reply-button" data-reply-id="{{ comment.id }}" data-reply-author="{{ comment.author_name ?: 'Anonym' }}">
+                                                        Odpovědět
+                                                    </button>
+                                                {% endif %}
                                             </div>
                                         </div>
-                                        <div class="mt-2">{{ comment.body|nl2br }}</div>
-                                        {% if comment_settings.allow_replies and comment_settings.max_depth > comment.depth and commenting_enabled %}
-                                            <button type="button" class="btn btn-sm btn-link text-decoration-none ps-0 reply-button" data-reply-id="{{ comment.id }}" data-reply-author="{{ comment.author_name ?: 'Anonym' }}">
-                                                Odpovědět
-                                            </button>
-                                        {% endif %}
                                     </div>
                                 {% endfor %}
                             </div>

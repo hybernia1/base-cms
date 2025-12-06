@@ -6,7 +6,14 @@
     {% if not user %}
         <div class="alert alert-warning mt-4">Profil nenalezen.</div>
     {% else %}
-    <div class="d-flex align-items-center gap-3 mt-3">
+    <div class="d-flex align-items-center gap-3 mt-3 flex-wrap">
+        <div class="avatar avatar-lg bg-primary-subtle text-primary fw-bold">
+            {% if avatar.url %}
+                <img src="{{ avatar.url }}" alt="Avatar {{ user.nickname ?: user.email }}" class="rounded-circle" loading="lazy">
+            {% else %}
+                {{ avatar.initials }}
+            {% endif %}
+        </div>
         <div>
             <h1 class="mb-1">{{ user.nickname ?: 'Uživatel' }}</h1>
             <div class="text-muted">Registrován: {{ user.created_at|date('j. n. Y') }}</div>

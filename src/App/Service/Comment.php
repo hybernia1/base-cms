@@ -2,6 +2,7 @@
 namespace App\Service;
 
 use RedBeanPHP\R as R;
+use App\Service\Avatar;
 
 class Comment
 {
@@ -132,6 +133,7 @@ class Comment
         foreach ($items as $item) {
             $displayName = $item->author_name ?: 'Anonym';
             $profileUrl = null;
+            $user = null;
 
             if ($item->user_id) {
                 if (!array_key_exists($item->user_id, $users)) {
@@ -159,6 +161,7 @@ class Comment
                 'status' => $item->status,
                 'depth' => (int) $item->depth,
                 'created_at' => $item->created_at,
+                'avatar' => $item->user_id && $user ? Avatar::forUser($user, $displayName) : Avatar::forName($displayName),
             ];
         }
 

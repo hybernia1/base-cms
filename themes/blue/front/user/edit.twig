@@ -5,11 +5,31 @@
 {% block body %}
     <h1>Upravit profil</h1>
 
-    <form method="post" action="/profile/edit" class="card p-4 shadow-sm">
+    <form method="post" action="/profile/edit" class="card p-4 shadow-sm" enctype="multipart/form-data">
         <div class="mb-3">
             <label class="form-label">E-mail</label>
             <input type="email" class="form-control" value="{{ values.email }}" disabled>
             <div class="form-text">E-mail nelze měnit.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="avatar">Avatar</label>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <div class="avatar avatar-lg bg-primary-subtle text-primary fw-bold">
+                    {% if avatar.url %}
+                        <img src="{{ avatar.url }}" alt="Avatar {{ values.nickname ?: values.email }}" class="rounded-circle" loading="lazy">
+                    {% else %}
+                        {{ avatar.initials }}
+                    {% endif %}
+                </div>
+                <div class="flex-grow-1">
+                    <input type="file" name="avatar" id="avatar" class="form-control" accept="image/jpeg,image/png,image/gif,image/webp,image/avif">
+                    <div class="form-text">Podporované formáty: JPG, PNG, GIF, WebP, AVIF.</div>
+                    {% if errors.avatar %}
+                        <div class="text-danger small mt-1">{{ errors.avatar }}</div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
 
         <div class="mb-3">

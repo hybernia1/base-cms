@@ -5,6 +5,7 @@ use App\Service\Auth;
 use App\Service\ContentType;
 use App\Service\Flash;
 use App\Service\UserProfile;
+use App\Service\Avatar;
 use RedBeanPHP\R as R;
 
 class UserController extends BaseFrontController
@@ -64,6 +65,7 @@ class UserController extends BaseFrontController
                 'is_profile_public' => (int) ($user->is_profile_public ?? 1),
             ],
             'errors' => [],
+            'avatar' => Avatar::forUser($user),
         ]);
     }
 
@@ -79,10 +81,23 @@ class UserController extends BaseFrontController
         $data = $this->sanitizeProfile();
         $errors = $this->validateProfile($data);
 
+        $avatarPath = $user->avatar_path ?? null;
+        $uploadedAvatar = null;
+        if (isset($_FILES['avatar'])) {
+            [$uploadedAvatar, $avatarError] = Avatar::upload($_FILES['avatar']);
+            if ($avatarError) {
+                $errors['avatar'] = $avatarError;
+            }
+        }
+
         if ($errors) {
+            if ($uploadedAvatar) {
+                Avatar::delete($uploadedAvatar);
+            }
             $this->render('front/user/edit.twig', [
                 'values' => array_merge($data, ['email' => $user->email]),
                 'errors' => $errors,
+                'avatar' => Avatar::forUser($user),
             ]);
             return;
         }
@@ -93,6 +108,13 @@ class UserController extends BaseFrontController
 
         if ($data['password'] !== '') {
             $user->password = password_hash($data['password'], PASSWORD_DEFAULT);
+        }
+
+        if ($uploadedAvatar) {
+            if ($avatarPath && $avatarPath !== $uploadedAvatar) {
+                Avatar::delete($avatarPath);
+            }
+            $user->avatar_path = $uploadedAvatar;
         }
 
         R::store($user);
@@ -120,6 +142,7 @@ class UserController extends BaseFrontController
             'ban_reason' => $user->ban_reason ?? null,
             'comments' => $this->findUserComments((int) $user->id, $isOwner),
             'admin_bar' => $adminBar,
+            'avatar' => Avatar::forUser($user),
         ]);
     }
 

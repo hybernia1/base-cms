@@ -44,6 +44,20 @@
             line-height: 1.7;
             letter-spacing: 0.01em;
         }
+        .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #e7f1ff;
+            color: var(--accent);
+        }
+        .avatar-sm { width: 36px; height: 36px; font-size: .9rem; }
+        .avatar-lg { width: 80px; height: 80px; font-size: 1.1rem; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        .nav-avatar-link { display: inline-flex; text-decoration: none; }
         a { color: inherit; }
         a:hover, a:focus { color: var(--accent); }
         @media (min-width: 992px) {
@@ -267,9 +281,21 @@
                 <button class="btn btn-icon" type="button" data-action="toggle-search" aria-expanded="false" aria-controls="headerSearchOverlay" aria-label="Otevřít vyhledávání">
                     <i class="bi bi-search"></i>
                 </button>
-                <a class="btn btn-icon" href="{{ current_user ? '/profile' : '/login' }}" aria-label="{{ current_user ? 'Přejít na profil' : 'Přihlásit se' }}">
-                    <i class="bi bi-person"></i>
-                </a>
+                {% if current_user %}
+                    <a class="nav-avatar-link" href="/profile" aria-label="Přejít na profil">
+                        <span class="avatar avatar-sm bg-primary-subtle text-primary fw-bold">
+                            {% if current_user_avatar and current_user_avatar.url %}
+                                <img src="{{ current_user_avatar.url }}" alt="Avatar {{ current_user.nickname ?: current_user.email }}" class="rounded-circle" loading="lazy">
+                            {% else %}
+                                {{ current_user_avatar.initials|default('PR') }}
+                            {% endif %}
+                        </span>
+                    </a>
+                {% else %}
+                    <a class="btn btn-icon" href="/login" aria-label="Přihlásit se">
+                        <i class="bi bi-person"></i>
+                    </a>
+                {% endif %}
             </div>
         </div>
         <div class="header-search-overlay" id="headerSearchOverlay" hidden>

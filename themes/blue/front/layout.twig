@@ -216,9 +216,42 @@
         .article-figure img { width: 100%; height: auto; border-radius: 18px; object-fit: cover; }
         .article-shell { background: transparent; border: none; box-shadow: none; overflow: visible; max-width: 820px; }
         .badge.text-bg-light { background: #f3ede3 !important; color: var(--ink); border: 1px solid var(--stroke); padding: .45rem .75rem; border-radius: 999px; }
+        .article-feature {
+            position: relative;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0;
+            border: 1px solid var(--stroke);
+            border-radius: 16px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: none;
+        }
+        .article-feature-thumb .ratio { height: 100%; }
+        .article-feature-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .article-feature-fallback {
+            background: #f1f4f8;
+            color: var(--ink);
+            font-weight: 700;
+            font-size: clamp(2rem, 4vw, 2.6rem);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .article-feature-body { padding: 1.15rem 1.2rem; }
+        .article-feature-body .article-meta { margin-bottom: .55rem; }
+        .article-feature-title { font-size: clamp(1.7rem, 2.6vw, 2.1rem); line-height: 1.2; margin-bottom: .75rem; }
+        .article-feature .article-subtitle { font-size: 1.05rem; line-height: 1.65; }
         @media (min-width: 768px) {
             .navbar { padding: 1.2rem 0; }
             main { padding: 2.65rem 0 3rem; }
+            .article-feature {
+                grid-template-columns: 1.1fr 1fr;
+                align-items: stretch;
+                box-shadow: 0 16px 36px rgba(16, 24, 40, 0.08);
+            }
+            .article-feature-body { padding: 1.6rem 1.8rem; }
+            .article-feature .ratio-16x9 { min-height: 280px; }
         }
         @media (max-width: 575.98px) {
             .article-row { padding: 1rem; }
@@ -230,6 +263,12 @@
             .article-list { margin-left: 0; margin-right: 0; }
             .article-row { border-radius: 10px; }
             .content-body { max-width: 100%; }
+            .article-list-body { gap: .75rem; }
+            .article-row { padding: 1rem; gap: .85rem; }
+            .article-thumb { width: 86px; height: 86px; border-radius: 12px; }
+            .article-feature { box-shadow: none; }
+            .article-feature-body { padding: 1.15rem; }
+            .article-feature-title { margin-bottom: .6rem; }
         }
     </style>
 </head>

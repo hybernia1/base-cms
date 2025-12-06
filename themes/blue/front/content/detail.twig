@@ -134,9 +134,7 @@
                                             <a href="/{{ type_def.slug }}/{{ post.slug }}" class="stretched-link text-decoration-none">{{ post.title }}</a>
                                         </h3>
                                         {% set preview = post.excerpt ?: post.body %}
-                                        {% if preview %}
-                                            <p class="article-subtitle mb-0 small text-muted">{{ preview|striptags|slice(0, 120) }}{% if preview|striptags|length > 120 %}…{% endif %}</p>
-                                        {% endif %}
+
                                     </div>
                                 </article>
                             {% endfor %}

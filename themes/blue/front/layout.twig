@@ -157,17 +157,28 @@
         .dropdown-menu .dropdown-menu {
             margin-left: 0.5rem;
         }
-        .article-stack .card {
+        .article-stack {
+            background: transparent;
+        }
+        .article-list {
             background: #fdfaf5;
-        }
-        .article-card {
             border-radius: 18px;
-            transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
             box-shadow: 0 16px 30px rgba(34, 26, 16, 0.06);
+            border: 1px solid var(--stroke);
+            padding: 0;
         }
-        .article-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 20px 38px rgba(34, 26, 16, 0.08);
+        .article-list-body {
+            display: flex;
+            flex-direction: column;
+        }
+        .article-row {
+            padding: 1rem 1.25rem;
+            transition: background-color .12s ease;
+        }
+        .article-row + .article-row {
+            border-top: 1px solid var(--stroke);
+        }
+        .article-row:hover {
             background-color: #fffaf2;
         }
         .article-thumb {
@@ -208,6 +219,10 @@
             .navbar { padding: .8rem 0; }
             main { padding: 2rem 0 3rem; }
             .card-body { padding: 1.25rem 1.5rem; }
+        }
+        @media (max-width: 575.98px) {
+            .article-row { padding: .85rem 1rem; }
+            .article-thumb { width: 78px; height: 78px; }
         }
         @media (max-width: 767.98px) {
             .article-shell {

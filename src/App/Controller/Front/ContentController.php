@@ -22,8 +22,8 @@ class ContentController extends BaseFrontController
             return;
         }
 
-        $definitions = ContentType::definitions();
-        $typeDef = $definitions[$typeKey] ?? ['name' => $typeSlug, 'slug' => $typeSlug];
+        $contentTypeDefinitions = ContentType::definitions();
+        $typeDef = $contentTypeDefinitions[$typeKey] ?? ['name' => $typeSlug, 'slug' => $typeSlug];
         $typeSlug = $typeDef['slug'] ?? $typeSlug;
 
         $item = R::findOne(
@@ -47,6 +47,7 @@ class ContentController extends BaseFrontController
         $renderedBody = null;
         $metaValues = [];
         $metaDefinitions = [];
+        $relatedPosts = [];
         if ($item) {
             $termIds = R::getCol('SELECT term_id FROM content_term WHERE content_id = ?', [$item->id]);
             if ($termIds) {
@@ -72,11 +73,18 @@ class ContentController extends BaseFrontController
 
             $metaValues = Meta::valuesFor(Meta::TARGET_CONTENT, (int) $item->id);
             if ($metaValues !== []) {
-                $definitions = Meta::allKeysIndexed();
+                $metaDefinitionCatalog = Meta::allKeysIndexed();
                 foreach ($metaValues as $key => $value) {
-                    $metaDefinitions[$key] = $definitions[$key] ?? ['name' => $key, 'key' => $key];
+                    $metaDefinitions[$key] = $metaDefinitionCatalog[$key] ?? ['name' => $key, 'key' => $key];
                 }
             }
+
+            $relatedItems = R::findAll(
+                'content',
+                ' type = ? AND status = ? AND publish_at <= ? AND id != ? ORDER BY publish_at DESC LIMIT 5 ',
+                [$typeKey, 'published', date('Y-m-d H:i:s'), $item->id]
+            );
+            $relatedPosts = $relatedItems ? $this->attachAuthors($relatedItems) : [];
 
             if (Auth::hasRole(['admin', 'editor'])) {
                 $adminBarContext['edit_url'] = '/admin/content/' . $typeDef['slug'] . '/' . $item->id . '/edit';
@@ -118,6 +126,8 @@ class ContentController extends BaseFrontController
             'current_url' => $this->currentUrl(),
             'base_url' => $this->baseUrl(),
             'breadcrumbs' => $breadcrumbs,
+            'related_posts' => $relatedPosts,
+            'content_types' => $contentTypeDefinitions,
         ]);
     }
 

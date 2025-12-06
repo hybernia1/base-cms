@@ -2,7 +2,6 @@
 namespace App\Controller\Front;
 
 use App\Service\Auth;
-use App\Service\ContentType;
 use App\Service\Comment;
 use App\Service\CommentNotifier;
 use App\Service\Csrf;
@@ -12,51 +11,6 @@ use RedBeanPHP\R as R;
 
 class CommentController extends BaseFrontController
 {
-    public function index(): void
-    {
-        $contentId = (int) ($_GET['content_id'] ?? 0);
-        $content = $contentId ? R::findOne(
-            'content',
-            ' id = ? AND status = ? AND publish_at <= ? AND deleted_at IS NULL ',
-            [$contentId, 'published', date('Y-m-d H:i:s')]
-        ) : null;
-
-        if (!$content || !$content->id) {
-            $this->renderNotFound([
-                'title' => 'Diskuse nenalezena',
-                'message' => 'Požadovaná diskuse nebyla nalezena.',
-            ]);
-            return;
-        }
-
-        $commentAllowed = Setting::get('comments_enabled', '1') === '1'
-            && (string) ($content->allow_comments ?? '1') !== '0';
-        $commentSettings = [
-            'allow_replies' => Setting::get('comments_allow_replies', '1') === '1',
-            'allow_anonymous' => Setting::get('comments_allow_anonymous', '0') === '1',
-            'max_depth' => (int) Setting::get('comments_max_depth', 0),
-        ];
-
-        $comments = $commentAllowed ? Comment::findByContent((int) $content->id) : [];
-        $currentUser = Auth::user();
-        $commentingEnabled = $commentAllowed && ($commentSettings['allow_anonymous'] || $currentUser);
-
-        $contentUrl = '/' . ContentType::slug((string) $content->type) . '/' . $content->slug;
-        $typeDefinitions = ContentType::definitions();
-        $type = $typeDefinitions[$content->type] ?? ['name' => (string) $content->type, 'slug' => (string) $content->type];
-
-        $this->render('front/comments/index.twig', [
-            'content' => $content,
-            'type' => $type,
-            'content_url' => $contentUrl,
-            'comments' => $comments,
-            'comment_allowed' => $commentAllowed,
-            'comment_settings' => $commentSettings,
-            'commenting_enabled' => $commentingEnabled,
-            'current_user' => $currentUser,
-        ]);
-    }
-
     public function store(): void
     {
         header('Content-Type: application/json');

@@ -16,14 +16,9 @@
             {% for post in posts %}
                 {% set type_def = content_types[post.type]|default({'slug': post.type, 'name': post.type}) %}
                 <article class="card border-0 shadow-sm p-3" style="border-radius: 20px;">
-                    {% set thumb = post.thumbnail ?? null %}
                     <div class="d-flex align-items-start gap-3">
-                        <div class="article-thumb flex-shrink-0 d-flex align-items-center justify-content-center text-uppercase fw-bold" aria-hidden="true">
-                            {% if thumb %}
-                                <img src="/{{ thumb.path }}/{{ thumb.webp_filename ?: thumb.filename }}" alt="{{ thumb.alt ?: post.title }}" loading="lazy" decoding="async">
-                            {% else %}
-                                {{ post.title|default('A')|slice(0, 1) }}
-                            {% endif %}
+                        <div class="article-thumb flex-shrink-0 rounded-4 d-none d-md-flex align-items-center justify-content-center text-uppercase fw-bold" aria-hidden="true">
+                            {{ post.title|default('A')|slice(0, 1) }}
                         </div>
                         <div class="flex-grow-1">
                             <div class="d-flex flex-wrap gap-2 text-muted small align-items-center mb-2">

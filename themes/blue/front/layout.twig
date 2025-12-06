@@ -62,6 +62,7 @@
         a:hover, a:focus { color: var(--accent); }
         @media (min-width: 992px) {
             .container { max-width: 1160px; }
+            .navbar-nav .dropdown-menu { position: absolute; }
         }
         header {
             background: var(--sand);
@@ -69,10 +70,11 @@
             border-bottom: 1px solid var(--stroke);
         }
         header a { color: var(--ink); text-decoration: none; }
-        .navbar { padding: 1rem 0; }
-        .nav-inner { display: flex; align-items: center; gap: 1.25rem; }
-        .site-brand { font-weight: 700; letter-spacing: 2px; font-size: 1rem; text-transform: uppercase; }
+        .navbar { padding: 1rem 0; position: relative; }
+        .nav-inner { display: flex; align-items: center; gap: 1.25rem; position: relative; z-index: 2; }
+        .site-brand { font-weight: 700; letter-spacing: 2px; font-size: 1rem; text-transform: uppercase; position: relative; z-index: 6; }
         .site-logo { height: 26px; width: auto; }
+        .nav-actions { position: relative; z-index: 6; }
         .nav-actions .btn-icon {
             width: 42px;
             height: 42px;

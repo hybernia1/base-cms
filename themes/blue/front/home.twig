@@ -3,10 +3,7 @@
 {% block title %}Úvod | Můj web{% endblock %}
 
 {% block body %}
-    <section class="mb-4 d-flex flex-column gap-2">
-        <h1 class="article-title mb-2" style="font-size: clamp(1.8rem, 3vw, 2.4rem);">{{ heading|default('Latest stories') }}</h1>
-        <p class="article-subtitle mb-0">Nejnovější články, které pro vás redakce vybrala a seřadila na jednom místě.</p>
-    </section>
+
 
     {% if posts is empty %}
         <p class="text-muted">{{ empty_message|default('Žádné příspěvky zatím nejsou publikovány.') }}</p>

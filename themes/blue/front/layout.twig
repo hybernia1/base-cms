@@ -52,8 +52,6 @@
         .navbar { padding: .7rem 0; }
         .site-brand { font-weight: 700; letter-spacing: .5px; font-size: 1rem; text-transform: uppercase; }
         .site-logo { height: 28px; width: auto; }
-        .nav-actions .btn-icon { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--stroke); background: #fff; display: inline-flex; align-items: center; justify-content: center; color: var(--ink); }
-        .nav-actions .btn-icon:hover, .nav-actions .btn-icon:focus { border-color: var(--accent); color: var(--accent); }
         .nav-search { gap: .5rem; }
         .nav-search .form-control,
         .nav-search .btn { padding: .45rem .75rem; }
@@ -77,8 +75,6 @@
         .nav-item + .nav-item { margin-left: .6rem; }
         .nav-search input { background: #fff; border: 1px solid var(--stroke); border-radius: 12px; }
         .nav-search .btn { border-radius: 12px; border-color: var(--stroke); color: var(--ink); }
-        .search-collapse { border-top: 1px solid var(--stroke); background: #f9f7f3; }
-        .search-collapse .form-control { background: #fff; }
         @media (max-width: 991.98px) {
             .nav-search { width: 100%; }
             .nav-item + .nav-item { margin-left: 0; }
@@ -109,13 +105,6 @@
             background: radial-gradient(circle at 30% 30%, #e5d7c3, #d1c2ae);
             color: var(--ink);
             font-size: 1.5rem;
-            border-radius: 18px;
-            overflow: hidden;
-        }
-        .article-thumb img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
         }
         .badge.text-bg-light {
             background: #f0ebdf !important;
@@ -154,88 +143,51 @@
     }) }}
 {% endif %}
 <header>
-    <nav class="navbar navbar-light">
-        <div class="container align-items-center">
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
             <a class="navbar-brand site-brand d-flex align-items-center gap-2" href="/">
                 {% if site.logo and site.logo.url %}
                     <img src="{{ site.logo.url }}" alt="{{ site.logo.alt ?: site.name }}" class="site-logo">
                 {% endif %}
                 <span>{{ site.name|default('Base CMS') }}</span>
             </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Přepnout navigaci">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                {% import _self as nav %}
+                {% set nav_items = [] %}
+                {% for item in navigation|default([]) %}
+                    {% if not ((current_user and item.type in ['core_login', 'core_register']) or (not current_user and item.type in ['core_profile', 'core_logout'])) %}
+                        {% set nav_items = nav_items|merge([item]) %}
+                    {% endif %}
+                {% endfor %}
 
-            {% import _self as nav %}
-            {% set nav_items = [] %}
-            {% for item in navigation|default([]) %}
-                {% if not ((current_user and item.type in ['core_login', 'core_register']) or (not current_user and item.type in ['core_profile', 'core_logout'])) %}
-                    {% set nav_items = nav_items|merge([item]) %}
+                {% if nav_items is empty %}
+                    {% set nav_items = [
+                        {'label': 'Domů', 'url': '/', 'children': [], 'type': 'core_home', 'open_in_new_tab': false},
+                        {'label': 'Archiv', 'url': '/' ~ post_archive_slug, 'children': [], 'type': 'archive', 'open_in_new_tab': false},
+                        {'label': current_user ? 'Můj profil' : 'Přihlášení', 'url': current_user ? '/profile' : '/login', 'children': [], 'type': current_user ? 'core_profile' : 'core_login', 'open_in_new_tab': false},
+                    ] %}
                 {% endif %}
-            {% endfor %}
 
-            {% if nav_items is empty %}
-                {% set nav_items = [
-                    {'label': 'Domů', 'url': '/', 'children': [], 'type': 'core_home', 'open_in_new_tab': false},
-                    {'label': 'Archiv', 'url': '/' ~ post_archive_slug, 'children': [], 'type': 'archive', 'open_in_new_tab': false},
-                    {'label': current_user ? 'Můj profil' : 'Přihlášení', 'url': current_user ? '/profile' : '/login', 'children': [], 'type': current_user ? 'core_profile' : 'core_login', 'open_in_new_tab': false},
-                ] %}
-            {% endif %}
-
-            <div class="d-flex align-items-center gap-2 nav-actions ms-auto">
-                <button class="btn btn-icon d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#navSearchCollapse" aria-expanded="false" aria-controls="navSearchCollapse" aria-label="Otevřít vyhledávání">
-                    <i class="bi bi-search"></i>
-                </button>
-                <button class="btn btn-icon d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu" aria-controls="mobileMenu" aria-label="Otevřít menu">
-                    <i class="bi bi-list"></i>
-                </button>
-            </div>
-
-            <div class="d-none d-lg-flex align-items-center gap-3 ms-4 flex-grow-1 justify-content-end">
-                <ul class="navbar-nav mb-0 align-items-lg-center">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
                     {% for item in nav_items %}
                         {{ nav.nav_item(item) }}
                     {% endfor %}
+                    <li class="nav-item w-100 w-lg-auto ms-lg-3">
+                        <form class="d-flex nav-search" role="search" method="get" action="/search">
+                            <label class="visually-hidden" for="navSearch">Hledat</label>
+                            <input class="form-control form-control-sm me-2" type="search" name="q" id="navSearch" placeholder="Hledat…" aria-label="Hledat" minlength="2" required>
+                            <button class="btn btn-outline-dark btn-sm" type="submit" aria-label="Odeslat vyhledávání" title="Hledat">
+                                <i class="bi bi-search" aria-hidden="true"></i>
+                            </button>
+                        </form>
+                    </li>
                 </ul>
-                <form class="d-flex nav-search" role="search" method="get" action="/search">
-                    <label class="visually-hidden" for="navSearchLg">Hledat</label>
-                    <input class="form-control form-control-sm me-2" type="search" name="q" id="navSearchLg" placeholder="Hledat…" aria-label="Hledat" minlength="2" required>
-                    <button class="btn btn-outline-dark btn-sm" type="submit" aria-label="Odeslat vyhledávání" title="Hledat">
-                        <i class="bi bi-search" aria-hidden="true"></i>
-                    </button>
-                </form>
-            </div>
-        </div>
-        <div class="collapse search-collapse d-lg-none" id="navSearchCollapse">
-            <div class="container py-3">
-                <form class="d-flex nav-search" role="search" method="get" action="/search">
-                    <label class="visually-hidden" for="navSearchMobile">Hledat</label>
-                    <input class="form-control form-control-sm me-2" type="search" name="q" id="navSearchMobile" placeholder="Hledat…" aria-label="Hledat" minlength="2" required>
-                    <button class="btn btn-outline-dark btn-sm" type="submit" aria-label="Odeslat vyhledávání" title="Hledat">
-                        <i class="bi bi-search" aria-hidden="true"></i>
-                    </button>
-                </form>
             </div>
         </div>
     </nav>
-
-    <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileMenu" aria-labelledby="mobileMenuLabel">
-        <div class="offcanvas-header">
-            <h2 class="h6 mb-0" id="mobileMenuLabel">Menu</h2>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Zavřít"></button>
-        </div>
-        <div class="offcanvas-body d-flex flex-column gap-3">
-            <ul class="navbar-nav">
-                {% for item in nav_items %}
-                    {{ nav.nav_item(item) }}
-                {% endfor %}
-            </ul>
-            <form class="d-flex nav-search" role="search" method="get" action="/search">
-                <label class="visually-hidden" for="navSearchOffcanvas">Hledat</label>
-                <input class="form-control form-control-sm me-2" type="search" name="q" id="navSearchOffcanvas" placeholder="Hledat…" aria-label="Hledat" minlength="2" required>
-                <button class="btn btn-outline-dark btn-sm" type="submit" aria-label="Odeslat vyhledávání" title="Hledat">
-                    <i class="bi bi-search" aria-hidden="true"></i>
-                </button>
-            </form>
-        </div>
-    </div>
 </header>
 
 <main class="container">

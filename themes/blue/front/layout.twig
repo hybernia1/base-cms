@@ -307,8 +307,6 @@
             position: relative;
             margin-left: calc(var(--comment-indent, 0) * var(--comment-indent-size));
             padding: var(--comment-padding-y) 1rem .75rem;
-            --connector-top: calc(-1 * var(--comment-gap) - var(--comment-padding-y) - (var(--comment-avatar-size) / 2));
-            --connector-bottom: calc(-1 * var(--comment-gap) + var(--comment-padding-y));
         }
         .comment-item.has-parent {
             padding-left: 1.6rem;
@@ -321,8 +319,8 @@
             border-color: var(--comment-connector);
         }
         .comment-item.has-parent::before {
-            top: var(--connector-top);
-            bottom: var(--connector-bottom);
+            top: calc(-1 * var(--comment-gap) - var(--comment-padding-y) - (var(--comment-avatar-size) / 2));
+            bottom: calc(-1 * var(--comment-gap) + var(--comment-padding-y));
             border-left: 2px solid var(--comment-connector);
         }
         .comment-item.has-parent::after {

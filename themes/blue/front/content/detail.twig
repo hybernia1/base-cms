@@ -46,15 +46,26 @@
                 <div class="alert alert-warning mt-4">Obsah nebyl nalezen.</div>
             {% else %}
                 <article class="article-shell mt-4">
-                    <div class="mb-3 d-flex flex-wrap gap-3 align-items-center">
-                        <span class="article-meta">{{ item.created_at|date('F j, Y') }}</span>
-                        <span class="article-meta">{{ type.name|default(type.slug|default('Obsah')) }}</span>
-                        {% if author %}
-                            <span class="article-meta">{{ author.nickname }}</span>
-                        {% endif %}
-                    </div>
-
                     <h1 class="article-title">{{ item.title }}</h1>
+
+                    {% if author %}
+                        <div class="d-flex align-items-center gap-3 mt-3 mb-3">
+                            <span class="avatar avatar-sm bg-primary-subtle text-primary fw-bold">
+                                {% if author.avatar.url %}
+                                    <img src="{{ author.avatar.url }}" alt="Avatar {{ author.nickname }}" class="rounded-circle" loading="lazy">
+                                {% else %}
+                                    {{ author.avatar.initials }}
+                                {% endif %}
+                            </span>
+                            <div class="d-flex flex-column">
+                                <span class="fw-semibold">{{ author.nickname }}</span>
+                                <span class="text-muted small">{{ item.created_at|date('j. F Y, H:i') }}</span>
+                            </div>
+                        </div>
+                    {% elseif item.created_at is defined %}
+                        <div class="text-muted small mt-3 mb-3">{{ item.created_at|date('j. F Y, H:i') }}</div>
+                    {% endif %}
+
                     {% if item.excerpt %}
                         <p class="article-subtitle mt-2 mb-3">{{ item.excerpt }}</p>
                     {% endif %}

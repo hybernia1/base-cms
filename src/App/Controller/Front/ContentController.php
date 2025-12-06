@@ -7,6 +7,7 @@ use App\Service\Setting;
 use App\Service\Auth;
 use App\Service\ContentProtection;
 use App\Service\Meta;
+use App\Service\Avatar;
 use RedBeanPHP\R as R;
 
 class ContentController extends BaseFrontController
@@ -151,6 +152,7 @@ class ContentController extends BaseFrontController
             'email' => $user->email,
             'nickname' => $user->nickname ?: $user->email,
             'profile_url' => (int) ($user->is_profile_public ?? 1) === 1 ? '/users/' . $user->id : null,
+            'avatar' => Avatar::forUser($user),
         ];
     }
 

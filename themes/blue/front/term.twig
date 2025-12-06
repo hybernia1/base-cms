@@ -20,12 +20,12 @@
     {% elseif items is empty %}
         <p class="text-muted">{{ empty_message|default('Tento term zatím nemá žádný obsah.') }}</p>
     {% else %}
-        <div class="article-stack d-flex flex-column gap-3">
-            {% for post in items %}
-                {% set type_def = content_types[post.type]|default({'slug': post.type, 'name': post.type}) %}
-                {% set thumb = post.thumbnail ?? null %}
-                <article class="card border-0 p-3 article-card">
-                    <div class="d-flex align-items-start gap-3">
+        <div class="article-stack card article-list">
+            <div class="article-list-body">
+                {% for post in items %}
+                    {% set type_def = content_types[post.type]|default({'slug': post.type, 'name': post.type}) %}
+                    {% set thumb = post.thumbnail ?? null %}
+                    <article class="article-row d-flex align-items-start gap-3">
                         <div class="article-thumb flex-shrink-0 d-flex align-items-center justify-content-center text-uppercase fw-bold" aria-hidden="true">
                             {% if thumb %}
                                 <img src="/{{ thumb.path }}/{{ thumb.webp_filename ?: thumb.filename }}" alt="{{ thumb.alt ?: post.title }}" loading="lazy" decoding="async">
@@ -34,7 +34,7 @@
                             {% endif %}
                         </div>
                         <div class="flex-grow-1">
-                            <h2 class="h5 mb-2">
+                            <h2 class="h5 mb-1">
                                 <a href="/{{ type_def.slug }}/{{ post.slug }}" class="stretched-link text-decoration-none text-dark">{{ post.title }}</a>
                             </h2>
                             {% set preview = post.excerpt ?: post.body %}
@@ -43,9 +43,9 @@
                             {% endif %}
                             <p class="text-muted small mb-0">{{ post.created_at|date('j. n. Y') }}</p>
                         </div>
-                    </div>
-                </article>
-            {% endfor %}
+                    </article>
+                {% endfor %}
+            </div>
         </div>
     {% endif %}
 {% endblock %}

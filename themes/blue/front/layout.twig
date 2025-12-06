@@ -31,7 +31,7 @@
             --surface: #ffffff;
             --muted: #6f6b63;
             --stroke: #e7dfd0;
-            --radius: 16px;
+            --radius: 0;
             --sand: #f3ede3;
             --ink: #1f1a17;
             --accent: #0f4fa3;
@@ -203,18 +203,16 @@
             border-radius: 999px;
         }
         .article-shell {
-            background: #fdfaf5;
-            border: 1px solid var(--stroke);
-            border-radius: 22px;
-            box-shadow: 0 20px 45px rgba(34, 26, 16, 0.07);
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
             overflow: hidden;
         }
         .article-shell .card-img-top {
             border-radius: 0;
         }
-        .article-shell .card-body {
-            padding: 1.5rem 1.6rem;
-        }
+        .article-shell .card-body { padding: 0; }
         @media (min-width: 768px) {
             .navbar { padding: .8rem 0; }
             main { padding: 2rem 0 3rem; }

@@ -334,7 +334,7 @@
         .comment-connector-stack {
             position: absolute;
             top: var(--connector-top);
-            bottom: var(--connector-bottom);
+            bottom: calc(-1 * var(--comment-gap) + var(--comment-padding-y));
             left: calc((var(--comment-avatar-size) / 2) - var(--comment-indent-size));
             width: 2px;
             background: transparent;

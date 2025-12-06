@@ -172,31 +172,22 @@
                     });
                 }
 
-                const getAvatarCenter = (element) => {
-                    const avatar = element.querySelector('.comment-avatar');
-                    if (!avatar) return 0;
-
-                    const avatarRect = avatar.getBoundingClientRect();
-                    return avatarRect.top + (avatarRect.height / 2);
-                };
-
                 commentItems.forEach((item, index) => {
                     if (!item.classList.contains('has-parent')) return;
 
                     const currentDepth = parseInt(item.dataset.depth || '0', 10);
+                    let hasContinuation = false;
                     const continuingLevels = new Set();
-                    let nextRelevant = null;
 
                     for (let i = index + 1; i < commentItems.length; i += 1) {
                         const nextDepth = parseInt(commentItems[i].dataset.depth || '0', 10);
 
-                        if (!nextRelevant && nextDepth >= currentDepth) {
-                            nextRelevant = commentItems[i];
-                        }
-
                         for (let level = 1; level <= currentDepth; level += 1) {
                             if (nextDepth >= level) {
                                 continuingLevels.add(level);
+                                if (level === currentDepth) {
+                                    hasContinuation = true;
+                                }
                             }
                         }
                     }
@@ -221,28 +212,10 @@
                         stackEl.classList.remove('has-lines');
                     }
 
-                    const itemRect = item.getBoundingClientRect();
-                    const currentCenter = getAvatarCenter(item) - itemRect.top;
-
-                    const ancestor = [...commentItems.slice(0, index)]
-                        .reverse()
-                        .find((candidate) => parseInt(candidate.dataset.depth || '0', 10) === currentDepth - 1);
-
-                    if (ancestor) {
-                        const ancestorCenter = getAvatarCenter(ancestor) - itemRect.top;
-                        item.style.setProperty('--connector-top', `${ancestorCenter - currentCenter}px`);
-                    } else {
-                        item.style.setProperty('--connector-top', `calc(-1 * var(--comment-gap) - var(--comment-padding-y) - (var(--comment-avatar-size) / 2))`);
-                    }
-
-                    if (nextRelevant) {
-                        const nextRect = nextRelevant.getBoundingClientRect();
-                        const nextCenter = getAvatarCenter(nextRelevant) - nextRect.top;
-                        const connectorBottom = (nextRect.top - itemRect.top) + nextCenter - currentCenter;
-                        item.style.setProperty('--connector-bottom', `${connectorBottom}px`);
-                    } else {
-                        item.style.setProperty('--connector-bottom', 'calc(var(--comment-padding-y) + (var(--comment-avatar-size) / 2))');
-                    }
+                    item.style.setProperty('--connector-top', 'calc(-1 * var(--comment-gap) - var(--comment-padding-y) - (var(--comment-avatar-size) / 2))');
+                    item.style.setProperty('--connector-bottom', hasContinuation
+                        ? 'calc(-1 * var(--comment-gap) + var(--comment-padding-y))'
+                        : 'calc(var(--comment-padding-y) + (var(--comment-avatar-size) / 2))');
                 });
 
                 form.addEventListener('submit', async (event) => {

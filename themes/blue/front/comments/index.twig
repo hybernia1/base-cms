@@ -8,7 +8,6 @@
     <div class="row justify-content-center">
         <div class="col-12">
             <div class="d-flex align-items-center gap-3 mt-4 flex-wrap">
-                <a href="{{ content_url }}" class="btn btn-outline-secondary btn-sm">&larr; Zpět na článek</a>
                 <div>
                     <p class="text-muted small mb-1">{{ content.created_at|date('j. n. Y') }} · {{ type.name|default(content.type) }}</p>
                     <h1 class="h4 mb-0">Diskuse: {{ content.title }}</h1>
@@ -83,9 +82,6 @@
                                                 </div>
                                                 <div class="text-muted small">{{ comment.created_at|date('j. n. Y H:i') }}</div>
                                             </div>
-                                            {% if comment.depth > 0 %}
-                                                <span class="badge text-bg-light">Úroveň {{ comment.depth }}</span>
-                                            {% endif %}
                                         </div>
                                         <div class="mt-2">{{ comment.body|nl2br }}</div>
                                         {% if comment_settings.allow_replies and comment_settings.max_depth > comment.depth and commenting_enabled %}

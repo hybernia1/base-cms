@@ -86,7 +86,7 @@
                             <div class="comment-thread" role="list">
                                 {% for comment in comments %}
                                     {% set has_parent = comment.depth > 0 %}
-                                    <article class="comment-item{% if has_parent %} has-parent{% endif %}" id="comment-{{ comment.id }}" style="--comment-indent: {{ comment.depth }}" role="listitem">
+                                    <article class="comment-item{% if has_parent %} has-parent{% endif %}" id="comment-{{ comment.id }}" data-depth="{{ comment.depth }}" style="--comment-indent: {{ comment.depth }}" role="listitem">
                                         <div class="comment-inner">
                                             <div class="comment-avatar">
                                                 <span class="avatar avatar-sm bg-primary-subtle text-primary fw-bold flex-shrink-0">
@@ -148,6 +148,7 @@
 
                 const commentBody = document.getElementById('comment_body');
                 const alertBox = document.getElementById('commentAlert');
+                const commentItems = Array.from(document.querySelectorAll('.comment-thread .comment-item'));
 
                 document.querySelectorAll('.reply-button').forEach((btn) => {
                     btn.addEventListener('click', () => {
@@ -170,6 +171,52 @@
                         }
                     });
                 }
+
+                commentItems.forEach((item, index) => {
+                    if (!item.classList.contains('has-parent')) return;
+
+                    const currentDepth = parseInt(item.dataset.depth || '0', 10);
+                    let hasContinuation = false;
+                    const continuingLevels = new Set();
+
+                    for (let i = index + 1; i < commentItems.length; i += 1) {
+                        const nextDepth = parseInt(commentItems[i].dataset.depth || '0', 10);
+
+                        for (let level = 1; level <= currentDepth; level += 1) {
+                            if (nextDepth >= level) {
+                                continuingLevels.add(level);
+                                if (level === currentDepth) {
+                                    hasContinuation = true;
+                                }
+                            }
+                        }
+                    }
+
+                    const stackOffsets = Array.from(continuingLevels)
+                        .filter((level) => level < currentDepth)
+                        .sort((a, b) => a - b)
+                        .map((level) => `calc(-1 * var(--comment-indent-size) * ${currentDepth - level}) 0 0 0 var(--comment-connector)`);
+
+                    let stackEl = item.querySelector('.comment-connector-stack');
+                    if (!stackEl) {
+                        stackEl = document.createElement('span');
+                        stackEl.className = 'comment-connector-stack';
+                        item.prepend(stackEl);
+                    }
+
+                    if (stackOffsets.length) {
+                        stackEl.style.setProperty('--stack-shadows', stackOffsets.join(', '));
+                        stackEl.classList.add('has-lines');
+                    } else {
+                        stackEl.style.removeProperty('--stack-shadows');
+                        stackEl.classList.remove('has-lines');
+                    }
+
+                    item.style.setProperty('--connector-top', 'calc(-1 * var(--comment-gap) - var(--comment-padding-y) - (var(--comment-avatar-size) / 2))');
+                    item.style.setProperty('--connector-bottom', hasContinuation
+                        ? 'calc(-1 * var(--comment-gap) + var(--comment-padding-y))'
+                        : 'calc(var(--comment-padding-y) + (var(--comment-avatar-size) / 2))');
+                });
 
                 form.addEventListener('submit', async (event) => {
                     event.preventDefault();

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Náhled diskuse</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --surface: #ffffff;
+            --muted: #6b7482;
+            --stroke: #edf1f6;
+            --radius: 12px;
+            --sand: #f8fafc;
+            --ink: #0f1a2b;
+            --accent: #3f70c2;
+        }
+        body {
+            background-color: var(--sand);
+            color: var(--ink);
+            font-size: 16px;
+            font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
+            line-height: 1.7;
+            letter-spacing: 0.01em;
+        }
+        .card { border: 1px solid var(--stroke); border-radius: var(--radius); }
+        .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #e7f1ff;
+            color: var(--accent);
+        }
+        .avatar-sm { width: 36px; height: 36px; font-size: .9rem; }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        a { color: inherit; }
+        a:hover, a:focus { color: var(--accent); }
+        .comment-thread {
+            --comment-gap: 1.25rem;
+            --comment-indent-size: 52px;
+            --comment-avatar-size: 44px;
+            --comment-connector: var(--stroke, #edf1f6);
+            display: flex;
+            flex-direction: column;
+            row-gap: var(--comment-gap);
+        }
+        .comment-item {
+            position: relative;
+            margin-left: calc(var(--comment-indent, 0) * var(--comment-indent-size));
+            padding: .85rem 1rem .75rem;
+        }
+        .comment-item.has-parent {
+            padding-left: 1.6rem;
+        }
+        .comment-item.has-parent::before,
+        .comment-item.has-parent::after {
+            content: '';
+            position: absolute;
+            left: calc((var(--comment-avatar-size) / 2) - var(--comment-indent-size));
+            border-color: var(--comment-connector);
+        }
+        .comment-item.has-parent::before {
+            top: calc(var(--comment-avatar-size) / -2);
+            bottom: calc(-1 * var(--comment-gap));
+            border-left: 2px solid var(--comment-connector);
+        }
+        .comment-item.has-parent::after {
+            top: calc(var(--comment-avatar-size) / 2);
+            width: var(--comment-indent-size);
+            border-top: 2px solid var(--comment-connector);
+        }
+        .comment-inner { display: flex; gap: .95rem; align-items: flex-start; }
+        .comment-avatar { flex-shrink: 0; }
+        .comment-text { line-height: 1.7; }
+        .comment-body .btn-link { color: var(--accent); }
+        .comment-body .btn-link:hover,
+        .comment-body .btn-link:focus { color: #365fa5; text-decoration: none; }
+    </style>
+</head>
+<body>
+    <main class="container py-5">
+        <section class="card shadow-sm">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                    <h1 class="h5 mb-0">Diskuse (2)</h1>
+                    <span class="text-muted small">Ukázka rozložení rodič ↔ reakce</span>
+                </div>
+
+                <div class="comment-thread" role="list">
+                    <article class="comment-item" id="comment-1" style="--comment-indent: 0" role="listitem">
+                        <div class="comment-inner">
+                            <div class="comment-avatar">
+                                <span class="avatar avatar-sm bg-primary-subtle text-primary fw-bold flex-shrink-0">AB</span>
+                            </div>
+                            <div class="comment-body">
+                                <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                                    <div>
+                                        <div class="fw-semibold">Andrea B.</div>
+                                        <div class="text-muted small">12. 8. 2024 09:15</div>
+                                    </div>
+                                </div>
+                                <div class="mt-2 comment-text">Rodičovský komentář s delším textem, aby bylo vidět zarovnání avataru i obsahu.</div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="comment-item has-parent" id="comment-2" style="--comment-indent: 1" role="listitem">
+                        <div class="comment-inner">
+                            <div class="comment-avatar">
+                                <span class="avatar avatar-sm bg-primary-subtle text-primary fw-bold flex-shrink-0">PM</span>
+                            </div>
+                            <div class="comment-body">
+                                <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                                    <div>
+                                        <div class="fw-semibold">Petr M.</div>
+                                        <div class="text-muted small">12. 8. 2024 10:02</div>
+                                    </div>
+                                </div>
+                                <div class="mt-2 comment-text">Reakce navazuje na avatar rodiče a konektor vede ze středu kruhů.</div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

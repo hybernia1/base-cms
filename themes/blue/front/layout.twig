@@ -295,8 +295,9 @@
         .archive-list .article-row .stretched-link::after { border-radius: 0; }
         .comment-thread {
             --comment-gap: 1.25rem;
-            --comment-indent-size: 36px;
-            --comment-connector: #cdd8e7;
+            --comment-indent-size: 52px;
+            --comment-avatar-size: 44px;
+            --comment-connector: var(--stroke, #edf1f6);
             display: flex;
             flex-direction: column;
             row-gap: var(--comment-gap);
@@ -313,17 +314,17 @@
         .comment-item.has-parent::after {
             content: '';
             position: absolute;
-            left: -20px;
+            left: calc((var(--comment-avatar-size) / 2) - var(--comment-indent-size));
             border-color: var(--comment-connector);
         }
         .comment-item.has-parent::before {
-            top: 0;
+            top: calc(var(--comment-avatar-size) / -2);
             bottom: calc(-1 * var(--comment-gap));
             border-left: 2px solid var(--comment-connector);
         }
         .comment-item.has-parent::after {
-            top: 18px;
-            width: 20px;
+            top: calc(var(--comment-avatar-size) / 2);
+            width: var(--comment-indent-size);
             border-top: 2px solid var(--comment-connector);
         }
         .comment-inner { display: flex; gap: .95rem; align-items: flex-start; }

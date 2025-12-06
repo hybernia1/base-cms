@@ -90,47 +90,17 @@
                 </article>
 
                 {% if comment_allowed %}
-                    <section class="card shadow-sm mt-4" id="comments">
+                    <div class="mt-4">
+                        <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#comments" aria-expanded="false" aria-controls="comments">
+                            Vstoupit do diskuse
+                        </button>
+                    </div>
+
+                    <section class="card shadow-sm mt-3 collapse" id="comments">
                         <div class="card-body p-4">
-                            <h2 class="h5 mb-3">Komentáře</h2>
+                            <h2 class="h5 mb-3">Diskuse</h2>
 
-                            {% if comments %}
-                                <div class="list-group mb-4">
-                                    {% for comment in comments %}
-                                        <div class="list-group-item border-0 border-bottom" id="comment-{{ comment.id }}" style="margin-left: {{ comment.depth * 1.5 }}rem;">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <div class="fw-semibold">
-                                                        {% if comment.profile_url %}
-                                                            <a href="{{ comment.profile_url }}" class="text-decoration-none">{{ comment.author_name ?: 'Anonym' }}</a>
-                                                        {% else %}
-                                                            {{ comment.author_name ?: 'Anonym' }}
-                                                        {% endif %}
-                                                    </div>
-                                                    <div class="text-muted small">{{ comment.created_at|date('j. n. Y H:i') }}</div>
-                                                </div>
-                                                {% if comment.depth > 0 %}
-                                                    <span class="badge text-bg-light">Úroveň {{ comment.depth }}</span>
-                                                {% endif %}
-                                            </div>
-                                            <div class="mt-2">{{ comment.body|nl2br }}</div>
-                                            {% if comment_settings.allow_replies and comment_settings.max_depth > comment.depth and commenting_enabled %}
-                                                <button type="button" class="btn btn-sm btn-link text-decoration-none ps-0 reply-button" data-reply-id="{{ comment.id }}" data-reply-author="{{ comment.author_name ?: 'Anonym' }}">
-                                                    Odpovědět
-                                                </button>
-                                            {% endif %}
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <p class="text-muted">Buďte první, kdo přidá komentář.</p>
-                            {% endif %}
-
-                            {% if not commenting_enabled %}
-                                <div class="alert alert-info">Komentáře jsou povoleny pouze pro přihlášené uživatele.</div>
-                            {% endif %}
-
-                            <form method="post" action="/comments" class="mt-3" id="commentForm">
+                            <form method="post" action="{{ current_url is defined ? current_url ~ '/comments' : '/comments' }}" class="mt-3" id="commentForm">
                                 <input type="hidden" name="content_id" value="{{ item.id }}">
                                 <input type="hidden" name="parent_id" value="">
                                 <input type="hidden" name="_csrf" value="{{ csrf_token('comment_form') }}">
@@ -164,10 +134,48 @@
                                     </div>
                                 {% endif %}
 
+                                {% if not commenting_enabled %}
+                                    <div class="alert alert-info mt-3">Komentáře jsou povoleny pouze pro přihlášené uživatele.</div>
+                                {% endif %}
+
                                 <div id="commentAlert" class="alert d-none mt-3" role="alert"></div>
 
                                 <button type="submit" class="btn btn-primary mt-3" {% if not commenting_enabled %}disabled{% endif %}>Odeslat</button>
                             </form>
+
+                            <hr class="my-4">
+
+                            {% if comments %}
+                                <div class="list-group">
+                                    {% for comment in comments %}
+                                        <div class="list-group-item border-0 border-bottom" id="comment-{{ comment.id }}" style="margin-left: {{ comment.depth * 1.5 }}rem;">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <div class="fw-semibold">
+                                                        {% if comment.profile_url %}
+                                                            <a href="{{ comment.profile_url }}" class="text-decoration-none">{{ comment.author_name ?: 'Anonym' }}</a>
+                                                        {% else %}
+                                                            {{ comment.author_name ?: 'Anonym' }}
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="text-muted small">{{ comment.created_at|date('j. n. Y H:i') }}</div>
+                                                </div>
+                                                {% if comment.depth > 0 %}
+                                                    <span class="badge text-bg-light">Úroveň {{ comment.depth }}</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="mt-2">{{ comment.body|nl2br }}</div>
+                                            {% if comment_settings.allow_replies and comment_settings.max_depth > comment.depth and commenting_enabled %}
+                                                <button type="button" class="btn btn-sm btn-link text-decoration-none ps-0 reply-button" data-reply-id="{{ comment.id }}" data-reply-author="{{ comment.author_name ?: 'Anonym' }}">
+                                                    Odpovědět
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <p class="text-muted mb-0">Buďte první, kdo přidá komentář.</p>
+                            {% endif %}
                         </div>
                     </section>
                 {% endif %}
@@ -229,7 +237,9 @@
                     const formData = new FormData(form);
 
                     try {
-                        const response = await fetch('/comments', {
+                        const commentEndpoint = form.getAttribute('action') || '/comments';
+
+                        const response = await fetch(commentEndpoint, {
                             method: 'POST',
                             body: formData,
                             headers: {

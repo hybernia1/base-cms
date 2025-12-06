@@ -23,8 +23,14 @@
         <div class="row row-cols-1 row-cols-md-2 g-4">
             {% for post in items %}
                 {% set type_def = content_types[post.type]|default({'slug': post.type, 'name': post.type}) %}
+                {% set thumb = post.thumbnail ?? null %}
                 <div class="col">
                     <article class="card h-100 shadow-sm">
+                        {% if thumb %}
+                            <div class="ratio ratio-16x9">
+                                <img src="/{{ thumb.path }}/{{ thumb.webp_filename ?: thumb.filename }}" alt="{{ thumb.alt ?: post.title }}" class="card-img-top object-fit-cover" loading="lazy" decoding="async">
+                            </div>
+                        {% endif %}
                         <div class="card-body">
                             <div class="text-muted small mb-1">
                                 {{ post.created_at|date('j. n. Y') }} · {{ type_def.name }}

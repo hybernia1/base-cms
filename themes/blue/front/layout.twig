@@ -294,39 +294,42 @@
         .archive-list .article-row { border: none; border-radius: 0; box-shadow: none; }
         .archive-list .article-row .stretched-link::after { border-radius: 0; }
         .comment-thread {
-            --comment-gap: 1rem;
+            --comment-gap: 1.25rem;
+            --comment-indent-size: 36px;
+            --comment-avatar-size: 36px;
+            --comment-padding-start: 1rem;
+            --comment-connector: #cdd8e7;
             display: flex;
             flex-direction: column;
             row-gap: var(--comment-gap);
         }
         .comment-item {
             position: relative;
-            margin-left: calc(var(--comment-indent, 0) * 24px);
-            border: none;
-
-            padding: 1rem 1.1rem;
+            margin-left: calc(var(--comment-indent, 0) * var(--comment-indent-size));
+            padding: .85rem 1rem .75rem;
+            --comment-padding-start-current: var(--comment-padding-start);
         }
-        .comment-item.has-parent::before {
-            content: '';
-            position: absolute;
-            left: -18px;
-            top: calc(-1 * var(--comment-gap));
-            bottom: calc(-1 * var(--comment-gap));
-            width: 2px;
-            background: #e1e8f0;
-            border-radius: 999px;
+        .comment-item.has-parent {
+            padding-left: var(--comment-padding-start-current);
         }
+        .comment-item.has-parent::before,
         .comment-item.has-parent::after {
             content: '';
             position: absolute;
-            left: -18px;
-            top: 32px;
-            width: 18px;
-            height: 2px;
-            background: #e1e8f0;
-            border-radius: 999px;
+            left: calc(-1 * var(--comment-indent-size) + var(--comment-padding-start-current) + (var(--comment-avatar-size) / 2));
+            border-color: var(--comment-connector);
         }
-        .comment-inner { display: flex; gap: .85rem; align-items: flex-start; }
+        .comment-item.has-parent::before {
+            top: 0;
+            bottom: calc(-1 * var(--comment-gap));
+            border-left: 2px solid var(--comment-connector);
+        }
+        .comment-item.has-parent::after {
+            top: calc(var(--comment-avatar-size) / 2);
+            width: var(--comment-indent-size);
+            border-top: 2px solid var(--comment-connector);
+        }
+        .comment-inner { display: flex; gap: .95rem; align-items: flex-start; }
         .comment-avatar { flex-shrink: 0; }
         .comment-text { line-height: 1.7; }
         .comment-body .btn-link { color: var(--accent); }

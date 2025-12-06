@@ -37,6 +37,7 @@ $router->get('/profile/edit', 'App\\Controller\\Front\\UserController@editForm')
 $router->post('/profile/edit', 'App\\Controller\\Front\\UserController@update');
 $router->get('/users/(\\d+)', 'App\\Controller\\Front\\UserController@show');
 $router->get('/search', 'App\\Controller\\Front\\SearchController@index');
+$router->get('/comments', 'App\\Controller\\Front\\CommentController@index');
 $router->get('/terms/([\\w-]+)/([^/]+)', 'App\\Controller\\Front\\TermController@show');
 
 foreach (ContentType::definitions() as $definition) {

@@ -54,7 +54,7 @@
                                 </h2>
                                 {% set preview = post.excerpt ?: post.body %}
                                 {% if preview %}
-                                    <p class="card-text text-muted mb-2">{{ preview|striptags|slice(0, 180) }}{% if preview|striptags|length > 180 %}…{% endif %}</p>
+                                    <p class="card-text text-muted mb-2 d-none d-md-block">{{ preview|striptags|slice(0, 180) }}{% if preview|striptags|length > 180 %}…{% endif %}</p>
                                 {% endif %}
                             </div>
                         </article>

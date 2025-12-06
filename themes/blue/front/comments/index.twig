@@ -15,6 +15,20 @@
                 </div>
             </div>
 
+            {% set perex = content.excerpt ?: (content.body|default('')|striptags|slice(0, 240)) %}
+            {% if perex or thumbnail %}
+                <div class="d-flex align-items-start gap-3 mt-3">
+                    {% if thumbnail %}
+                        <div class="article-thumb flex-shrink-0 d-flex align-items-center justify-content-center text-uppercase fw-bold" aria-hidden="true">
+                            <img src="/{{ thumbnail.path }}/{{ thumbnail.webp_filename ?: thumbnail.filename }}" alt="{{ thumbnail.alt ?: content.title }}" loading="lazy" decoding="async">
+                        </div>
+                    {% endif %}
+                    {% if perex %}
+                        <p class="mb-0 text-muted">{{ perex }}</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+
             {% if comment_allowed %}
                 <section class="card shadow-sm mt-3">
                     <div class="card-body p-4">

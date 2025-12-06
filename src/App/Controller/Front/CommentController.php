@@ -44,6 +44,14 @@ class CommentController extends BaseFrontController
             'max_depth' => (int) Setting::get('comments_max_depth', 0),
         ];
 
+        $thumbnail = null;
+        if ($content->thumbnail_id) {
+            $loadedThumbnail = R::load('media', (int) $content->thumbnail_id);
+            if ($loadedThumbnail && $loadedThumbnail->id) {
+                $thumbnail = $loadedThumbnail;
+            }
+        }
+
         $comments = $commentAllowed ? Comment::findByContent((int) $content->id) : [];
         $currentUser = Auth::user();
         $commentingEnabled = $commentAllowed && ($commentSettings['allow_anonymous'] || $currentUser);
@@ -73,6 +81,7 @@ class CommentController extends BaseFrontController
             'commenting_enabled' => $commentingEnabled,
             'current_user' => $currentUser,
             'breadcrumbs' => $breadcrumbs,
+            'thumbnail' => $thumbnail,
         ]);
     }
 

@@ -4,9 +4,9 @@
 
 {% block body %}
     <section class="mb-4 d-flex flex-column gap-2">
-        <p class="text-uppercase text-muted fw-semibold mb-0" style="letter-spacing: 1px;">{{ site.name|default('Aktuality') }}</p>
-        <h1 class="display-6 fw-semibold mb-0" style="font-size: 2rem;">{{ heading|default('Domovská stránka') }}</h1>
-        <p class="text-muted mb-0" style="max-width: 640px;">Nejnovější články, které pro vás redakce vybrala a seřadila na jednom místě.</p>
+        <p class="article-meta mb-0">{{ site.name|default('News') }}</p>
+        <h1 class="article-title mb-2" style="font-size: clamp(1.8rem, 3vw, 2.4rem);">{{ heading|default('Latest stories') }}</h1>
+        <p class="article-subtitle mb-0">Nejnovější články, které pro vás redakce vybrala a seřadila na jednom místě.</p>
     </section>
 
     {% if posts is empty %}
@@ -17,7 +17,7 @@
                 {% for post in posts %}
                     {% set type_def = content_types[post.type]|default({'slug': post.type, 'name': post.type}) %}
                     {% set thumb = post.thumbnail ?? null %}
-                    <article class="article-row d-flex align-items-start gap-3">
+                    <article class="article-row d-flex align-items-start gap-3 gap-md-4">
                         <div class="article-thumb flex-shrink-0 d-flex align-items-center justify-content-center text-uppercase fw-bold" aria-hidden="true">
                             {% if thumb %}
                                 <img src="/{{ thumb.path }}/{{ thumb.webp_filename ?: thumb.filename }}" alt="{{ thumb.alt ?: post.title }}" loading="lazy" decoding="async">
@@ -26,14 +26,14 @@
                             {% endif %}
                         </div>
                         <div class="flex-grow-1">
-                            <h2 class="h5 mb-1">
-                                <a href="/{{ type_def.slug }}/{{ post.slug }}" class="stretched-link text-decoration-none text-dark">{{ post.title }}</a>
+                            <p class="article-meta mb-1">{{ post.created_at|date('j. n. Y') }} · {{ type_def.name|default(type_def.slug) }}</p>
+                            <h2 class="h5 mb-2">
+                                <a href="/{{ type_def.slug }}/{{ post.slug }}" class="stretched-link text-decoration-none">{{ post.title }}</a>
                             </h2>
                             {% set preview = post.excerpt ?: post.body %}
                             {% if preview %}
-                                <p class="card-text text-muted mb-2">{{ preview|striptags|slice(0, 170) }}{% if preview|striptags|length > 170 %}…{% endif %}</p>
+                                <p class="article-subtitle mb-0">{{ preview|striptags|slice(0, 170) }}{% if preview|striptags|length > 170 %}…{% endif %}</p>
                             {% endif %}
-                            <p class="text-muted small mb-0">{{ post.created_at|date('j. n. Y') }}</p>
                         </div>
                     </article>
                 {% endfor %}

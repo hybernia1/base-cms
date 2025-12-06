@@ -30,10 +30,10 @@
         :root {
             --surface: #ffffff;
             --muted: #6f6b63;
-            --stroke: #e7dfd0;
-            --radius: 0px;
-            --sand: #f3ede3;
-            --ink: #1f1a17;
+            --stroke: #e3d8c8;
+            --radius: 12px;
+            --sand: #f7f2e9;
+            --ink: #15110e;
             --accent: #0f4fa3;
         }
         body {
@@ -41,90 +41,94 @@
             color: var(--ink);
             font-size: 16px;
             font-family: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
+            line-height: 1.6;
         }
+        a { color: inherit; }
+        a:hover, a:focus { color: var(--accent); }
         @media (min-width: 992px) {
             .container {
-                max-width: 1100px;
+                max-width: 1120px;
             }
         }
         header {
-            position: relative;
-            background: #f9f7f3;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--sand);
             color: var(--ink);
-            box-shadow: 0 10px 35px rgba(34, 26, 16, 0.08);
             border-bottom: 1px solid var(--stroke);
-            overflow: hidden;
         }
         header a { color: var(--ink); text-decoration: none; }
-        .navbar { padding: .7rem 0; }
-        .site-brand { font-weight: 700; letter-spacing: .5px; font-size: 1rem; text-transform: uppercase; }
-        .site-logo { height: 28px; width: auto; }
-        .nav-actions .btn-icon { width: 42px; height: 42px; border-radius: 0; border: 1px solid var(--stroke); background: #fff; display: inline-flex; align-items: center; justify-content: center; color: var(--ink); }
-        .nav-actions .btn-icon:hover, .nav-actions .btn-icon:focus { border-color: var(--accent); color: var(--accent); }
+        .navbar { padding: 1rem 0; }
+        .nav-inner { display: flex; align-items: center; gap: 1.5rem; }
+        .site-brand { font-weight: 700; letter-spacing: 2px; font-size: 1rem; text-transform: uppercase; }
+        .site-logo { height: 26px; width: auto; }
+        .nav-actions .btn-icon { width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--stroke); background: #fff; display: inline-flex; align-items: center; justify-content: center; color: var(--ink); }
+        .nav-actions .btn-icon:hover, .nav-actions .btn-icon:focus { border-color: var(--accent); color: var(--accent); background: #fff; }
         .nav-search { gap: .5rem; }
         .nav-search .form-control,
-        .nav-search .btn { padding: .45rem .75rem; }
+        .nav-search .btn { padding: .5rem .75rem; border-radius: 999px; }
         .nav-link {
             font-weight: 600;
-            letter-spacing: .4px;
+            letter-spacing: .5px;
             text-transform: uppercase;
-            font-size: .9rem;
-            padding: .5rem .35rem;
-            border-bottom: 2px solid transparent;
+            font-size: .92rem;
+            padding: .35rem .45rem;
+            border-radius: 999px;
+            transition: background-color .15s ease, color .15s ease;
         }
         .nav-link:hover,
         .nav-link:focus {
             color: var(--accent);
-            border-color: var(--accent);
+            background: rgba(15, 79, 163, 0.07);
         }
         .nav-link.active {
             color: var(--accent) !important;
-            border-color: var(--accent);
+            background: rgba(15, 79, 163, 0.07);
         }
-        .nav-item + .nav-item { margin-left: .6rem; }
-        .nav-search input { background: #fff; border: 1px solid var(--stroke); border-radius: 0; }
-        .nav-search .btn { border-radius: 0; border-color: var(--stroke); color: var(--ink); }
+        .nav-item + .nav-item { margin-left: .2rem; }
+        .nav-search input { background: #fff; border: 1px solid var(--stroke); }
+        .nav-search .btn { border-color: var(--stroke); color: var(--ink); }
         .header-search-overlay {
             position: absolute;
             inset: 0;
-            background: rgba(249, 247, 243, 0.98);
-            backdrop-filter: blur(2px);
+            background: rgba(247, 242, 233, 0.98);
+            backdrop-filter: blur(3px);
             display: none;
             align-items: center;
             z-index: 5;
             border-bottom: 1px solid var(--stroke);
-            box-shadow: inset 0 -1px 0 var(--stroke);
         }
         .header-search-overlay.show { display: flex; }
         .header-search-overlay .nav-search { width: 100%; max-width: 640px; }
         .header-search-overlay .nav-search .form-control { background: #fff; }
-        .header-search-overlay .btn-close-search { border: 1px solid var(--stroke); }
+        .header-search-overlay .btn-close-search { border: 1px solid var(--stroke); border-radius: 999px; }
         .nav-scroller {
             border-top: 1px solid var(--stroke);
             border-bottom: 1px solid var(--stroke);
-            background: #fbf8f2;
+            background: #f9f6ef;
         }
         .nav-scroller-inner {
             overflow-x: auto;
             scrollbar-width: thin;
-            padding: .35rem 0;
+            padding: .5rem 0;
         }
         .nav-scroller-inner::-webkit-scrollbar { height: 6px; }
-        .nav-scroller-inner::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 0; }
+        .nav-scroller-inner::-webkit-scrollbar-thumb { background: var(--stroke); border-radius: 999px; }
         .nav-track {
             display: inline-flex;
-            gap: .25rem;
+            gap: .35rem;
             padding: 0 .25rem;
         }
         .nav-pill {
             display: inline-flex;
             align-items: center;
-            padding: .4rem .85rem;
-            border-radius: 0;
+            padding: .35rem .85rem;
+            border-radius: 999px;
             border: 1px solid transparent;
             background: transparent;
             font-weight: 600;
-            letter-spacing: .25px;
+            letter-spacing: .35px;
             text-transform: uppercase;
             color: var(--ink);
             white-space: nowrap;
@@ -144,107 +148,48 @@
         @media (max-width: 991.98px) {
             .nav-search { width: 100%; }
             .nav-item + .nav-item { margin-left: 0; }
-            .nav-link { padding-left: 0; padding-right: 0; }
+            .nav-link { padding-left: .35rem; padding-right: .35rem; }
+            .nav-inner { flex-direction: row; gap: .75rem; }
         }
-        main { padding: 1.5rem 0 2.25rem; }
-        footer { padding: 1.75rem 0; color: var(--muted); font-size: .95rem; }
-        .card { border: 1px solid var(--stroke); border-radius: var(--radius); box-shadow: 0 18px 40px rgba(34, 26, 16, 0.06); }
-        .card-body { padding: 1rem 1.25rem; }
-        .content-body p { margin-bottom: 1rem; line-height: 1.7; }
+        main { padding: 2rem 0 2.5rem; }
+        footer { padding: 2rem 0; color: var(--muted); font-size: .95rem; border-top: 1px solid var(--stroke); }
+        .card { border: 1px solid var(--stroke); border-radius: var(--radius); box-shadow: none; background: #fff; }
+        .card-body { padding: 1.25rem 1.35rem; }
+        .content-body p { margin-bottom: 1rem; line-height: 1.8; }
         .content-body h2, .content-body h3, .content-body h4 { margin-top: 1.2rem; margin-bottom: .6rem; }
         .content-body ul, .content-body ol { padding-left: 1.1rem; }
-        .breadcrumb { font-size: .95rem; color: var(--muted); }
-        .breadcrumb a { color: var(--ink); }
-        .dropdown-submenu .dropdown-menu {
-            position: static;
-        }
-        .dropdown-menu { border-radius: 0; }
-        .dropdown-menu .dropdown-menu {
-            margin-left: 0.5rem;
-        }
-        .article-stack {
-            background: transparent;
-        }
-        .article-list {
-            background: #fff;
-            border-radius: 0;
-            box-shadow: none;
-            border: none;
-            padding: 0;
-        }
-        .article-list-body {
-            display: flex;
-            flex-direction: column;
-        }
-        .article-row {
-            padding: 1rem 1.25rem;
-            transition: background-color .12s ease;
-        }
-        .article-row + .article-row {
-            border-top: 1px solid var(--stroke);
-        }
-        .article-row:hover {
-            background-color: #fffaf2;
-        }
-        .article-thumb {
-            width: 88px;
-            height: 88px;
-            background: radial-gradient(circle at 30% 30%, #e5d7c3, #d1c2ae);
-            color: var(--ink);
-            font-size: 1.4rem;
-            border-radius: 0;
-            overflow: hidden;
-        }
-        .article-thumb img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .badge.text-bg-light {
-            background: #f0ebdf !important;
-            color: var(--ink);
-            border: 1px solid var(--stroke);
-            padding: .5rem .75rem;
-            border-radius: 0;
-        }
-        .article-shell {
-            background: #fdfaf5;
-            border: 1px solid var(--stroke);
-            border-radius: 0;
-            box-shadow: 0 20px 45px rgba(34, 26, 16, 0.07);
-            overflow: hidden;
-        }
-        .article-shell .card-img-top {
-            border-radius: 0;
-        }
-        .article-shell .card-body {
-            padding: 1.5rem 1.6rem;
-        }
+        .breadcrumb { font-size: .9rem; color: var(--muted); letter-spacing: .5px; text-transform: uppercase; }
+        .breadcrumb a { color: var(--ink); text-decoration: none; }
+        .breadcrumb a:hover { color: var(--accent); }
+        .dropdown-submenu .dropdown-menu { position: static; }
+        .dropdown-menu { border-radius: var(--radius); }
+        .dropdown-menu .dropdown-menu { margin-left: 0.5rem; }
+        .article-stack { background: transparent; }
+        .article-list { background: transparent; border: none; padding: 0; }
+        .article-list-body { display: flex; flex-direction: column; gap: 1rem; }
+        .article-row { padding: 1.25rem; border: 1px solid var(--stroke); border-radius: var(--radius); background: #fff; transition: transform .12s ease, box-shadow .12s ease; }
+        .article-row:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(19, 12, 4, 0.08); }
+        .article-thumb { width: 110px; height: 110px; background: #e9decd; color: var(--ink); font-size: 1.4rem; border-radius: 14px; overflow: hidden; }
+        .article-thumb img { width: 100%; height: 100%; object-fit: cover; }
+        .article-meta { font-size: .95rem; color: var(--muted); letter-spacing: .3px; text-transform: uppercase; }
+        .article-title { font-size: clamp(1.6rem, 3vw, 2.5rem); line-height: 1.2; margin-bottom: .85rem; font-weight: 700; }
+        .article-subtitle { font-size: 1.05rem; color: var(--muted); max-width: 720px; }
+        .article-figure { margin: 1.25rem 0 1.75rem; }
+        .article-figure img { width: 100%; height: auto; border-radius: 16px; object-fit: cover; }
+        .article-shell { background: transparent; border: none; box-shadow: none; overflow: visible; }
+        .badge.text-bg-light { background: #f3ede3 !important; color: var(--ink); border: 1px solid var(--stroke); padding: .45rem .75rem; border-radius: 999px; }
         @media (min-width: 768px) {
-            .navbar { padding: .8rem 0; }
-            main { padding: 2rem 0 3rem; }
-            .card-body { padding: 1.25rem 1.5rem; }
+            .navbar { padding: 1.15rem 0; }
+            main { padding: 2.5rem 0 3rem; }
         }
         @media (max-width: 575.98px) {
-            .article-row { padding: .85rem 1rem; }
-            .article-thumb { width: 78px; height: 78px; }
+            .article-row { padding: 1rem; }
+            .article-thumb { width: 88px; height: 88px; }
+            .nav-inner { gap: .5rem; }
         }
         @media (max-width: 767.98px) {
-            .article-list {
-                margin-left: -1rem;
-                margin-right: -1rem;
-            }
-            .article-shell {
-                border-radius: 0;
-                overflow: visible;
-            }
-            .article-shell .card-img-top {
-                display: block;
-                width: 100vw;
-                max-width: none;
-                margin-left: calc(50% - 50vw);
-                margin-right: calc(50% - 50vw);
-            }
+            .article-list { margin-left: 0; margin-right: 0; }
+            .article-row { border-radius: 10px; }
         }
     </style>
 </head>
@@ -262,12 +207,12 @@
 {% endif %}
 <header>
     <nav class="navbar navbar-light">
-        <div class="container align-items-center">
-            <a class="navbar-brand site-brand d-flex align-items-center gap-2" href="/">
+        <div class="container nav-inner">
+            <a class="navbar-brand site-brand d-flex align-items-center gap-2 mb-0" href="/">
                 {% if site.logo and site.logo.url %}
                     <img src="{{ site.logo.url }}" alt="{{ site.logo.alt ?: site.name }}" class="site-logo">
                 {% endif %}
-                <span>{{ site.name|default('Base CMS') }}</span>
+                <span>{{ site.name|default('News') }}</span>
             </a>
 
             {% import _self as nav %}
@@ -280,13 +225,21 @@
 
             {% if nav_items is empty %}
                 {% set nav_items = [
-                    {'label': 'Domů', 'url': '/', 'children': [], 'type': 'core_home', 'open_in_new_tab': false},
-                    {'label': 'Archiv', 'url': '/' ~ post_archive_slug, 'children': [], 'type': 'archive', 'open_in_new_tab': false},
-                    {'label': current_user ? 'Můj profil' : 'Přihlášení', 'url': current_user ? '/profile' : '/login', 'children': [], 'type': current_user ? 'core_profile' : 'core_login', 'open_in_new_tab': false},
+                    {'label': 'World', 'url': '/', 'children': [], 'type': 'core_home', 'open_in_new_tab': false},
+                    {'label': 'Politics', 'url': '/' ~ post_archive_slug, 'children': [], 'type': 'archive', 'open_in_new_tab': false},
+                    {'label': 'Business', 'url': current_user ? '/profile' : '/login', 'children': [], 'type': current_user ? 'core_profile' : 'core_login', 'open_in_new_tab': false},
                 ] %}
             {% endif %}
 
-            <div class="d-flex align-items-center gap-2 nav-actions ms-auto">
+            <div class="ms-auto d-none d-lg-block">
+                <ul class="navbar-nav flex-row gap-1">
+                    {% for item in nav_items %}
+                        {{ _self.nav_item(item) }}
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="d-flex align-items-center gap-2 nav-actions ms-lg-3">
                 <button class="btn btn-icon" type="button" data-action="toggle-search" aria-expanded="false" aria-controls="headerSearchOverlay" aria-label="Otevřít vyhledávání">
                     <i class="bi bi-search"></i>
                 </button>
@@ -410,9 +363,10 @@
     {% set hasChildren = item.children is defined and item.children|length > 0 %}
     {% set target = item.open_in_new_tab ? '_blank' : '_self' %}
     {% set rel = item.open_in_new_tab ? 'noopener' : null %}
+    {% set active = current_url is defined and current_url == item.url %}
     {% if hasChildren %}
         <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="{{ item.url ?? '#' }}" role="button" data-bs-toggle="dropdown" aria-expanded="false" target="{{ target }}" {% if rel %}rel="{{ rel }}"{% endif %}>{{ item.label }}</a>
+            <a class="nav-link dropdown-toggle{% if active %} active{% endif %}" href="{{ item.url ?? '#' }}" role="button" data-bs-toggle="dropdown" aria-expanded="false" target="{{ target }}" {% if rel %}rel="{{ rel }}"{% endif %}>{{ item.label }}</a>
             <ul class="dropdown-menu">
                 {% for child in item.children %}
                     {{ _self.dropdown_item(child) }}
@@ -421,7 +375,7 @@
         </li>
     {% else %}
         <li class="nav-item">
-            <a class="nav-link" href="{{ item.url }}" target="{{ target }}" {% if rel %}rel="{{ rel }}"{% endif %}>{{ item.label }}</a>
+            <a class="nav-link{% if active %} active{% endif %}" href="{{ item.url }}" target="{{ target }}" {% if rel %}rel="{{ rel }}"{% endif %}>{{ item.label }}</a>
         </li>
     {% endif %}
 {% endmacro %}

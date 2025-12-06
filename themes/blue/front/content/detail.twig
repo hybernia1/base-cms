@@ -129,7 +129,7 @@
                                         {% endif %}
                                     </div>
                                     <div class="flex-grow-1">
-                                        <p class="article-meta mb-1">{{ post.created_at|date('j. n. Y') }} · {{ type_def.name|default(type_def.slug) }}</p>
+                                        <p class="article-meta mb-1">{{ post.created_at|date('j. n. Y') }}</p>
                                         <h3 class="h6 mb-1">
                                             <a href="/{{ type_def.slug }}/{{ post.slug }}" class="stretched-link text-decoration-none">{{ post.title }}</a>
                                         </h3>

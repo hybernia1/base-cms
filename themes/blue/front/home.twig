@@ -17,7 +17,7 @@
                 {% for post in posts %}
                     {% set type_def = content_types[post.type]|default({'slug': post.type, 'name': post.type}) %}
                     {% set thumb = post.thumbnail ?? null %}
-                    <article class="article-row d-flex align-items-start gap-3 gap-md-4">
+                    <article class="article-row d-flex align-items-center align-items-md-start gap-3 gap-md-4">
                         <div class="article-thumb flex-shrink-0 d-flex align-items-center justify-content-center text-uppercase fw-bold" aria-hidden="true">
                             {% if thumb %}
                                 <img src="/{{ thumb.path }}/{{ thumb.webp_filename ?: thumb.filename }}" alt="{{ thumb.alt ?: post.title }}" loading="lazy" decoding="async">
@@ -32,7 +32,7 @@
                             </h2>
                             {% set preview = post.excerpt ?: post.body %}
                             {% if preview %}
-                                <p class="article-subtitle mb-0">{{ preview|striptags|slice(0, 170) }}{% if preview|striptags|length > 170 %}…{% endif %}</p>
+                                <p class="article-subtitle mb-0 d-none d-md-block">{{ preview|striptags|slice(0, 170) }}{% if preview|striptags|length > 170 %}…{% endif %}</p>
                             {% endif %}
                         </div>
                     </article>

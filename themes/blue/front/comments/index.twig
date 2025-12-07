@@ -1,13 +1,13 @@
 {% extends 'front/layout.twig' %}
 
 {% set breadcrumbs_enabled = false %}
+{% set can_manage_comments = can_manage_comments is defined ? can_manage_comments : (current_user and current_user.role == 'admin') %}
 
 {% block title %}
     Diskuse: {{ content.title }} | {{ type.name|default('Obsah') }}
 {% endblock %}
 
 {% block body %}
-    {% set can_manage_comments = current_user and current_user.role == 'admin' %}
     <div class="row justify-content-center">
         <div class="col-12">
             <div class="d-flex align-items-center gap-3 mt-4 flex-wrap">
@@ -38,50 +38,54 @@
                             <a href="{{ content_url }}" class="btn btn-link text-decoration-none p-0">Zpět na článek</a>
                         </div>
 
-                        <form method="post" action="/comments" class="mt-3" id="commentForm">
-                            <input type="hidden" name="content_id" value="{{ content.id }}">
-                            <input type="hidden" name="parent_id" value="">
-                            <input type="hidden" name="reply_depth" value="">
-                            <input type="hidden" name="mention_only" value="0">
-                            <input type="hidden" name="_csrf" value="{{ csrf_token('comment_form') }}">
+                        <div id="commentFormHome">
+                            <div id="commentFormWrapper">
+                                <form method="post" action="/comments" class="mt-3" id="commentForm">
+                                    <input type="hidden" name="content_id" value="{{ content.id }}">
+                                    <input type="hidden" name="parent_id" value="">
+                                    <input type="hidden" name="reply_depth" value="">
+                                    <input type="hidden" name="mention_only" value="0">
+                                    <input type="hidden" name="_csrf" value="{{ csrf_token('comment_form') }}">
 
-                            <div id="replyInfo" class="alert alert-secondary d-none py-2 px-3 mb-3">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="small"><span data-reply-label>Odpovídáte na</span> <strong id="replyTarget"></strong></div>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="cancelReply">Zrušit</button>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="comment_body" class="form-label">Komentář</label>
-                                <textarea class="form-control" id="comment_body" name="body" rows="4" required {% if not commenting_enabled %}disabled{% endif %}></textarea>
-                            </div>
-
-                            {% if current_user %}
-                                <div class="alert alert-light border">
-                                    Přihlášen jako <strong>{{ current_user.nickname ?: current_user.email }}</strong>. Přezdívka se použije u komentáře.
-                                </div>
-                            {% elseif comment_settings.allow_anonymous %}
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <label for="comment_author" class="form-label">Jméno</label>
-                                        <input type="text" class="form-control" id="comment_author" name="author_name" value="" required {% if not commenting_enabled %}disabled{% endif %}>
+                                    <div id="replyInfo" class="alert alert-secondary d-none py-2 px-3 mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="small"><span data-reply-label>Odpovídáte na</span> <strong id="replyTarget"></strong></div>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="cancelReply">Zrušit</button>
+                                        </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label for="comment_email" class="form-label">E-mail</label>
-                                        <input type="email" class="form-control" id="comment_email" name="author_email" value="" required {% if not commenting_enabled %}disabled{% endif %}>
+
+                                    <div class="mb-3">
+                                        <label for="comment_body" class="form-label">Komentář</label>
+                                        <textarea class="form-control" id="comment_body" name="body" rows="4" required {% if not commenting_enabled %}disabled{% endif %}></textarea>
                                     </div>
-                                </div>
-                            {% endif %}
 
-                            {% if not commenting_enabled %}
-                                <div class="alert alert-info mt-3">Komentáře jsou povoleny pouze pro přihlášené uživatele.</div>
-                            {% endif %}
+                                    {% if current_user %}
+                                        <div class="alert alert-light border">
+                                            Přihlášen jako <strong>{{ current_user.nickname ?: current_user.email }}</strong>. Přezdívka se použije u komentáře.
+                                        </div>
+                                    {% elseif comment_settings.allow_anonymous %}
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label for="comment_author" class="form-label">Jméno</label>
+                                                <input type="text" class="form-control" id="comment_author" name="author_name" value="" required {% if not commenting_enabled %}disabled{% endif %}>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="comment_email" class="form-label">E-mail</label>
+                                                <input type="email" class="form-control" id="comment_email" name="author_email" value="" required {% if not commenting_enabled %}disabled{% endif %}>
+                                            </div>
+                                        </div>
+                                    {% endif %}
 
-                            <div id="commentAlert" class="alert d-none mt-3" role="alert"></div>
+                                    {% if not commenting_enabled %}
+                                        <div class="alert alert-info mt-3">Komentáře jsou povoleny pouze pro přihlášené uživatele.</div>
+                                    {% endif %}
 
-                            <button type="submit" class="btn btn-primary mt-3" {% if not commenting_enabled %}disabled{% endif %}>Odeslat</button>
-                        </form>
+                                    <div id="commentAlert" class="alert d-none mt-3" role="alert"></div>
+
+                                    <button type="submit" class="btn btn-primary mt-3" {% if not commenting_enabled %}disabled{% endif %}>Odeslat</button>
+                                </form>
+                            </div>
+                        </div>
 
                         <hr class="my-4">
 
@@ -177,6 +181,8 @@
                 const cancelReply = document.getElementById('cancelReply');
                 const mentionField = form.querySelector('input[name="mention_only"]');
                 const replyDepthField = form.querySelector('input[name="reply_depth"]');
+                const formWrapper = document.getElementById('commentFormWrapper');
+                const formHome = document.getElementById('commentFormHome');
 
                 const commentBody = document.getElementById('comment_body');
                 const alertBox = document.getElementById('commentAlert');
@@ -215,6 +221,12 @@
                     }
                 };
 
+                const moveFormHome = () => {
+                    if (formWrapper && formHome && !formHome.contains(formWrapper)) {
+                        formHome.appendChild(formWrapper);
+                    }
+                };
+
                 const resetReply = () => {
                     parentField.value = '';
                     if (mentionField) {
@@ -237,6 +249,8 @@
                     if (replyInfo) {
                         replyInfo.classList.add('d-none');
                     }
+
+                    moveFormHome();
                 };
 
                 if (cancelReply) {
@@ -271,6 +285,13 @@
                         }
                         replyInfo.classList.remove('d-none');
                     }
+                    if (formWrapper && commentThread) {
+                        const commentItem = btn.closest('.comment-item');
+                        if (commentItem) {
+                            commentItem.insertAdjacentElement('afterend', formWrapper);
+                        }
+                    }
+
                     if (commentBody) {
                         commentBody.focus();
                     }
@@ -501,6 +522,7 @@
                 const renderComments = (comments = []) => {
                     if (!commentThread) return;
 
+                    moveFormHome();
                     commentThread.innerHTML = '';
                     const fragment = document.createDocumentFragment();
                     comments.forEach((comment) => fragment.appendChild(buildCommentElement(comment)));

@@ -174,7 +174,7 @@
 
                         isMentionOnly = btn.dataset.mentionOnly === '1';
                         const replyAuthor = btn.dataset.replyAuthor || 'komentář';
-                        parentField.value = btn.dataset.replyId;
+                        parentField.value = isMentionOnly ? '' : btn.dataset.replyId;
                         if (mentionField) {
                             mentionField.value = isMentionOnly ? '1' : '0';
                         }

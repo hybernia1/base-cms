@@ -3,6 +3,41 @@
 {% set breadcrumbs_enabled = false %}
 {% set can_manage_comments = can_manage_comments is defined ? can_manage_comments : (current_user and current_user.role == 'admin') %}
 
+{% block head_extra %}
+    {{ parent() }}
+    <style>
+        .comment-replies {
+            margin-left: calc(var(--comment-indent-size) * 0.35);
+        }
+
+        .comment-thread {
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            border-radius: .65rem;
+            padding: 1rem 1.25rem;
+            margin-bottom: calc(var(--comment-gap) * 0.75);
+            background: #f9fbff;
+        }
+
+        .comment-reply-list {
+            display: flex;
+            flex-direction: column;
+            row-gap: calc(var(--comment-gap) * 0.75);
+            margin-top: .35rem;
+        }
+
+        .reply-toggle {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .reply-toggle:hover,
+        .reply-toggle:focus {
+            color: #365fa5;
+            text-decoration: none;
+        }
+    </style>
+{% endblock %}
+
 {% block title %}
     Diskuse: {{ content.title }} | {{ type.name|default('Obsah') }}
 {% endblock %}
@@ -363,16 +398,100 @@
                     return footer;
                 };
 
-                const buildCommentElement = (comment) => {
+                const formatReplyToggleLabel = (count, expanded) => {
+                    if (expanded) {
+                        return 'Skrýt odpovědi';
+                    }
+
+                    if (count === 1) {
+                        return 'Zobrazit odpověď';
+                    }
+
+                    return `Zobrazit předchozí ${count} odpovědi`;
+                };
+
+                const countReplies = (comment) => {
+                    if (!comment.replies || !comment.replies.length) {
+                        return 0;
+                    }
+
+                    return comment.replies.reduce((total, reply) => total + 1 + countReplies(reply), 0);
+                };
+
+                const groupCommentsByParent = (items = []) => {
+                    const byId = new Map();
+                    const roots = [];
+
+                    items.forEach((comment) => {
+                        byId.set(comment.id, { ...comment, replies: [] });
+                    });
+
+                    byId.forEach((comment) => {
+                        const parentId = comment.parent_id ? Number(comment.parent_id) : 0;
+                        if (parentId && byId.has(parentId)) {
+                            byId.get(parentId).replies.push(comment);
+                        } else {
+                            roots.push(comment);
+                        }
+                    });
+
+                    return roots;
+                };
+
+                const renderReplies = (comment, isRootLevel = false) => {
+                    if (!comment.replies || !comment.replies.length) {
+                        return null;
+                    }
+
+                    const repliesWrapper = document.createElement('div');
+                    repliesWrapper.className = 'comment-replies';
+
+                    const repliesList = document.createElement('div');
+                    repliesList.className = 'comment-reply-list';
+                    if (isRootLevel) {
+                        repliesList.classList.add('d-none');
+                    }
+                    comment.replies.forEach((reply) => {
+                        repliesList.appendChild(buildCommentElement(reply, true));
+                        const nested = renderReplies(reply, false);
+                        if (nested) {
+                            repliesList.appendChild(nested);
+                        }
+                    });
+
+                    if (isRootLevel) {
+                        const toggleBtn = document.createElement('button');
+                        toggleBtn.type = 'button';
+                        toggleBtn.className = 'btn btn-link text-decoration-none px-0 reply-toggle';
+                        toggleBtn.setAttribute('aria-expanded', 'false');
+                        const totalReplies = countReplies(comment) || comment.replies.length;
+                        toggleBtn.textContent = formatReplyToggleLabel(totalReplies, false);
+
+                        toggleBtn.addEventListener('click', () => {
+                            repliesList.classList.toggle('d-none');
+                            const expanded = !repliesList.classList.contains('d-none');
+                            toggleBtn.textContent = formatReplyToggleLabel(totalReplies, expanded);
+                            toggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                        });
+
+                        repliesWrapper.appendChild(toggleBtn);
+                    }
+                    repliesWrapper.appendChild(repliesList);
+
+                    return repliesWrapper;
+                };
+
+                const buildCommentElement = (comment, isReply = false) => {
                     const article = document.createElement('article');
                     const hasParent = comment.depth > 0;
                     const maxDepth = Number(commentSettings.max_depth || 0);
                     const indentDepth = maxDepth > 0 ? Math.min(comment.depth, maxDepth) : comment.depth;
-                    article.className = `comment-item${hasParent ? ' has-parent' : ''}${comment.depth === 0 ? ' is-root' : ''}`;
+                    article.className = `comment-item${hasParent ? ' has-parent' : ''}${comment.depth === 0 ? ' is-root' : ''}${isReply ? ' is-reply' : ''}`;
                     article.id = `comment-${comment.id}`;
                     article.dataset.depth = comment.depth;
                     article.dataset.commentId = comment.id;
                     article.dataset.commentBody = comment.body || '';
+                    article.dataset.parentId = comment.parent_id || '';
                     article.style.setProperty('--comment-indent', indentDepth);
                     article.setAttribute('role', 'listitem');
 
@@ -525,7 +644,22 @@
                     moveFormHome();
                     commentThread.innerHTML = '';
                     const fragment = document.createDocumentFragment();
-                    comments.forEach((comment) => fragment.appendChild(buildCommentElement(comment)));
+                    const roots = groupCommentsByParent(comments);
+
+                    roots.forEach((comment) => {
+                        const thread = document.createElement('div');
+                        thread.className = 'comment-thread';
+
+                        thread.appendChild(buildCommentElement(comment));
+
+                        const replies = renderReplies(comment, true);
+                        if (replies) {
+                            thread.appendChild(replies);
+                        }
+
+                        fragment.appendChild(thread);
+                    });
+
                     commentThread.appendChild(fragment);
                     bindReplyButtons(commentThread);
                     bindAdminButtons(commentThread);

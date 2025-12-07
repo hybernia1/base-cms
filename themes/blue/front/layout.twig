@@ -322,6 +322,9 @@
         }
         .comment-depth-line {
             position: absolute;
+            top: var(--connector-top);
+            bottom: var(--connector-bottom);
+            left: calc((var(--comment-avatar-size) / 2) - var(--comment-indent-size));
             width: 2px;
             background: var(--comment-connector);
             left: 0;

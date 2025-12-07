@@ -176,13 +176,7 @@
                     if (!thread) return;
 
                     const threadRect = thread.getBoundingClientRect();
-                    const styles = getComputedStyle(thread);
-                    const indentSize = parseFloat(styles.getPropertyValue('--comment-indent-size')) || 0;
-                    const avatarSize = parseFloat(styles.getPropertyValue('--comment-avatar-size')) || 0;
-                    const paddingY = parseFloat(styles.getPropertyValue('--comment-padding-y')) || 0;
-
                     const items = Array.from(thread.querySelectorAll('.comment-item'));
-                    const centersByDepth = new Map();
 
                     const getAvatarCenter = (element) => {
                         const avatar = element.querySelector('.comment-avatar');
@@ -192,35 +186,66 @@
                         return (rect.top - threadRect.top) + (rect.height / 2);
                     };
 
+                    const centers = new Map();
                     items.forEach((item) => {
-                        const depth = parseInt(item.dataset.depth || '0', 10);
-                        const center = getAvatarCenter(item);
-
-                        if (!centersByDepth.has(depth)) {
-                            centersByDepth.set(depth, []);
-                        }
-
-                        centersByDepth.get(depth).push(center);
+                        centers.set(item, getAvatarCenter(item));
                     });
 
-                    thread.querySelectorAll('.comment-depth-line').forEach((line) => line.remove());
+                    items.forEach((item, index) => {
+                        if (!item.classList.contains('has-parent')) return;
 
-                    centersByDepth.forEach((centers, depth) => {
-                        if (depth === 0 || centers.length === 0) return;
+                        const currentDepth = parseInt(item.dataset.depth || '0', 10);
+                        const currentCenter = centers.get(item) || 0;
 
-                        const minCenter = Math.min(...centers);
-                        const maxCenter = Math.max(...centers);
+                        const ancestor = [...items.slice(0, index)]
+                            .reverse()
+                            .find((candidate) => parseInt(candidate.dataset.depth || '0', 10) === currentDepth - 1);
 
-                        const line = document.createElement('span');
-                        line.className = 'comment-depth-line';
-                        line.dataset.depth = depth;
+                        if (ancestor) {
+                            const ancestorCenter = centers.get(ancestor) || 0;
+                            item.style.setProperty('--connector-top', `${ancestorCenter - currentCenter}px`);
+                        } else {
+                            item.style.setProperty('--connector-top', `calc(-1 * var(--comment-gap) - var(--comment-padding-y) - (var(--comment-avatar-size) / 2))`);
+                        }
 
-                        const left = (depth * indentSize) + (avatarSize / 2 - indentSize);
-                        line.style.left = `${left}px`;
-                        line.style.top = `${minCenter - paddingY}px`;
-                        line.style.height = `${(maxCenter - minCenter) + (paddingY * 2)}px`;
+                        const nextRelevant = items.slice(index + 1)
+                            .find((candidate) => parseInt(candidate.dataset.depth || '0', 10) >= currentDepth);
 
-                        thread.appendChild(line);
+                        if (nextRelevant) {
+                            const nextCenter = centers.get(nextRelevant) || 0;
+                            const connectorBottom = nextCenter - currentCenter + (nextRelevant.getBoundingClientRect().top - threadRect.top) - (item.getBoundingClientRect().top - threadRect.top);
+                            item.style.setProperty('--connector-bottom', `${connectorBottom}px`);
+                        } else {
+                            item.style.setProperty('--connector-bottom', 'calc(var(--comment-padding-y) + (var(--comment-avatar-size) / 2))');
+                        }
+
+                        const continuingLevels = [];
+                        for (let level = 1; level < currentDepth; level += 1) {
+                            const hasContinuation = items.slice(index + 1)
+                                .some((candidate) => parseInt(candidate.dataset.depth || '0', 10) >= level);
+                            if (hasContinuation) {
+                                continuingLevels.push(level);
+                            }
+                        }
+
+                        const stackOffsets = continuingLevels
+                            .sort((a, b) => a - b)
+                            .map((level) => `calc(-1 * var(--comment-indent-size) * ${currentDepth - level}) 0 0 0 var(--comment-connector)`);
+
+                        let stackEl = item.querySelector('.comment-connector-stack');
+                        if (!stackEl) {
+                            stackEl = document.createElement('span');
+                            stackEl.className = 'comment-connector-stack';
+                            item.prepend(stackEl);
+                        }
+
+                        if (stackOffsets.length) {
+                            stackEl.style.setProperty('--stack-shadows', stackOffsets.join(', '));
+                            stackEl.classList.add('has-lines');
+                        } else {
+                            stackEl.style.removeProperty('--stack-shadows');
+                            stackEl.classList.remove('has-lines');
+                        }
                     });
                 };
 

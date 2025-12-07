@@ -198,7 +198,7 @@
                                 {% set is_mention_only = comment.mention_only ?? false %}
                                 {% set base_indent = comment_settings.max_depth is defined ? min(comment.depth, comment_settings.max_depth) : comment.depth %}
                                 {% set indent_depth = base_indent %}
-                                <article class="comment-item{% if has_parent %} has-parent{% endif %}{% if comment.depth == 0 %} is-root{% endif %}" id="comment-{{ comment.id }}" data-depth="{{ comment.depth }}" data-comment-id="{{ comment.id }}" data-comment-body="{{ comment.body|e('html_attr') }}" data-mention-only="{{ is_mention_only ? '1' : '0' }}" style="--comment-indent: {{ indent_depth }}" role="listitem">
+                                <article class="comment-item{% if has_parent %} has-parent{% endif %}{% if comment.depth == 0 %} is-root{% endif %}" id="comment-{{ comment.id }}" data-depth="{{ comment.depth }}" data-comment-id="{{ comment.id }}" data-comment-body="{{ comment.body|e('html_attr') }}" data-mention-only="{{ is_mention_only ? '1' : '0' }}" data-comment-url="{{ comment.comment_url|default('') }}" style="--comment-indent: {{ indent_depth }}" role="listitem">
                                     <div class="comment-card">
                                         <div class="comment-inner">
                                             <div class="comment-avatar">
@@ -646,6 +646,14 @@
                     return adminWrap;
                 };
 
+                const countReplies = (comment) => {
+                    if (!comment || !comment.replies) {
+                        return 0;
+                    }
+
+                    return comment.replies.reduce((total, reply) => total + 1 + countReplies(reply), 0);
+                };
+
                 const formatReplyToggleLabel = (count, expanded) => {
                     const icon = '<i class="bi bi-chat-dots me-1" aria-hidden="true"></i>';
                     if (expanded) {
@@ -718,17 +726,19 @@
                         }
                     });
 
+                    const replyCount = countReplies(comment);
+
                     if (isRootThread) {
                         const toggleBtn = document.createElement('button');
                         toggleBtn.type = 'button';
                         toggleBtn.className = 'btn btn-link text-decoration-none px-0 reply-toggle';
                         toggleBtn.setAttribute('aria-expanded', 'false');
-                        toggleBtn.innerHTML = formatReplyToggleLabel(comment.replies.length, false);
+                        toggleBtn.innerHTML = formatReplyToggleLabel(replyCount, false);
 
                         toggleBtn.addEventListener('click', () => {
                             repliesList.classList.toggle('d-none');
                             const expanded = !repliesList.classList.contains('d-none');
-                            toggleBtn.innerHTML = formatReplyToggleLabel(comment.replies.length, expanded);
+                            toggleBtn.innerHTML = formatReplyToggleLabel(replyCount, expanded);
                             toggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
                             const commentId = Number(comment.id);
                             if (expanded) {
@@ -740,7 +750,7 @@
 
                         if (expandedThreads.has(comment.id)) {
                             repliesList.classList.remove('d-none');
-                            toggleBtn.innerHTML = formatReplyToggleLabel(comment.replies.length, true);
+                            toggleBtn.innerHTML = formatReplyToggleLabel(replyCount, true);
                             toggleBtn.setAttribute('aria-expanded', 'true');
                         }
 
@@ -768,6 +778,7 @@
                     article.dataset.commentBody = comment.body || '';
                     article.dataset.parentId = comment.parent_id || '';
                     article.dataset.mentionOnly = comment.mention_only ? '1' : '0';
+                    article.dataset.commentUrl = comment.comment_url || '';
                     article.style.setProperty('--comment-indent', indentDepth);
                     article.setAttribute('role', 'listitem');
 

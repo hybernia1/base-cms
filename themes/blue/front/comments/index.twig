@@ -119,6 +119,13 @@
                                         </div>
                                     </div>
 
+                                    <div id="editInfo" class="alert alert-warning d-none py-2 px-3 mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="small">Upravujete komentář <strong id="editTarget"></strong></div>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="cancelEdit">Zrušit úpravu</button>
+                                        </div>
+                                    </div>
+
                                     <div class="mb-3">
                                         <label for="comment_body" class="form-label">Komentář</label>
                                         <textarea class="form-control" id="comment_body" name="body" rows="4" required {% if not commenting_enabled %}disabled{% endif %}></textarea>
@@ -246,6 +253,9 @@
                 const replyTarget = document.getElementById('replyTarget');
                 const replyLabel = replyInfo ? replyInfo.querySelector('[data-reply-label]') : null;
                 const cancelReply = document.getElementById('cancelReply');
+                const editInfo = document.getElementById('editInfo');
+                const editTarget = document.getElementById('editTarget');
+                const cancelEdit = document.getElementById('cancelEdit');
                 const mentionField = form.querySelector('input[name="mention_only"]');
                 const replyDepthField = form.querySelector('input[name="reply_depth"]');
                 const formWrapper = document.getElementById('commentFormWrapper');
@@ -255,6 +265,7 @@
                 const alertBox = document.getElementById('commentAlert');
                 let isMentionOnly = false;
                 let mentionPrefix = '';
+                let editingCommentId = null;
 
                 const commentThread = document.querySelector('[data-comment-thread]');
                 const emptyState = document.querySelector('[data-empty-comments]');
@@ -312,6 +323,86 @@
                     }
                 };
 
+                const ensureConfirmModal = () => {
+                    let modalEl = document.getElementById('commentConfirmModal');
+                    if (modalEl) {
+                        return modalEl;
+                    }
+
+                    const container = document.createElement('div');
+                    container.innerHTML = `
+                        <div class="modal fade" id="commentConfirmModal" tabindex="-1" aria-labelledby="commentConfirmTitle" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="commentConfirmTitle" data-confirm-title>Mazání komentáře</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+                                    </div>
+                                    <div class="modal-body" data-confirm-message>Opravdu chcete smazat tento komentář?</div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zrušit</button>
+                                        <button type="button" class="btn btn-danger" data-confirm-approve>Smazat</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    modalEl = container.firstElementChild;
+                    document.body.appendChild(modalEl);
+                    return modalEl;
+                };
+
+                const confirmDelete = (message = 'Opravdu chcete smazat tento komentář?') => {
+                    return new Promise((resolve) => {
+                        const modalEl = ensureConfirmModal();
+                        const titleEl = modalEl.querySelector('[data-confirm-title]');
+                        const messageEl = modalEl.querySelector('[data-confirm-message]');
+                        const confirmBtn = modalEl.querySelector('[data-confirm-approve]');
+
+                        if (titleEl) {
+                            titleEl.textContent = 'Mazání komentáře';
+                        }
+                        if (messageEl) {
+                            messageEl.textContent = message;
+                        }
+                        if (confirmBtn) {
+                            confirmBtn.textContent = 'Smazat';
+                        }
+
+                        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                        let resolved = false;
+
+                        const cleanup = () => {
+                            if (confirmBtn) {
+                                confirmBtn.removeEventListener('click', onConfirm);
+                            }
+                            modalEl.removeEventListener('hidden.bs.modal', onHide);
+                        };
+
+                        const onConfirm = () => {
+                            resolved = true;
+                            cleanup();
+                            modal.hide();
+                            resolve(true);
+                        };
+
+                        const onHide = () => {
+                            if (!resolved) {
+                                resolve(false);
+                            }
+                            cleanup();
+                        };
+
+                        modalEl.addEventListener('hidden.bs.modal', onHide);
+                        if (confirmBtn) {
+                            confirmBtn.addEventListener('click', onConfirm, { once: true });
+                        }
+
+                        modal.show();
+                    });
+                };
+
                 const isFormInteracting = () => {
                     const active = document.activeElement;
                     const isFocused = active && formWrapper && formWrapper.contains(active);
@@ -352,8 +443,52 @@
                     moveFormHome();
                 };
 
+                const resetEdit = () => {
+                    editingCommentId = null;
+                    if (editTarget) {
+                        editTarget.textContent = '';
+                    }
+                    if (editInfo) {
+                        editInfo.classList.add('d-none');
+                    }
+                };
+
+                const startEdit = (commentId, bodyText) => {
+                    resetReply();
+                    editingCommentId = Number(commentId);
+
+                    if (commentBody) {
+                        commentBody.value = bodyText || '';
+                        commentBody.focus();
+                    }
+
+                    if (editTarget) {
+                        editTarget.textContent = `#${commentId}`;
+                    }
+                    if (editInfo) {
+                        editInfo.classList.remove('d-none');
+                    }
+
+                    if (formWrapper && commentThread) {
+                        const commentItem = commentThread.querySelector(`[data-comment-id="${commentId}"]`);
+                        if (commentItem) {
+                            commentItem.insertAdjacentElement('afterend', formWrapper);
+                        }
+                    }
+                };
+
                 if (cancelReply) {
                     cancelReply.addEventListener('click', resetReply);
+                }
+
+                if (cancelEdit) {
+                    cancelEdit.addEventListener('click', () => {
+                        resetEdit();
+                        resetReply();
+                        if (commentBody) {
+                            commentBody.value = '';
+                        }
+                    });
                 }
 
                 const handleReplyClick = (btn) => {
@@ -673,45 +808,17 @@
                     if (!canManageComments) return;
 
                     scope.querySelectorAll('.edit-comment').forEach((btn) => {
-                        btn.addEventListener('click', async () => {
+                        btn.addEventListener('click', () => {
                             const commentId = btn.dataset.commentId;
                             const currentBody = btn.dataset.commentBody || '';
-                            const newBody = prompt('Upravit komentář:', currentBody);
-                            if (newBody === null) return;
-
-                            const formData = new FormData();
-                            formData.append('body', newBody.trim());
-                            formData.append('_csrf', adminCsrfToken);
-
-                            try {
-                                const response = await fetch(`/comments/${commentId}/edit`, {
-                                    method: 'POST',
-                                    body: formData,
-                                    headers: { 'Accept': 'application/json' },
-                                });
-                                const data = await response.json();
-                                if (alertBox) {
-                                    alertBox.textContent = data.message || 'Komentář byl upraven.';
-                                    alertBox.className = 'alert mt-3 ' + (data.status === 'success' ? 'alert-success' : 'alert-danger');
-                                    alertBox.classList.remove('d-none');
-                                }
-                                if (data.status === 'success') {
-                                    await fetchComments();
-                                }
-                            } catch (error) {
-                                if (alertBox) {
-                                    alertBox.textContent = 'Uložení komentáře se nezdařilo.';
-                                    alertBox.className = 'alert alert-danger mt-3';
-                                    alertBox.classList.remove('d-none');
-                                }
-                            }
+                            startEdit(commentId, currentBody);
                         });
                     });
 
                     scope.querySelectorAll('.delete-comment').forEach((btn) => {
                         btn.addEventListener('click', async () => {
                             const commentId = btn.dataset.commentId;
-                            const confirmed = confirm('Opravdu chcete smazat tento komentář?');
+                            const confirmed = await confirmDelete('Opravdu chcete smazat tento komentář?');
                             if (!confirmed) return;
 
                             const formData = new FormData();
@@ -797,7 +904,9 @@
                 form.addEventListener('submit', async (event) => {
                     event.preventDefault();
 
-                    if (!commentBody || commentBody.value.trim() === '') {
+                    const bodyValue = commentBody ? commentBody.value.trim() : '';
+
+                    if (!commentBody || bodyValue === '') {
                         if (alertBox) {
                             alertBox.textContent = 'Text komentáře je povinný.';
                             alertBox.className = 'alert alert-danger mt-3';
@@ -806,15 +915,24 @@
                         return;
                     }
 
-                    const formData = new FormData(form);
-                    formData.set('parent_id', parentField ? parentField.value : '');
-                    formData.set('mention_only', mentionField ? mentionField.value : '0');
-                    if (replyDepthField) {
-                        formData.set('reply_depth', replyDepthField.value || '');
+                    const isEditing = editingCommentId !== null;
+                    const formData = isEditing ? new FormData() : new FormData(form);
+                    const requestUrl = isEditing ? `/comments/${editingCommentId}/edit` : '/comments';
+
+                    if (isEditing) {
+                        formData.append('body', bodyValue);
+                        formData.append('_csrf', adminCsrfToken);
+                    } else {
+                        formData.set('body', bodyValue);
+                        formData.set('parent_id', parentField ? parentField.value : '');
+                        formData.set('mention_only', mentionField ? mentionField.value : '0');
+                        if (replyDepthField) {
+                            formData.set('reply_depth', replyDepthField.value || '');
+                        }
                     }
 
                     try {
-                        const response = await fetch('/comments', {
+                        const response = await fetch(requestUrl, {
                             method: 'POST',
                             body: formData,
                             headers: {
@@ -825,7 +943,8 @@
                         const data = await response.json();
 
                         if (alertBox) {
-                            alertBox.textContent = data.message || 'Komentář byl odeslán.';
+                            const defaultMessage = isEditing ? 'Komentář byl upraven.' : 'Komentář byl odeslán.';
+                            alertBox.textContent = data.message || defaultMessage;
                             alertBox.className = 'alert mt-3 ' + (data.status === 'success' ? 'alert-success' : 'alert-danger');
                             alertBox.classList.remove('d-none');
                         }
@@ -833,11 +952,14 @@
                         if (data.status === 'success') {
                             form.reset();
                             resetReply();
+                            resetEdit();
                             await fetchComments();
                         }
                     } catch (error) {
                         if (alertBox) {
-                            alertBox.textContent = 'Odeslání komentáře se nezdařilo. Zkuste to prosím znovu.';
+                            alertBox.textContent = isEditing
+                                ? 'Uložení komentáře se nezdařilo.'
+                                : 'Odeslání komentáře se nezdařilo. Zkuste to prosím znovu.';
                             alertBox.className = 'alert alert-danger mt-3';
                             alertBox.classList.remove('d-none');
                         }

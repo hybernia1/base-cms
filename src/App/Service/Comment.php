@@ -97,12 +97,28 @@ class Comment
             return;
         }
 
-        if ($comment->deleted_at !== null) {
+        $timestamp = $comment->deleted_at ?? date('Y-m-d H:i:s');
+        $forceDelete = $comment->deleted_at !== null;
+
+        self::deleteRecursive($comment, $forceDelete, $timestamp);
+    }
+
+    private static function deleteRecursive(object $comment, bool $forceDelete, string $timestamp): void
+    {
+        $children = R::findAll(self::TABLE, ' parent_id = ? ', [(int) $comment->id]);
+        foreach ($children as $child) {
+            self::deleteRecursive($child, $forceDelete, $timestamp);
+        }
+
+        if ($forceDelete) {
             R::trash($comment);
             return;
         }
 
-        $comment->deleted_at = date('Y-m-d H:i:s');
+        if ($comment->deleted_at === null) {
+            $comment->deleted_at = $timestamp;
+        }
+
         R::store($comment);
     }
 

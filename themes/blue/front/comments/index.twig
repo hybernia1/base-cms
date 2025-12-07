@@ -589,6 +589,7 @@
                     const canThreadReply = commentSettings.allow_replies && commentingEnabled && (maxDepth === 0 || maxDepth > comment.depth);
                     const canMention = commentSettings.allow_replies && commentingEnabled && maxDepth > 0 && maxDepth <= comment.depth;
                     const hasReply = canThreadReply || canMention;
+                    const hasExistingReplies = comment.depth === 0 && comment.replies && comment.replies.length > 0;
 
                     if (!hasReply) {
                         return null;
@@ -601,7 +602,7 @@
                     replyWrap.className = 'd-flex gap-2 flex-wrap';
                     replyWrap.dataset.replyActions = 'true';
 
-                    if (hasReply) {
+                    if (hasReply && !hasExistingReplies) {
                         const replyBtn = document.createElement('button');
                         replyBtn.type = 'button';
                         replyBtn.className = 'btn btn-sm btn-outline-primary rounded-pill reply-button';
@@ -656,11 +657,8 @@
                         return `${icon}<span>Skrýt odpovědi</span>`;
                     }
 
-                    if (count === 1) {
-                        return `${icon}<span>Zobrazit odpověď</span>`;
-                    }
-
-                    return `${icon}<span>Zobrazit ${count} odpovědi</span>`;
+                    const label = count === 1 ? 'odpověď' : 'odpovědi';
+                    return `${icon}<span>Zobrazit ${count} ${label}</span>`;
                 };
 
                 const groupCommentsByParent = (items = []) => {

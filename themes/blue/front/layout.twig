@@ -294,10 +294,10 @@
         .archive-list .article-row { border: none; border-radius: 0; box-shadow: none; }
         .archive-list .article-row .stretched-link::after { border-radius: 0; }
         .comment-thread {
-            --comment-gap: 1.25rem;
-            --comment-indent-size: 52px;
-            --comment-avatar-size: 44px;
-            --comment-padding-y: .85rem;
+            --comment-gap: 1rem;
+            --comment-indent-size: 44px;
+            --comment-avatar-size: 42px;
+            --comment-padding-y: .75rem;
             display: flex;
             flex-direction: column;
             row-gap: var(--comment-gap);
@@ -314,10 +314,10 @@
             background: #fff;
             border: 1px solid var(--bs-border-color);
             border-radius: 12px;
-            padding: .95rem 1rem;
+            padding: .85rem .9rem;
             box-shadow: none;
         }
-        .comment-inner { display: flex; gap: .95rem; align-items: flex-start; }
+        .comment-inner { display: flex; gap: .75rem; align-items: flex-start; }
         .comment-avatar { flex-shrink: 0; }
         .comment-avatar .avatar {
             width: var(--comment-avatar-size);
@@ -336,7 +336,8 @@
             margin-top: .75rem;
             padding-top: .65rem;
         }
-        .comment-text { line-height: 1.7; }
+        .comment-body { font-size: .96rem; }
+        .comment-text { line-height: 1.6; }
         .comment-body .btn-link { color: var(--accent); }
         .comment-body .btn-link:hover,
         .comment-body .btn-link:focus { color: #365fa5; text-decoration: none; }

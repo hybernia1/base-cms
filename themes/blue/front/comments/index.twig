@@ -148,8 +148,6 @@
 
                 const commentBody = document.getElementById('comment_body');
                 const alertBox = document.getElementById('commentAlert');
-                const commentItems = Array.from(document.querySelectorAll('.comment-thread .comment-item'));
-
                 document.querySelectorAll('.reply-button').forEach((btn) => {
                     btn.addEventListener('click', () => {
                         parentField.value = btn.dataset.replyId;

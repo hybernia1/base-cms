@@ -55,6 +55,7 @@ class CommentController extends BaseFrontController
         $comments = $commentAllowed ? Comment::findByContent((int) $content->id) : [];
         $currentUser = Auth::user();
         $commentingEnabled = $commentAllowed && ($commentSettings['allow_anonymous'] || $currentUser);
+        $canManageComments = Auth::hasRole(['admin', 'editor']);
 
         $contentUrl = '/' . ContentType::slug((string) $content->type) . '/' . $content->slug;
         $typeDefinitions = ContentType::definitions();
@@ -80,6 +81,7 @@ class CommentController extends BaseFrontController
             'comment_settings' => $commentSettings,
             'commenting_enabled' => $commentingEnabled,
             'current_user' => $currentUser,
+            'can_manage_comments' => $canManageComments,
             'breadcrumbs' => $breadcrumbs,
             'thumbnail' => $thumbnail,
         ]);

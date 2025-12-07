@@ -40,11 +40,12 @@
                         <form method="post" action="/comments" class="mt-3" id="commentForm">
                             <input type="hidden" name="content_id" value="{{ content.id }}">
                             <input type="hidden" name="parent_id" value="">
+                            <input type="hidden" name="mention_only" value="0">
                             <input type="hidden" name="_csrf" value="{{ csrf_token('comment_form') }}">
 
                             <div id="replyInfo" class="alert alert-secondary d-none py-2 px-3 mb-3">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <div class="small">Odpovídáte na <strong id="replyTarget"></strong></div>
+                                    <div class="small"><span data-reply-label>Odpovídáte na</span> <strong id="replyTarget"></strong></div>
                                     <button type="button" class="btn btn-sm btn-outline-secondary" id="cancelReply">Zrušit</button>
                                 </div>
                             </div>
@@ -110,9 +111,20 @@
                                                             </div>
                                                             <div class="text-muted small">{{ comment.created_at|date('j. n. Y H:i') }}</div>
                                                         </div>
-                                                        {% if comment_settings.allow_replies and comment_settings.max_depth > comment.depth and commenting_enabled %}
-                                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill reply-button" data-reply-id="{{ comment.id }}" data-reply-author="{{ comment.author_name ?: 'Anonym' }}">
-                                                                <i class="bi bi-reply me-1"></i> Odpovědět
+                                                        {% set can_thread_reply = comment_settings.allow_replies and comment_settings.max_depth > comment.depth and commenting_enabled %}
+                                                        {% set can_mention = comment_settings.allow_replies and comment_settings.max_depth > 0 and comment_settings.max_depth <= comment.depth and commenting_enabled %}
+                                                        {% if can_thread_reply or can_mention %}
+                                                            <button
+                                                                type="button"
+                                                                class="btn btn-sm btn-outline-primary rounded-pill reply-button"
+                                                                data-reply-id="{{ can_thread_reply ? comment.id : '' }}"
+                                                                data-reply-author="{{ comment.author_name ?: 'Anonym' }}"
+                                                                data-mention-only="{{ can_mention and not can_thread_reply ? '1' : '0' }}"
+                                                            >
+                                                                <i class="bi bi-reply me-1"></i> Reagovat
+                                                                {% if can_mention and not can_thread_reply %}
+                                                                    <span class="visually-hidden">(zmínka)</span>
+                                                                {% endif %}
                                                             </button>
                                                         {% endif %}
                                                     </div>
@@ -146,15 +158,38 @@
                 const parentField = form.querySelector('input[name="parent_id"]');
                 const replyInfo = document.getElementById('replyInfo');
                 const replyTarget = document.getElementById('replyTarget');
+                const replyLabel = replyInfo ? replyInfo.querySelector('[data-reply-label]') : null;
                 const cancelReply = document.getElementById('cancelReply');
+                const mentionField = form.querySelector('input[name="mention_only"]');
 
                 const commentBody = document.getElementById('comment_body');
                 const alertBox = document.getElementById('commentAlert');
+                let isMentionOnly = false;
+                let mentionPrefix = '';
                 document.querySelectorAll('.reply-button').forEach((btn) => {
                     btn.addEventListener('click', () => {
+                        if (commentBody && mentionPrefix && commentBody.value.startsWith(mentionPrefix)) {
+                            commentBody.value = commentBody.value.slice(mentionPrefix.length);
+                        }
+
+                        isMentionOnly = btn.dataset.mentionOnly === '1';
+                        const replyAuthor = btn.dataset.replyAuthor || 'komentář';
                         parentField.value = btn.dataset.replyId;
+                        if (mentionField) {
+                            mentionField.value = isMentionOnly ? '1' : '0';
+                        }
+
+                        mentionPrefix = isMentionOnly && replyAuthor ? `@${replyAuthor} ` : '';
+                        if (commentBody && mentionPrefix && !commentBody.value.startsWith(mentionPrefix)) {
+                            const existingText = commentBody.value.trim();
+                            commentBody.value = existingText ? `${mentionPrefix}${existingText}` : mentionPrefix;
+                        }
+
                         if (replyInfo && replyTarget) {
-                            replyTarget.textContent = btn.dataset.replyAuthor || 'komentář';
+                            replyTarget.textContent = replyAuthor;
+                            if (replyLabel) {
+                                replyLabel.textContent = isMentionOnly ? 'Zmiňujete' : 'Odpovídáte na';
+                            }
                             replyInfo.classList.remove('d-none');
                         }
                         if (commentBody) {
@@ -166,6 +201,20 @@
                 if (cancelReply) {
                     cancelReply.addEventListener('click', () => {
                         parentField.value = '';
+                        if (mentionField) {
+                            mentionField.value = '0';
+                        }
+                        if (commentBody && mentionPrefix && commentBody.value.startsWith(mentionPrefix)) {
+                            commentBody.value = commentBody.value.slice(mentionPrefix.length);
+                        }
+                        mentionPrefix = '';
+                        isMentionOnly = false;
+                        if (replyLabel) {
+                            replyLabel.textContent = 'Odpovídáte na';
+                        }
+                        if (replyTarget) {
+                            replyTarget.textContent = '';
+                        }
                         if (replyInfo) {
                             replyInfo.classList.add('d-none');
                         }

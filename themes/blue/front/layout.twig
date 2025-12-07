@@ -311,18 +311,13 @@
         .comment-item.is-root {
             --comment-avatar-size: 55px;
         }
-        .comment-item.has-parent {
-            --comment-card-bg: linear-gradient(135deg, #f7faff 0%, #f3f6fb 100%);
-        }
         .comment-card {
-            background: var(--comment-card-bg, #ffffff);
-            border: 1px solid var(--stroke);
-            border-radius: 16px;
-            padding: 1rem 1.1rem;
-            box-shadow: 0 8px 30px rgba(15, 26, 43, 0.05);
-            transition: transform .15s ease, box-shadow .15s ease;
+            background: #fff;
+            border: 1px solid var(--bs-border-color);
+            border-radius: 12px;
+            padding: .95rem 1rem;
+            box-shadow: none;
         }
-        .comment-card:hover { box-shadow: 0 12px 36px rgba(15, 26, 43, 0.07); transform: translateY(-1px); }
         .comment-inner { display: flex; gap: .95rem; align-items: flex-start; }
         .comment-avatar { flex-shrink: 0; }
         .comment-avatar .avatar {
@@ -339,9 +334,9 @@
             object-fit: cover;
         }
         .comment-footer {
-            border-top: 1px solid rgba(50, 71, 100, 0.08);
-            margin-top: .85rem;
-            padding-top: .75rem;
+            border-top: 1px solid var(--bs-border-color);
+            margin-top: .75rem;
+            padding-top: .65rem;
         }
         .comment-text { line-height: 1.7; }
         .comment-body .btn-link { color: var(--accent); }

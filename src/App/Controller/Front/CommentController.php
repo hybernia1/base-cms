@@ -206,7 +206,6 @@ class CommentController extends BaseFrontController
             'status' => $status,
             'depth' => $targetDepth,
             'ip_address' => $ipAddress,
-            'mention_only' => $mentionOnly,
         ]);
 
         if ($status === 'approved') {

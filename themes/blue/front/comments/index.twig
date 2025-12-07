@@ -41,30 +41,6 @@
             color: #365fa5;
             text-decoration: none;
         }
-
-        .comment-text .comment-mention {
-            font-weight: 600;
-            color: var(--accent);
-            text-decoration: none;
-        }
-
-        .comment-text .comment-mention:hover,
-        .comment-text .comment-mention:focus {
-            color: #365fa5;
-            text-decoration: underline;
-        }
-
-        .comment-mention-preview {
-            border-left: 3px solid var(--bs-border-color);
-            padding-left: .5rem;
-            margin-top: .35rem;
-            color: var(--bs-body-color);
-            font-size: .9rem;
-        }
-
-        .comment-mention-body {
-            margin-top: .35rem;
-        }
     </style>
 {% endblock %}
 
@@ -158,10 +134,8 @@
                             {% if comments %}
                                 {% for comment in comments %}
                                     {% set has_parent = comment.depth > 0 %}
-                                    {% set is_mention_only = comment.mention_only ?? false %}
-                                    {% set base_indent = comment_settings.max_depth is defined ? min(comment.depth, comment_settings.max_depth) : comment.depth %}
-                                    {% set indent_depth = (is_mention_only and comment.depth > 0) ? [base_indent - 1, 0]|max : base_indent %}
-                                    <article class="comment-item{% if has_parent %} has-parent{% endif %}{% if comment.depth == 0 %} is-root{% endif %}" id="comment-{{ comment.id }}" data-depth="{{ comment.depth }}" data-comment-id="{{ comment.id }}" data-comment-body="{{ comment.body|e('html_attr') }}" data-mention-only="{{ is_mention_only ? '1' : '0' }}" style="--comment-indent: {{ indent_depth }}" role="listitem">
+                                    {% set indent_depth = comment_settings.max_depth is defined ? min(comment.depth, comment_settings.max_depth) : comment.depth %}
+                                    <article class="comment-item{% if has_parent %} has-parent{% endif %}{% if comment.depth == 0 %} is-root{% endif %}" id="comment-{{ comment.id }}" data-depth="{{ comment.depth }}" data-comment-id="{{ comment.id }}" data-comment-body="{{ comment.body|e('html_attr') }}" style="--comment-indent: {{ indent_depth }}" role="listitem">
                                         <div class="comment-card">
                                             <div class="comment-inner">
                                                 <div class="comment-avatar">
@@ -267,7 +241,6 @@
                 const contentId = {{ content.id }};
                 const initialComments = {{ comments|json_encode|raw }};
                 const pollIntervalMs = 12000;
-                const commentMap = new Map();
 
                 const escapeHtml = (value) => {
                     return value
@@ -276,31 +249,6 @@
                 };
 
                 const nl2br = (text) => escapeHtml(text || '').replace(/\n/g, '<br>');
-
-                const buildCommentIndex = (items = []) => {
-                    commentMap.clear();
-                    items.forEach((item) => {
-                        if (item && item.id !== undefined) {
-                            commentMap.set(Number(item.id), item);
-                        }
-                    });
-                };
-
-                const getMentionTarget = (comment) => {
-                    if (!comment || !comment.mention_only) {
-                        return null;
-                    }
-
-                    const parentId = comment.parent_id ? Number(comment.parent_id) : 0;
-                    return parentId && commentMap.has(parentId) ? commentMap.get(parentId) : null;
-                };
-
-                const formatMentionPreview = (text = '') => {
-                    const value = (text || '').trim();
-                    if (!value) return '';
-
-                    return value.length > 160 ? `${value.slice(0, 160)}…` : value;
-                };
 
                 const updateCount = (count) => {
                     if (commentCount) {
@@ -568,15 +516,13 @@
                     const article = document.createElement('article');
                     const hasParent = comment.depth > 0;
                     const maxDepth = Number(commentSettings.max_depth || 0);
-                    const baseDepth = maxDepth > 0 ? Math.min(comment.depth, maxDepth) : comment.depth;
-                    const indentDepth = comment.mention_only && comment.depth > 0 ? Math.max(baseDepth - 1, 0) : baseDepth;
+                    const indentDepth = maxDepth > 0 ? Math.min(comment.depth, maxDepth) : comment.depth;
                     article.className = `comment-item${hasParent ? ' has-parent' : ''}${comment.depth === 0 ? ' is-root' : ''}${isReply ? ' is-reply' : ''}`;
                     article.id = `comment-${comment.id}`;
                     article.dataset.depth = comment.depth;
                     article.dataset.commentId = comment.id;
                     article.dataset.commentBody = comment.body || '';
                     article.dataset.parentId = comment.parent_id || '';
-                    article.dataset.mentionOnly = comment.mention_only ? '1' : '0';
                     article.style.setProperty('--comment-indent', indentDepth);
                     article.setAttribute('role', 'listitem');
 
@@ -631,29 +577,7 @@
 
                     const text = document.createElement('div');
                     text.className = 'mt-2 comment-text';
-                    const mentionTarget = getMentionTarget(comment);
-                    const mentionPreview = mentionTarget
-                        ? (() => {
-                            const mentionLabel = `@${mentionTarget.author_name || 'Anonym'}`;
-                            const previewText = formatMentionPreview(mentionTarget.body || '');
-                            let remainingText = (comment.body || '').trimStart();
-
-                            if (remainingText.startsWith(mentionLabel)) {
-                                remainingText = remainingText.slice(mentionLabel.length).trimStart();
-                            }
-
-                            const previewHtml = previewText
-                                ? `<div class="comment-mention-preview">„${escapeHtml(previewText)}“</div>`
-                                : '';
-                            const remainingHtml = remainingText
-                                ? `<div class="comment-mention-body">${nl2br(remainingText)}</div>`
-                                : '';
-
-                            return `<a href="#comment-${mentionTarget.id}" class="comment-mention">${escapeHtml(mentionLabel)}</a>${previewHtml}${remainingHtml}`;
-                        })()
-                        : '';
-
-                    text.innerHTML = mentionPreview || nl2br(comment.body || '');
+                    text.innerHTML = nl2br(comment.body || '');
 
                     bodyWrap.appendChild(header);
                     bodyWrap.appendChild(text);
@@ -752,7 +676,6 @@
                     const expandedThreads = getExpandedThreadIds();
 
                     moveFormHome();
-                    buildCommentIndex(comments);
                     commentThread.innerHTML = '';
                     const fragment = document.createDocumentFragment();
                     const roots = groupCommentsByParent(comments);

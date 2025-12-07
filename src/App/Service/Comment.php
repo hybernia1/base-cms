@@ -32,7 +32,6 @@ class Comment
         $comment->status = $data['status'] ?? 'pending';
         $comment->depth = (int) ($data['depth'] ?? 0);
         $comment->ip_address = trim((string) ($data['ip_address'] ?? ''));
-        $comment->mention_only = !empty($data['mention_only']);
         $comment->created_at = date('Y-m-d H:i:s');
         $comment->updated_at = date('Y-m-d H:i:s');
 
@@ -177,7 +176,6 @@ class Comment
                 'body' => $item->body,
                 'status' => $item->status,
                 'depth' => (int) $item->depth,
-                'mention_only' => (bool) ($item->mention_only ?? false),
                 'created_at' => $item->created_at,
                 'created_at_formatted' => $item->created_at
                     ? date('j. n. Y H:i', strtotime($item->created_at))

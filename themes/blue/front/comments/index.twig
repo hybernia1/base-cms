@@ -10,14 +10,6 @@
             margin-left: calc(var(--comment-indent-size) * 0.35);
         }
 
-        .comment-thread {
-            border: 1px solid rgba(0, 0, 0, 0.04);
-            border-radius: .65rem;
-            padding: 1rem 1.25rem;
-            margin-bottom: calc(var(--comment-gap) * 0.75);
-            background: #f9fbff;
-        }
-
         .comment-reply-list {
             display: flex;
             flex-direction: column;
@@ -410,14 +402,6 @@
                     return `Zobrazit předchozí ${count} odpovědi`;
                 };
 
-                const countReplies = (comment) => {
-                    if (!comment.replies || !comment.replies.length) {
-                        return 0;
-                    }
-
-                    return comment.replies.reduce((total, reply) => total + 1 + countReplies(reply), 0);
-                };
-
                 const groupCommentsByParent = (items = []) => {
                     const byId = new Map();
                     const roots = [];
@@ -438,7 +422,7 @@
                     return roots;
                 };
 
-                const renderReplies = (comment, isRootLevel = false) => {
+                const renderReplies = (comment) => {
                     if (!comment.replies || !comment.replies.length) {
                         return null;
                     }
@@ -447,35 +431,29 @@
                     repliesWrapper.className = 'comment-replies';
 
                     const repliesList = document.createElement('div');
-                    repliesList.className = 'comment-reply-list';
-                    if (isRootLevel) {
-                        repliesList.classList.add('d-none');
-                    }
+                    repliesList.className = 'comment-reply-list d-none';
                     comment.replies.forEach((reply) => {
                         repliesList.appendChild(buildCommentElement(reply, true));
-                        const nested = renderReplies(reply, false);
+                        const nested = renderReplies(reply);
                         if (nested) {
                             repliesList.appendChild(nested);
                         }
                     });
 
-                    if (isRootLevel) {
-                        const toggleBtn = document.createElement('button');
-                        toggleBtn.type = 'button';
-                        toggleBtn.className = 'btn btn-link text-decoration-none px-0 reply-toggle';
-                        toggleBtn.setAttribute('aria-expanded', 'false');
-                        const totalReplies = countReplies(comment) || comment.replies.length;
-                        toggleBtn.textContent = formatReplyToggleLabel(totalReplies, false);
+                    const toggleBtn = document.createElement('button');
+                    toggleBtn.type = 'button';
+                    toggleBtn.className = 'btn btn-link text-decoration-none px-0 reply-toggle';
+                    toggleBtn.setAttribute('aria-expanded', 'false');
+                    toggleBtn.textContent = formatReplyToggleLabel(comment.replies.length, false);
 
-                        toggleBtn.addEventListener('click', () => {
-                            repliesList.classList.toggle('d-none');
-                            const expanded = !repliesList.classList.contains('d-none');
-                            toggleBtn.textContent = formatReplyToggleLabel(totalReplies, expanded);
-                            toggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-                        });
+                    toggleBtn.addEventListener('click', () => {
+                        repliesList.classList.toggle('d-none');
+                        const expanded = !repliesList.classList.contains('d-none');
+                        toggleBtn.textContent = formatReplyToggleLabel(comment.replies.length, expanded);
+                        toggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                    });
 
-                        repliesWrapper.appendChild(toggleBtn);
-                    }
+                    repliesWrapper.appendChild(toggleBtn);
                     repliesWrapper.appendChild(repliesList);
 
                     return repliesWrapper;
@@ -647,17 +625,12 @@
                     const roots = groupCommentsByParent(comments);
 
                     roots.forEach((comment) => {
-                        const thread = document.createElement('div');
-                        thread.className = 'comment-thread';
+                        fragment.appendChild(buildCommentElement(comment));
 
-                        thread.appendChild(buildCommentElement(comment));
-
-                        const replies = renderReplies(comment, true);
+                        const replies = renderReplies(comment);
                         if (replies) {
-                            thread.appendChild(replies);
+                            fragment.appendChild(replies);
                         }
-
-                        fragment.appendChild(thread);
                     });
 
                     commentThread.appendChild(fragment);

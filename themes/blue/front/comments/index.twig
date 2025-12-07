@@ -187,7 +187,6 @@
                         const avatar = item.querySelector('.comment-avatar');
                         const depth = getDepth(item);
                         const itemTop = item.offsetTop;
-                        const itemBottom = itemTop + item.offsetHeight;
                         const avatarCenter = avatar
                             ? itemTop + (avatar.offsetTop + (avatar.offsetHeight / 2))
                             : itemTop;
@@ -196,7 +195,6 @@
                             item,
                             depth,
                             itemTop,
-                            itemBottom,
                             avatarCenter,
                         };
                     });
@@ -219,14 +217,14 @@
                     const lastAtDepth = [];
 
                     measurements.forEach((data, index) => {
-                        const { item, depth, itemTop, itemBottom, avatarCenter } = data;
+                        const { item, depth, itemTop, avatarCenter } = data;
                         const ancestor = lastAtDepth[depth - 1];
 
                         if (item.classList.contains('has-parent')) {
                             const currentCenterRelative = avatarCenter - itemTop;
 
                             if (ancestor) {
-                                const connectorStart = ancestor.itemBottom - itemTop;
+                                const connectorStart = ancestor.avatarCenter - itemTop;
                                 const connectorHeight = Math.max(0, currentCenterRelative - connectorStart);
 
                                 item.style.setProperty('--connector-start', `${connectorStart}px`);
@@ -258,7 +256,7 @@
                             }
                         }
 
-                        lastAtDepth[depth] = { avatarCenter, itemBottom };
+                        lastAtDepth[depth] = { avatarCenter };
                         lastAtDepth.length = depth + 1;
                     });
                 };

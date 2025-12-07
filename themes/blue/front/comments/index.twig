@@ -178,11 +178,7 @@
 
                         isMentionOnly = btn.dataset.mentionOnly === '1';
                         const replyAuthor = btn.dataset.replyAuthor || 'komentář';
-                        parentField.value = btn.dataset.replyId;
-                        currentReplyDepth = btn.dataset.replyDepth || '';
-                        if (replyDepthField) {
-                            replyDepthField.value = currentReplyDepth;
-                        }
+                        parentField.value = isMentionOnly ? '' : btn.dataset.replyId;
                         if (mentionField) {
                             mentionField.value = isMentionOnly ? '1' : '0';
                         }
@@ -209,10 +205,6 @@
                 if (cancelReply) {
                     cancelReply.addEventListener('click', () => {
                         parentField.value = '';
-                        currentReplyDepth = '';
-                        if (replyDepthField) {
-                            replyDepthField.value = '';
-                        }
                         if (mentionField) {
                             mentionField.value = '0';
                         }

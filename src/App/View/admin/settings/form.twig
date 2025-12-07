@@ -189,9 +189,9 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="comments_max_depth" class="form-label">Maximální úroveň vláken</label>
-                            <input type="number" class="form-control" id="comments_max_depth" name="comments_max_depth" value="{{ values.comments_max_depth|default(2) }}" min="0" max="5">
-                            <div class="form-text">0 = zakáže odpovědi, 1 = pouze hlavní komentáře, 5 = hlubší vlákna.</div>
+                            <label for="comments_max_depth" class="form-label">Maximální úroveň reakcí</label>
+                            <input type="number" class="form-control" id="comments_max_depth" name="comments_max_depth" value="{{ values.comments_max_depth|default(1) }}" min="0" max="1">
+                            <div class="form-text">Pro jednoduchou diskuzi ponechte hodnotu 1. Hodnota 0 odpovědi zcela zakáže.</div>
                         </div>
 
                         <div class="form-check form-switch mb-3">

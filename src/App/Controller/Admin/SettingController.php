@@ -182,7 +182,7 @@ class SettingController extends AjaxController
         $allowAnonymous = isset($_POST['comments_allow_anonymous']) ? '1' : '0';
         $rateLimitSeconds = (int) ($_POST['comments_rate_limit_seconds'] ?? Setting::DEFAULTS['comments_rate_limit_seconds']);
 
-        $maxDepth = max(0, min(5, $maxDepth));
+        $maxDepth = max(0, min(1, $maxDepth));
         $rateLimitSeconds = max(0, min(86400, $rateLimitSeconds));
 
         Setting::set('comments_enabled', $commentsEnabled);

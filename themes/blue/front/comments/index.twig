@@ -782,33 +782,52 @@
                     repliesWrapper.className = 'comment-replies';
                     repliesWrapper.classList.toggle('is-thread-root', isRootThread);
 
-                    const repliesList = document.createElement('div');
-                    repliesList.className = 'comment-reply-list';
-                    if (isRootThread) {
-                        repliesList.classList.add('d-none');
+                    const visibleRepliesList = document.createElement('div');
+                    visibleRepliesList.className = 'comment-reply-list';
+
+                    if (!isRootThread) {
+                        comment.replies.forEach((reply) => {
+                            const replyElement = buildCommentElement(reply, true);
+                            visibleRepliesList.appendChild(replyElement);
+                            const nested = renderReplies(reply, false, expandedThreads, replyElement.querySelector('[data-reply-actions]'));
+                            if (nested) {
+                                visibleRepliesList.appendChild(nested);
+                            }
+                        });
+
+                        repliesWrapper.appendChild(visibleRepliesList);
+                        return repliesWrapper;
                     }
-                    comment.replies.forEach((reply) => {
+
+                    const hiddenRepliesList = document.createElement('div');
+                    hiddenRepliesList.className = 'comment-reply-list d-none';
+
+                    comment.replies.forEach((reply, index) => {
                         const replyElement = buildCommentElement(reply, true);
-                        repliesList.appendChild(replyElement);
                         const nested = renderReplies(reply, false, expandedThreads, replyElement.querySelector('[data-reply-actions]'));
+
+                        const targetList = index === 0 ? visibleRepliesList : hiddenRepliesList;
+                        targetList.appendChild(replyElement);
                         if (nested) {
-                            repliesList.appendChild(nested);
+                            targetList.appendChild(nested);
                         }
                     });
 
-                    const replyCount = countReplies(comment);
+                    const totalReplies = countReplies(comment);
+                    const visiblePreviewCount = comment.replies.length ? countReplies(comment.replies[0]) : 0;
+                    const hiddenReplyCount = Math.max(totalReplies - visiblePreviewCount, 0);
 
-                    if (isRootThread) {
+                    if (hiddenReplyCount > 0) {
                         const toggleBtn = document.createElement('button');
                         toggleBtn.type = 'button';
                         toggleBtn.className = 'btn btn-link text-decoration-none px-0 reply-toggle';
                         toggleBtn.setAttribute('aria-expanded', 'false');
-                        toggleBtn.innerHTML = formatReplyToggleLabel(replyCount, false);
+                        toggleBtn.innerHTML = formatReplyToggleLabel(hiddenReplyCount, false);
 
                         toggleBtn.addEventListener('click', () => {
-                            repliesList.classList.toggle('d-none');
-                            const expanded = !repliesList.classList.contains('d-none');
-                            toggleBtn.innerHTML = formatReplyToggleLabel(replyCount, expanded);
+                            hiddenRepliesList.classList.toggle('d-none');
+                            const expanded = !hiddenRepliesList.classList.contains('d-none');
+                            toggleBtn.innerHTML = formatReplyToggleLabel(hiddenReplyCount, expanded);
                             toggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
                             const commentId = Number(comment.id);
                             if (expanded) {
@@ -819,8 +838,8 @@
                         });
 
                         if (expandedThreads.has(comment.id)) {
-                            repliesList.classList.remove('d-none');
-                            toggleBtn.innerHTML = formatReplyToggleLabel(replyCount, true);
+                            hiddenRepliesList.classList.remove('d-none');
+                            toggleBtn.innerHTML = formatReplyToggleLabel(hiddenReplyCount, true);
                             toggleBtn.setAttribute('aria-expanded', 'true');
                         }
 
@@ -829,9 +848,13 @@
                         } else {
                             repliesWrapper.appendChild(toggleBtn);
                         }
-                    }
-                    repliesWrapper.appendChild(repliesList);
 
+                        repliesWrapper.appendChild(visibleRepliesList);
+                        repliesWrapper.appendChild(hiddenRepliesList);
+                        return repliesWrapper;
+                    }
+
+                    repliesWrapper.appendChild(visibleRepliesList);
                     return repliesWrapper;
                 };
 

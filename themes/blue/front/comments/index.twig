@@ -182,6 +182,8 @@
                     const threadRect = thread.getBoundingClientRect();
                     const items = Array.from(thread.querySelectorAll('.comment-item'));
 
+                    const getDepth = (element) => parseInt(element.dataset.depth || '0', 10);
+
                     const getAvatarCenter = (element) => {
                         const avatar = element.querySelector('.comment-avatar');
                         if (!avatar) return 0;
@@ -198,43 +200,43 @@
                     items.forEach((item, index) => {
                         if (!item.classList.contains('has-parent')) return;
 
-                        const currentDepth = parseInt(item.dataset.depth || '0', 10);
+                        const currentDepth = getDepth(item);
                         const currentCenter = centers.get(item) || 0;
                         const itemRect = item.getBoundingClientRect();
                         const itemTop = itemRect.top - threadRect.top;
 
                         const ancestor = [...items.slice(0, index)]
                             .reverse()
-                            .find((candidate) => parseInt(candidate.dataset.depth || '0', 10) === currentDepth - 1);
-
-                        const nextRelevant = items.slice(index + 1)
-                            .find((candidate) => parseInt(candidate.dataset.depth || '0', 10) >= currentDepth);
+                            .find((candidate) => getDepth(candidate) === currentDepth - 1);
 
                         const currentCenterRelative = currentCenter - itemTop;
 
-                        let connectorStart = null;
                         if (ancestor) {
                             const ancestorCenter = centers.get(ancestor) || 0;
-                            connectorStart = ancestorCenter - itemTop;
-                        }
+                            const connectorStart = ancestorCenter - itemTop;
+                            const connectorHeight = Math.max(0, currentCenterRelative - connectorStart);
 
-                        const connectorEnd = nextRelevant
-                            ? (centers.get(nextRelevant) || 0) - itemTop
-                            : currentCenterRelative;
-
-                        if (connectorStart !== null) {
-                            const connectorHeight = Math.max(0, connectorEnd - connectorStart);
                             item.style.setProperty('--connector-start', `${connectorStart}px`);
                             item.style.setProperty('--connector-height', `${connectorHeight}px`);
                         } else {
-                            item.style.setProperty('--connector-start', `calc(-1 * var(--comment-gap) - var(--comment-padding-y) - (var(--comment-avatar-size) / 2))`);
-                            item.style.setProperty('--connector-height', `calc(var(--comment-gap) + var(--comment-padding-y) + (var(--comment-avatar-size) / 2) + ${connectorEnd}px)`);
+                            item.style.setProperty('--connector-start', '0px');
+                            item.style.setProperty('--connector-height', '0px');
                         }
 
                         const continuingLevels = [];
                         for (let level = 1; level < currentDepth; level += 1) {
-                            const hasContinuation = items.slice(index + 1)
-                                .some((candidate) => parseInt(candidate.dataset.depth || '0', 10) >= level);
+                            let hasContinuation = false;
+
+                            for (let lookAhead = index + 1; lookAhead < items.length; lookAhead += 1) {
+                                const candidateDepth = getDepth(items[lookAhead]);
+
+                                if (candidateDepth < level) break;
+                                if (candidateDepth >= level) {
+                                    hasContinuation = true;
+                                    break;
+                                }
+                            }
+
                             if (hasContinuation) {
                                 continuingLevels.push(level);
                             }

@@ -86,7 +86,11 @@
                             <div class="comment-thread" role="list">
                                 {% for comment in comments %}
                                     {% set has_parent = comment.depth > 0 %}
-                                    <article class="comment-item{% if has_parent %} has-parent{% endif %}" id="comment-{{ comment.id }}" data-depth="{{ comment.depth }}" style="--comment-indent: {{ comment.depth }}" role="listitem">
+                                    <article class="comment-item{% if has_parent %} has-parent{% endif %}{% if comment.depth == 0 %} is-root{% endif %}" id="comment-{{ comment.id }}" data-depth="{{ comment.depth }}" style="--comment-indent: {{ comment.depth }}" role="listitem">
+                                        {% if has_parent %}
+                                            <span class="comment-depth-line" aria-hidden="true"></span>
+                                            <span class="comment-connector-stack" aria-hidden="true"></span>
+                                        {% endif %}
                                         <div class="comment-inner">
                                             <div class="comment-avatar">
                                                 <span class="avatar avatar-sm bg-primary-subtle text-primary fw-bold flex-shrink-0">

@@ -7,7 +7,8 @@
     {{ parent() }}
     <style>
         .comment-replies {
-            margin-left: calc(var(--comment-indent-size) * 0.35);
+            margin-left: 0;
+            padding-left: 0;
         }
 
         .comment-reply-list {
@@ -64,6 +65,38 @@
 
         .comment-mention-body {
             margin-top: .35rem;
+        }
+
+        @media (max-width: 767.98px) {
+            .comment-thread {
+                --comment-gap: 1rem;
+                --comment-indent-size: 38px;
+                --comment-padding-y: .65rem;
+            }
+
+            .comment-card {
+                padding: .85rem .95rem;
+                border-radius: 12px;
+            }
+
+            .comment-inner {
+                align-items: flex-start;
+                gap: .65rem;
+            }
+
+            .comment-footer {
+                align-items: flex-start !important;
+                flex-direction: column;
+                row-gap: .35rem;
+            }
+
+            .comment-footer .btn {
+                padding-inline: .75rem;
+            }
+
+            .comment-text {
+                line-height: 1.55;
+            }
         }
     </style>
 {% endblock %}
@@ -132,8 +165,9 @@
                                     </div>
 
                                     {% if current_user %}
-                                        <div class="alert alert-light border">
-                                            Přihlášen jako <strong>{{ current_user.nickname ?: current_user.email }}</strong>. Přezdívka se použije u komentáře.
+                                        <div class="alert alert-light border d-flex align-items-center gap-2 mb-3">
+                                            <i class="bi bi-person-check text-primary"></i>
+                                            <span>Přihlášen jako <strong>{{ current_user.nickname ?: current_user.email }}</strong>.</span>
                                         </div>
                                     {% elseif comment_settings.allow_anonymous %}
                                         <div class="row g-3">
@@ -181,19 +215,22 @@
                                                     </span>
                                                 </div>
                                                 <div class="comment-body">
-                                                    <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
-                                                        <div>
-                                                            <div class="fw-semibold">
-                                                                {% if comment.profile_url %}
-                                                                    <a href="{{ comment.profile_url }}" class="text-decoration-none">{{ comment.author_name ?: 'Anonym' }}</a>
-                                                                {% else %}
-                                                                    {{ comment.author_name ?: 'Anonym' }}
-                                                                {% endif %}
+                                                        <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                                                            <div>
+                                                                <div class="fw-semibold">
+                                                                    {% if comment.profile_url %}
+                                                                        <a href="{{ comment.profile_url }}" class="text-decoration-none">{{ comment.author_name ?: 'Anonym' }}</a>
+                                                                    {% else %}
+                                                                        {{ comment.author_name ?: 'Anonym' }}
+                                                                    {% endif %}
+                                                                </div>
+                                                            <div class="text-muted small d-flex align-items-center gap-1">
+                                                                <i class="bi bi-clock" aria-hidden="true"></i>
+                                                                <span>{{ comment.created_at|date('j. n. Y H:i') }}</span>
                                                             </div>
-                                                            <div class="text-muted small">{{ comment.created_at|date('j. n. Y H:i') }}</div>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <div class="mt-2 comment-text">{{ comment.body|nl2br }}</div>
+                                                        <div class="mt-2 comment-text">{{ comment.body|nl2br }}</div>
                                                     {% set can_thread_reply = comment_settings.allow_replies and comment_settings.max_depth > comment.depth and commenting_enabled %}
                                                     {% set can_mention = comment_settings.allow_replies and comment_settings.max_depth > 0 and comment_settings.max_depth <= comment.depth and commenting_enabled %}
                                                     {% if (can_thread_reply or can_mention) or can_manage_comments %}
@@ -207,8 +244,11 @@
                                                                         data-reply-author="{{ comment.author_name ?: 'Anonym' }}"
                                                                         data-mention-only="{{ can_mention and not can_thread_reply ? '1' : '0' }}"
                                                                         data-reply-depth="{{ comment.depth }}"
+                                                                        aria-label="Reagovat na {{ comment.author_name ?: 'Anonym' }}"
                                                                     >
-                                                                        <i class="bi bi-reply me-1"></i> Reagovat
+                                                                        <i class="bi bi-reply me-1"></i>
+                                                                        <span class="d-none d-sm-inline">Reagovat</span>
+                                                                        <span class="visually-hidden d-sm-none">Reagovat</span>
                                                                         {% if can_mention and not can_thread_reply %}
                                                                             <span class="visually-hidden">(zmínka)</span>
                                                                         {% endif %}
@@ -217,8 +257,16 @@
                                                             </div>
                                                             {% if can_manage_comments %}
                                                                 <div class="d-flex gap-2 flex-wrap">
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary edit-comment" data-comment-id="{{ comment.id }}" data-comment-body="{{ comment.body|e('html_attr') }}">Upravit</button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-comment" data-comment-id="{{ comment.id }}">Smazat</button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-secondary edit-comment" data-comment-id="{{ comment.id }}" data-comment-body="{{ comment.body|e('html_attr') }}" aria-label="Upravit komentář {{ comment.id }}">
+                                                                        <i class="bi bi-pencil me-1" aria-hidden="true"></i>
+                                                                        <span class="d-none d-sm-inline">Upravit</span>
+                                                                        <span class="visually-hidden d-sm-none">Upravit komentář</span>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-comment" data-comment-id="{{ comment.id }}" aria-label="Smazat komentář {{ comment.id }}">
+                                                                        <i class="bi bi-trash me-1" aria-hidden="true"></i>
+                                                                        <span class="d-none d-sm-inline">Smazat</span>
+                                                                        <span class="visually-hidden d-sm-none">Smazat komentář</span>
+                                                                    </button>
                                                                 </div>
                                                             {% endif %}
                                                         </div>
@@ -277,6 +325,7 @@
                 const contentId = {{ content.id }};
                 const initialComments = {{ comments|json_encode|raw }};
                 const commentMap = new Map();
+                const expandedThreadIds = new Set();
 
                 const escapeHtml = (value) => {
                     return value
@@ -562,7 +611,8 @@
                         replyBtn.dataset.replyAuthor = comment.author_name || 'Anonym';
                         replyBtn.dataset.mentionOnly = canMention && !canThreadReply ? '1' : '0';
                         replyBtn.dataset.replyDepth = comment.depth;
-                        replyBtn.innerHTML = `<i class="bi bi-reply me-1"></i> Reagovat${canMention && !canThreadReply ? '<span class="visually-hidden">(zmínka)</span>' : ''}`;
+                        replyBtn.setAttribute('aria-label', `Reagovat na ${comment.author_name || 'Anonym'}`);
+                        replyBtn.innerHTML = `<i class="bi bi-reply me-1"></i><span class="d-none d-sm-inline">Reagovat</span><span class="visually-hidden d-sm-none">Reagovat</span>${canMention && !canThreadReply ? '<span class="visually-hidden">(zmínka)</span>' : ''}`;
                         replyWrap.appendChild(replyBtn);
                     }
 
@@ -575,13 +625,15 @@
                         editBtn.className = 'btn btn-sm btn-outline-secondary edit-comment';
                         editBtn.dataset.commentId = comment.id;
                         editBtn.dataset.commentBody = comment.body || '';
-                        editBtn.textContent = 'Upravit';
+                        editBtn.setAttribute('aria-label', `Upravit komentář ${comment.id}`);
+                        editBtn.innerHTML = '<i class="bi bi-pencil me-1" aria-hidden="true"></i><span class="d-none d-sm-inline">Upravit</span><span class="visually-hidden d-sm-none">Upravit komentář</span>';
 
                         const deleteBtn = document.createElement('button');
                         deleteBtn.type = 'button';
                         deleteBtn.className = 'btn btn-sm btn-outline-danger delete-comment';
                         deleteBtn.dataset.commentId = comment.id;
-                        deleteBtn.textContent = 'Smazat';
+                        deleteBtn.setAttribute('aria-label', `Smazat komentář ${comment.id}`);
+                        deleteBtn.innerHTML = '<i class="bi bi-trash me-1" aria-hidden="true"></i><span class="d-none d-sm-inline">Smazat</span><span class="visually-hidden d-sm-none">Smazat komentář</span>';
 
                         adminWrap.appendChild(editBtn);
                         adminWrap.appendChild(deleteBtn);
@@ -598,15 +650,16 @@
                 };
 
                 const formatReplyToggleLabel = (count, expanded) => {
+                    const icon = '<i class="bi bi-chat-dots me-1" aria-hidden="true"></i>';
                     if (expanded) {
-                        return 'Skrýt odpovědi';
+                        return `${icon}<span>Skrýt odpovědi</span>`;
                     }
 
                     if (count === 1) {
-                        return 'Zobrazit odpověď';
+                        return `${icon}<span>Zobrazit odpověď</span>`;
                     }
 
-                    return `Zobrazit ${count} odpovědi`;
+                    return `${icon}<span>Zobrazit ${count} odpovědi</span>`;
                 };
 
                 const groupCommentsByParent = (items = []) => {
@@ -675,18 +728,24 @@
                         toggleBtn.type = 'button';
                         toggleBtn.className = 'btn btn-link text-decoration-none px-0 reply-toggle';
                         toggleBtn.setAttribute('aria-expanded', 'false');
-                        toggleBtn.textContent = formatReplyToggleLabel(comment.replies.length, false);
+                        toggleBtn.innerHTML = formatReplyToggleLabel(comment.replies.length, false);
 
                         toggleBtn.addEventListener('click', () => {
                             repliesList.classList.toggle('d-none');
                             const expanded = !repliesList.classList.contains('d-none');
-                            toggleBtn.textContent = formatReplyToggleLabel(comment.replies.length, expanded);
+                            toggleBtn.innerHTML = formatReplyToggleLabel(comment.replies.length, expanded);
                             toggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+                            const commentId = Number(comment.id);
+                            if (expanded) {
+                                expandedThreadIds.add(commentId);
+                            } else {
+                                expandedThreadIds.delete(commentId);
+                            }
                         });
 
                         if (expandedThreads.has(comment.id)) {
                             repliesList.classList.remove('d-none');
-                            toggleBtn.textContent = formatReplyToggleLabel(comment.replies.length, true);
+                            toggleBtn.innerHTML = formatReplyToggleLabel(comment.replies.length, true);
                             toggleBtn.setAttribute('aria-expanded', 'true');
                         }
 
@@ -755,8 +814,8 @@
                         name.textContent = comment.author_name || 'Anonym';
                     }
                     const meta = document.createElement('div');
-                    meta.className = 'text-muted small';
-                    meta.textContent = comment.created_at_formatted || '';
+                    meta.className = 'text-muted small d-flex align-items-center gap-1';
+                    meta.innerHTML = `<i class="bi bi-clock" aria-hidden="true"></i><span>${escapeHtml(comment.created_at_formatted || '')}</span>`;
                     authorBlock.appendChild(name);
                     authorBlock.appendChild(meta);
 
@@ -854,13 +913,29 @@
                     if (!commentThread) return;
                     if (isFormInteracting()) return;
 
-                    const expandedThreads = getExpandedThreadIds();
+                    const expandedThreads = new Set(expandedThreadIds);
+                    getExpandedThreadIds().forEach((id) => expandedThreads.add(id));
+                    expandedThreadIds.clear();
+                    expandedThreads.forEach((id) => expandedThreadIds.add(id));
 
                     moveFormHome();
                     buildCommentIndex(comments);
                     commentThread.innerHTML = '';
                     const fragment = document.createDocumentFragment();
                     const roots = groupCommentsByParent(comments);
+
+                    const visibleThreadIds = new Set();
+                    roots.forEach((comment) => {
+                        if (comment.replies && comment.replies.length) {
+                            visibleThreadIds.add(Number(comment.id));
+                        }
+                    });
+
+                    expandedThreadIds.forEach((id) => {
+                        if (!visibleThreadIds.has(id)) {
+                            expandedThreadIds.delete(id);
+                        }
+                    });
 
                     roots.forEach((comment) => {
                         const threadItem = document.createElement('div');

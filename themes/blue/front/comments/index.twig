@@ -177,76 +177,89 @@
                 const thread = document.querySelector('.comment-thread');
 
                 const recalcConnectors = () => {
-                        if (!thread) return;
+                    if (!thread) return;
 
-                        const threadRect = thread.getBoundingClientRect();
-                        const items = Array.from(thread.querySelectorAll('.comment-item'));
+                    const threadRect = thread.getBoundingClientRect();
+                    const items = Array.from(thread.querySelectorAll('.comment-item'));
 
-                        const getAvatarCenter = (element) => {
-                            const avatar = element.querySelector('.comment-avatar');
-                            if (!avatar) return 0;
+                    const getAvatarCenter = (element) => {
+                        const avatar = element.querySelector('.comment-avatar');
+                        if (!avatar) return 0;
 
-                            const rect = avatar.getBoundingClientRect();
-                            return (rect.top - threadRect.top) + (rect.height / 2);
-                        };
-
-                        const centers = new Map();
-                        items.forEach((item) => {
-                            centers.set(item, getAvatarCenter(item));
-                        });
-
-                        items.forEach((item, index) => {
-                            if (!item.classList.contains('has-parent')) return;
-
-                            const currentDepth = parseInt(item.dataset.depth || '0', 10);
-                            const currentCenter = centers.get(item) || 0;
-                            const itemRect = item.getBoundingClientRect();
-                            const itemTop = itemRect.top - threadRect.top;
-
-                            const ancestor = [...items.slice(0, index)]
-                                .reverse()
-                                .find((candidate) => parseInt(candidate.dataset.depth || '0', 10) === currentDepth - 1);
-
-                            const currentCenterRelative = currentCenter - itemTop;
-
-                            if (ancestor) {
-                                const ancestorCenter = centers.get(ancestor) || 0;
-                                const connectorStart = ancestorCenter - itemTop;
-                                const connectorHeight = Math.max(0, currentCenterRelative - connectorStart);
-
-                                item.style.setProperty('--connector-start', `${connectorStart}px`);
-                                item.style.setProperty('--connector-height', `${connectorHeight}px`);
-                            }
-
-                            const continuingLevels = [];
-                            for (let level = 1; level < currentDepth; level += 1) {
-                                const hasContinuation = items.slice(index + 1)
-                                    .some((candidate) => parseInt(candidate.dataset.depth || '0', 10) >= level);
-                                if (hasContinuation) {
-                                    continuingLevels.push(level);
-                                }
-                            }
-
-                            const stackOffsets = continuingLevels
-                                .sort((a, b) => a - b)
-                                .map((level) => `calc(-1 * var(--comment-indent-size) * ${currentDepth - level}) 0 0 0 var(--comment-connector)`);
-
-                            let stackEl = item.querySelector('.comment-connector-stack');
-                            if (!stackEl) {
-                                stackEl = document.createElement('span');
-                                stackEl.className = 'comment-connector-stack';
-                                item.prepend(stackEl);
-                            }
-
-                            if (stackOffsets.length) {
-                                stackEl.style.setProperty('--stack-shadows', stackOffsets.join(', '));
-                                stackEl.classList.add('has-lines');
-                            } else {
-                                stackEl.style.removeProperty('--stack-shadows');
-                                stackEl.classList.remove('has-lines');
-                            }
-                        });
+                        const rect = avatar.getBoundingClientRect();
+                        return (rect.top - threadRect.top) + (rect.height / 2);
                     };
+
+                    const centers = new Map();
+                    items.forEach((item) => {
+                        centers.set(item, getAvatarCenter(item));
+                    });
+
+                    items.forEach((item, index) => {
+                        if (!item.classList.contains('has-parent')) return;
+
+                        const currentDepth = parseInt(item.dataset.depth || '0', 10);
+                        const currentCenter = centers.get(item) || 0;
+                        const itemRect = item.getBoundingClientRect();
+                        const itemTop = itemRect.top - threadRect.top;
+
+                        const ancestor = [...items.slice(0, index)]
+                            .reverse()
+                            .find((candidate) => parseInt(candidate.dataset.depth || '0', 10) === currentDepth - 1);
+
+                        const nextRelevant = items.slice(index + 1)
+                            .find((candidate) => parseInt(candidate.dataset.depth || '0', 10) >= currentDepth);
+
+                        const currentCenterRelative = currentCenter - itemTop;
+
+                        let connectorStart = null;
+                        if (ancestor) {
+                            const ancestorCenter = centers.get(ancestor) || 0;
+                            connectorStart = ancestorCenter - itemTop;
+                        }
+
+                        const connectorEnd = nextRelevant
+                            ? (centers.get(nextRelevant) || 0) - itemTop
+                            : currentCenterRelative;
+
+                        if (connectorStart !== null) {
+                            const connectorHeight = Math.max(0, connectorEnd - connectorStart);
+                            item.style.setProperty('--connector-start', `${connectorStart}px`);
+                            item.style.setProperty('--connector-height', `${connectorHeight}px`);
+                        } else {
+                            item.style.setProperty('--connector-start', `calc(-1 * var(--comment-gap) - var(--comment-padding-y) - (var(--comment-avatar-size) / 2))`);
+                            item.style.setProperty('--connector-height', `calc(var(--comment-gap) + var(--comment-padding-y) + (var(--comment-avatar-size) / 2) + ${connectorEnd}px)`);
+                        }
+
+                        const continuingLevels = [];
+                        for (let level = 1; level < currentDepth; level += 1) {
+                            const hasContinuation = items.slice(index + 1)
+                                .some((candidate) => parseInt(candidate.dataset.depth || '0', 10) >= level);
+                            if (hasContinuation) {
+                                continuingLevels.push(level);
+                            }
+                        }
+
+                        const stackOffsets = continuingLevels
+                            .sort((a, b) => a - b)
+                            .map((level) => `calc(-1 * var(--comment-indent-size) * ${currentDepth - level}) 0 0 0 var(--comment-connector)`);
+
+                        let stackEl = item.querySelector('.comment-connector-stack');
+                        if (!stackEl) {
+                            stackEl = document.createElement('span');
+                            stackEl.className = 'comment-connector-stack';
+                            item.prepend(stackEl);
+                        }
+
+                        if (stackOffsets.length) {
+                            stackEl.style.setProperty('--stack-shadows', stackOffsets.join(', '));
+                            stackEl.classList.add('has-lines');
+                        } else {
+                            stackEl.style.removeProperty('--stack-shadows');
+                            stackEl.classList.remove('has-lines');
+                        }
+                    });
+                };
 
                 recalcConnectors();
                 window.addEventListener('resize', recalcConnectors);

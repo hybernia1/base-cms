@@ -117,7 +117,7 @@
                                                             <button
                                                                 type="button"
                                                                 class="btn btn-sm btn-outline-primary rounded-pill reply-button"
-                                                                data-reply-id="{{ can_thread_reply ? comment.id : '' }}"
+                                                                data-reply-id="{{ comment.id }}"
                                                                 data-reply-author="{{ comment.author_name ?: 'Anonym' }}"
                                                                 data-mention-only="{{ can_mention and not can_thread_reply ? '1' : '0' }}"
                                                             >
@@ -174,7 +174,10 @@
 
                         isMentionOnly = btn.dataset.mentionOnly === '1';
                         const replyAuthor = btn.dataset.replyAuthor || 'komentář';
-                        parentField.value = isMentionOnly ? '' : btn.dataset.replyId;
+                        parentField.value = btn.dataset.replyId;
+                        if (mentionField) {
+                            mentionField.value = isMentionOnly ? '1' : '0';
+                        }
 
                         mentionPrefix = isMentionOnly && replyAuthor ? `@${replyAuthor} ` : '';
                         if (commentBody && mentionPrefix && !commentBody.value.startsWith(mentionPrefix)) {
@@ -198,6 +201,9 @@
                 if (cancelReply) {
                     cancelReply.addEventListener('click', () => {
                         parentField.value = '';
+                        if (mentionField) {
+                            mentionField.value = '0';
+                        }
                         if (commentBody && mentionPrefix && commentBody.value.startsWith(mentionPrefix)) {
                             commentBody.value = commentBody.value.slice(mentionPrefix.length);
                         }

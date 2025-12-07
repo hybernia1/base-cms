@@ -7,8 +7,11 @@
     {{ parent() }}
     <style>
         .comment-replies {
-            margin-left: 0;
-            padding-left: 0;
+            margin-left: calc(var(--comment-indent-size) + (var(--comment-avatar-size) * .35));
+            padding-left: calc(var(--comment-indent-size) * .75);
+            border-left: 2px solid rgba(50, 71, 100, 0.08);
+            display: grid;
+            row-gap: calc(var(--comment-gap) * 0.65);
         }
 
         .comment-reply-list {
@@ -19,13 +22,27 @@
         }
 
         .comment-thread-item {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: minmax(0, var(--comment-indent-size)) 1fr;
+            column-gap: 1rem;
             row-gap: .65rem;
         }
 
         .comment-thread-item + .comment-thread-item {
             margin-top: var(--comment-gap);
+        }
+
+        .comment-thread-item > .comment-item,
+        .comment-thread-item > .comment-replies {
+            grid-column: 1 / -1;
+        }
+
+        .comment-replies .comment-reply-list {
+            margin-top: .75rem;
+        }
+
+        .comment-replies .comment-item {
+            margin-left: calc((var(--comment-indent, 1) - 1) * var(--comment-indent-size));
         }
 
         .comment-replies.is-thread-root .comment-reply-list {

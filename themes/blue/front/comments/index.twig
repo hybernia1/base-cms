@@ -255,7 +255,6 @@
                 const alertBox = document.getElementById('commentAlert');
                 let isMentionOnly = false;
                 let mentionPrefix = '';
-                let pollTimer;
 
                 const commentThread = document.querySelector('[data-comment-thread]');
                 const emptyState = document.querySelector('[data-empty-comments]');
@@ -266,7 +265,6 @@
                 const adminCsrfToken = '{{ csrf_token('comment_admin') }}';
                 const contentId = {{ content.id }};
                 const initialComments = {{ comments|json_encode|raw }};
-                const pollIntervalMs = 12000;
                 const commentMap = new Map();
 
                 const escapeHtml = (value) => {
@@ -788,19 +786,13 @@
                             renderComments(data.comments || []);
                         }
                     } catch (error) {
-                        // ignore polling errors
+                        // ignore fetch errors
                     }
-                };
-
-                const startPolling = () => {
-                    clearInterval(pollTimer);
-                    pollTimer = setInterval(fetchComments, pollIntervalMs);
                 };
 
                 bindReplyButtons(document);
                 bindAdminButtons(document);
                 renderComments(initialComments || []);
-                startPolling();
 
                 form.addEventListener('submit', async (event) => {
                     event.preventDefault();

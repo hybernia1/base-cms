@@ -229,12 +229,24 @@
                                                                 <span>{{ comment.created_at|date('j. n. Y H:i') }}</span>
                                                             </div>
                                                             </div>
+                                                            {% if can_manage_comments %}
+                                                                <div class="d-flex align-items-start gap-1 ms-auto">
+                                                                    <button type="button" class="btn btn-sm btn-outline-secondary edit-comment" data-comment-id="{{ comment.id }}" data-comment-body="{{ comment.body|e('html_attr') }}" aria-label="Upravit komentář {{ comment.id }}">
+                                                                        <i class="bi bi-pencil" aria-hidden="true"></i>
+                                                                        <span class="visually-hidden">Upravit komentář</span>
+                                                                    </button>
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-comment" data-comment-id="{{ comment.id }}" aria-label="Smazat komentář {{ comment.id }}">
+                                                                        <i class="bi bi-trash" aria-hidden="true"></i>
+                                                                        <span class="visually-hidden">Smazat komentář</span>
+                                                                    </button>
+                                                                </div>
+                                                            {% endif %}
                                                         </div>
                                                         <div class="mt-2 comment-text">{{ comment.body|nl2br }}</div>
                                                     {% set can_thread_reply = comment_settings.allow_replies and comment_settings.max_depth > comment.depth and commenting_enabled %}
                                                     {% set can_mention = comment_settings.allow_replies and comment_settings.max_depth > 0 and comment_settings.max_depth <= comment.depth and commenting_enabled %}
-                                                    {% if (can_thread_reply or can_mention) or can_manage_comments %}
-                                                        <div class="comment-footer d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                                    {% if (can_thread_reply or can_mention) %}
+                                                        <div class="comment-footer d-flex align-items-center gap-2 flex-wrap">
                                                             <div class="d-flex gap-2 flex-wrap">
                                                                 {% if can_thread_reply or can_mention %}
                                                                     <button
@@ -255,20 +267,6 @@
                                                                     </button>
                                                                 {% endif %}
                                                             </div>
-                                                            {% if can_manage_comments %}
-                                                                <div class="d-flex gap-2 flex-wrap">
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary edit-comment" data-comment-id="{{ comment.id }}" data-comment-body="{{ comment.body|e('html_attr') }}" aria-label="Upravit komentář {{ comment.id }}">
-                                                                        <i class="bi bi-pencil me-1" aria-hidden="true"></i>
-                                                                        <span class="d-none d-sm-inline">Upravit</span>
-                                                                        <span class="visually-hidden d-sm-none">Upravit komentář</span>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-comment" data-comment-id="{{ comment.id }}" aria-label="Smazat komentář {{ comment.id }}">
-                                                                        <i class="bi bi-trash me-1" aria-hidden="true"></i>
-                                                                        <span class="d-none d-sm-inline">Smazat</span>
-                                                                        <span class="visually-hidden d-sm-none">Smazat komentář</span>
-                                                                    </button>
-                                                                </div>
-                                                            {% endif %}
                                                         </div>
                                                     {% endif %}
                                                 </div>
@@ -591,14 +589,13 @@
                     const canThreadReply = commentSettings.allow_replies && commentingEnabled && (maxDepth === 0 || maxDepth > comment.depth);
                     const canMention = commentSettings.allow_replies && commentingEnabled && maxDepth > 0 && maxDepth <= comment.depth;
                     const hasReply = canThreadReply || canMention;
-                    const hasAdmin = canManageComments;
 
-                    if (!hasReply && !hasAdmin) {
+                    if (!hasReply) {
                         return null;
                     }
 
                     const footer = document.createElement('div');
-                    footer.className = 'comment-footer d-flex justify-content-between align-items-center gap-2 flex-wrap';
+                    footer.className = 'comment-footer d-flex align-items-center gap-2 flex-wrap';
 
                     const replyWrap = document.createElement('div');
                     replyWrap.className = 'd-flex gap-2 flex-wrap';
@@ -616,37 +613,40 @@
                         replyWrap.appendChild(replyBtn);
                     }
 
-                    const adminWrap = document.createElement('div');
-                    adminWrap.className = 'd-flex gap-2 flex-wrap';
-
-                    if (hasAdmin) {
-                        const editBtn = document.createElement('button');
-                        editBtn.type = 'button';
-                        editBtn.className = 'btn btn-sm btn-outline-secondary edit-comment';
-                        editBtn.dataset.commentId = comment.id;
-                        editBtn.dataset.commentBody = comment.body || '';
-                        editBtn.setAttribute('aria-label', `Upravit komentář ${comment.id}`);
-                        editBtn.innerHTML = '<i class="bi bi-pencil me-1" aria-hidden="true"></i><span class="d-none d-sm-inline">Upravit</span><span class="visually-hidden d-sm-none">Upravit komentář</span>';
-
-                        const deleteBtn = document.createElement('button');
-                        deleteBtn.type = 'button';
-                        deleteBtn.className = 'btn btn-sm btn-outline-danger delete-comment';
-                        deleteBtn.dataset.commentId = comment.id;
-                        deleteBtn.setAttribute('aria-label', `Smazat komentář ${comment.id}`);
-                        deleteBtn.innerHTML = '<i class="bi bi-trash me-1" aria-hidden="true"></i><span class="d-none d-sm-inline">Smazat</span><span class="visually-hidden d-sm-none">Smazat komentář</span>';
-
-                        adminWrap.appendChild(editBtn);
-                        adminWrap.appendChild(deleteBtn);
-                    }
-
                     if (replyWrap.childNodes.length) {
                         footer.appendChild(replyWrap);
                     }
-                    if (adminWrap.childNodes.length) {
-                        footer.appendChild(adminWrap);
-                    }
 
                     return footer;
+                };
+
+                const createAdminActions = (comment) => {
+                    if (!canManageComments) {
+                        return null;
+                    }
+
+                    const adminWrap = document.createElement('div');
+                    adminWrap.className = 'd-flex align-items-start gap-1 ms-auto';
+
+                    const editBtn = document.createElement('button');
+                    editBtn.type = 'button';
+                    editBtn.className = 'btn btn-sm btn-outline-secondary edit-comment';
+                    editBtn.dataset.commentId = comment.id;
+                    editBtn.dataset.commentBody = comment.body || '';
+                    editBtn.setAttribute('aria-label', `Upravit komentář ${comment.id}`);
+                    editBtn.innerHTML = '<i class="bi bi-pencil" aria-hidden="true"></i><span class="visually-hidden">Upravit komentář</span>';
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.type = 'button';
+                    deleteBtn.className = 'btn btn-sm btn-outline-danger delete-comment';
+                    deleteBtn.dataset.commentId = comment.id;
+                    deleteBtn.setAttribute('aria-label', `Smazat komentář ${comment.id}`);
+                    deleteBtn.innerHTML = '<i class="bi bi-trash" aria-hidden="true"></i><span class="visually-hidden">Smazat komentář</span>';
+
+                    adminWrap.appendChild(editBtn);
+                    adminWrap.appendChild(deleteBtn);
+
+                    return adminWrap;
                 };
 
                 const formatReplyToggleLabel = (count, expanded) => {
@@ -820,6 +820,10 @@
                     authorBlock.appendChild(meta);
 
                     header.appendChild(authorBlock);
+                    const adminActions = createAdminActions(comment);
+                    if (adminActions) {
+                        header.appendChild(adminActions);
+                    }
 
                     const text = document.createElement('div');
                     text.className = 'mt-2 comment-text';

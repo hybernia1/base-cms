@@ -215,8 +215,8 @@
                                                     </span>
                                                 </div>
                                                 <div class="comment-body">
-                                                        <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
-                                                            <div>
+                                                        <div class="d-flex align-items-start gap-2 flex-wrap">
+                                                            <div class="flex-grow-1 min-w-0">
                                                                 <div class="fw-semibold">
                                                                     {% if comment.profile_url %}
                                                                         <a href="{{ comment.profile_url }}" class="text-decoration-none">{{ comment.author_name ?: 'Anonym' }}</a>
@@ -247,7 +247,7 @@
                                                     {% set can_mention = comment_settings.allow_replies and comment_settings.max_depth > 0 and comment_settings.max_depth <= comment.depth and commenting_enabled %}
                                                     {% if (can_thread_reply or can_mention) %}
                                                         <div class="comment-footer d-flex align-items-center gap-2 flex-wrap">
-                                                            <div class="d-flex gap-2 flex-wrap">
+                                                            <div class="d-flex gap-2 flex-wrap" data-reply-actions>
                                                                 {% if can_thread_reply or can_mention %}
                                                                     <button
                                                                         type="button"
@@ -599,6 +599,7 @@
 
                     const replyWrap = document.createElement('div');
                     replyWrap.className = 'd-flex gap-2 flex-wrap';
+                    replyWrap.dataset.replyActions = 'true';
 
                     if (hasReply) {
                         const replyBtn = document.createElement('button');
@@ -701,7 +702,7 @@
                     return expanded;
                 };
 
-                const renderReplies = (comment, isRootThread = false, expandedThreads = new Set()) => {
+                const renderReplies = (comment, isRootThread = false, expandedThreads = new Set(), replyActionsContainer = null) => {
                     if (!comment.replies || !comment.replies.length) {
                         return null;
                     }
@@ -716,8 +717,9 @@
                         repliesList.classList.add('d-none');
                     }
                     comment.replies.forEach((reply) => {
-                        repliesList.appendChild(buildCommentElement(reply, true));
-                        const nested = renderReplies(reply, false);
+                        const replyElement = buildCommentElement(reply, true);
+                        repliesList.appendChild(replyElement);
+                        const nested = renderReplies(reply, false, expandedThreads, replyElement.querySelector('[data-reply-actions]'));
                         if (nested) {
                             repliesList.appendChild(nested);
                         }
@@ -749,7 +751,11 @@
                             toggleBtn.setAttribute('aria-expanded', 'true');
                         }
 
-                        repliesWrapper.appendChild(toggleBtn);
+                        if (replyActionsContainer) {
+                            replyActionsContainer.appendChild(toggleBtn);
+                        } else {
+                            repliesWrapper.appendChild(toggleBtn);
+                        }
                     }
                     repliesWrapper.appendChild(repliesList);
 
@@ -799,9 +805,10 @@
                     bodyWrap.className = 'comment-body';
 
                     const header = document.createElement('div');
-                    header.className = 'd-flex justify-content-between align-items-start gap-2 flex-wrap';
+                    header.className = 'd-flex align-items-start gap-2 flex-wrap';
 
                     const authorBlock = document.createElement('div');
+                    authorBlock.className = 'flex-grow-1 min-w-0';
                     const name = document.createElement('div');
                     name.className = 'fw-semibold';
                     if (comment.profile_url) {
@@ -945,9 +952,10 @@
                         const threadItem = document.createElement('div');
                         threadItem.className = 'comment-thread-item';
 
-                        threadItem.appendChild(buildCommentElement(comment));
+                        const commentElement = buildCommentElement(comment);
+                        threadItem.appendChild(commentElement);
 
-                        const replies = renderReplies(comment, true, expandedThreads);
+                        const replies = renderReplies(comment, true, expandedThreads, commentElement.querySelector('[data-reply-actions]'));
                         if (replies) {
                             threadItem.appendChild(replies);
                         }

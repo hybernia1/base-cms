@@ -262,6 +262,14 @@
                     }
                 };
 
+                const isFormInteracting = () => {
+                    const active = document.activeElement;
+                    const isFocused = active && formWrapper && formWrapper.contains(active);
+                    const isReplying = formWrapper && formHome && formWrapper.parentElement !== formHome;
+
+                    return Boolean(isFocused || isReplying);
+                };
+
                 const moveFormHome = () => {
                     if (formWrapper && formHome && !formHome.contains(formWrapper)) {
                         formHome.appendChild(formWrapper);
@@ -436,7 +444,26 @@
                     return roots;
                 };
 
-                const renderReplies = (comment, isRootThread = false) => {
+                const getExpandedThreadIds = () => {
+                    const expanded = new Set();
+
+                    if (!commentThread) {
+                        return expanded;
+                    }
+
+                    commentThread.querySelectorAll('.comment-replies.is-thread-root .reply-toggle[aria-expanded="true"]').forEach((btn) => {
+                        const commentItem = btn.closest('.comment-item');
+                        const commentId = commentItem ? commentItem.dataset.commentId : null;
+
+                        if (commentId) {
+                            expanded.add(Number(commentId));
+                        }
+                    });
+
+                    return expanded;
+                };
+
+                const renderReplies = (comment, isRootThread = false, expandedThreads = new Set()) => {
                     if (!comment.replies || !comment.replies.length) {
                         return null;
                     }
@@ -471,6 +498,12 @@
                             toggleBtn.textContent = formatReplyToggleLabel(comment.replies.length, expanded);
                             toggleBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
                         });
+
+                        if (expandedThreads.has(comment.id)) {
+                            repliesList.classList.remove('d-none');
+                            toggleBtn.textContent = formatReplyToggleLabel(comment.replies.length, true);
+                            toggleBtn.setAttribute('aria-expanded', 'true');
+                        }
 
                         repliesWrapper.appendChild(toggleBtn);
                     }
@@ -638,6 +671,9 @@
 
                 const renderComments = (comments = []) => {
                     if (!commentThread) return;
+                    if (isFormInteracting()) return;
+
+                    const expandedThreads = getExpandedThreadIds();
 
                     moveFormHome();
                     commentThread.innerHTML = '';
@@ -650,7 +686,7 @@
 
                         threadItem.appendChild(buildCommentElement(comment));
 
-                        const replies = renderReplies(comment, true);
+                        const replies = renderReplies(comment, true, expandedThreads);
                         if (replies) {
                             threadItem.appendChild(replies);
                         }

@@ -102,7 +102,7 @@
 {% endblock %}
 
 {% block title %}
-    Diskuse: {{ content.title }} | {{ type.name|default('Obsah') }}
+    Diskuse k článku: {{ content.title }} | {{ type.name|default('Obsah') }}
 {% endblock %}
 
 {% block body %}
@@ -110,18 +110,13 @@
         <div class="col-12">
             <div class="d-flex align-items-center gap-3 mt-4 flex-wrap">
                 <div>
-                    <h1 class="h4 mb-0">Diskuse: {{ content.title }}</h1>
+                    <h1 class="h4 mb-0">Diskuse k článku: <a href="{{ content_url }}" class=""> {{ content.title }}</a></h1>
                 </div>
             </div>
 
             {% set perex = content.excerpt ?: (content.body|default('')|striptags|slice(0, 240)) %}
             {% if perex or thumbnail %}
                 <div class="d-flex align-items-start gap-3 mt-3">
-                    {% if thumbnail %}
-                        <div class="article-thumb flex-shrink-0 d-flex align-items-center justify-content-center text-uppercase fw-bold" aria-hidden="true">
-                            <img src="/{{ thumbnail.path }}/{{ thumbnail.webp_filename ?: thumbnail.filename }}" alt="{{ thumbnail.alt ?: content.title }}" loading="lazy" decoding="async">
-                        </div>
-                    {% endif %}
                     {% if perex %}
                         <p class="mb-0 text-muted">{{ perex }}</p>
                     {% endif %}
@@ -129,155 +124,155 @@
             {% endif %}
 
             {% if comment_allowed %}
-                <section class="card shadow-sm mt-3">
-                    <div class="card-body p-4">
-                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
-                            <h2 class="h5 mb-0">Diskuse (<span data-comment-count>{{ comments|length }}</span>)</h2>
-                            <a href="{{ content_url }}" class="btn btn-link text-decoration-none p-0">Zpět na článek</a>
+                <section class="mt-3">
+                    <div id="commentFormHome">
+                        <div id="commentFormWrapper">
+                            <form method="post" action="/comments" class="mt-3" id="commentForm">
+                                <input type="hidden" name="content_id" value="{{ content.id }}">
+                                <input type="hidden" name="parent_id" value="">
+                                <input type="hidden" name="reply_depth" value="">
+                                <input type="hidden" name="mention_only" value="0">
+                                <input type="hidden" name="_csrf" value="{{ csrf_token('comment_form') }}">
+
+                                <div id="replyInfo" class="alert alert-secondary d-none py-2 px-3 mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="small"><span data-reply-label>Odpovídáte na</span> <strong id="replyTarget"></strong></div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="cancelReply">Zrušit</button>
+                                    </div>
+                                </div>
+
+                                <div id="editInfo" class="alert alert-warning d-none py-2 px-3 mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="small">Upravujete komentář <strong id="editTarget"></strong></div>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" id="cancelEdit">Zrušit úpravu</button>
+                                    </div>
+                                </div>
+
+                                {# ZMĚNĚNÝ LABEL PODLE PŘIHLÁŠENÍ #}
+                                <div class="mb-3">
+                                    <label for="comment_body" class="form-label">
+                                        {% if current_user %}
+                                            {{ current_user.nickname is not empty ? current_user.nickname : current_user.email }}
+                                        {% else %}
+                                            Komentář
+                                        {% endif %}
+                                    </label>
+                                    <textarea class="form-control" id="comment_body" name="body" rows="4" required {% if not commenting_enabled %}disabled{% endif %}></textarea>
+                                </div>
+
+                                {# BLOK S "PŘIHLÁŠEN JAKO..." JE PRYČ #}
+                                {% if (not current_user) and comment_settings.allow_anonymous %}
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="comment_author" class="form-label">Jméno</label>
+                                            <input type="text" class="form-control" id="comment_author" name="author_name" value="" required {% if not commenting_enabled %}disabled{% endif %}>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="comment_email" class="form-label">E-mail</label>
+                                            <input type="email" class="form-control" id="comment_email" name="author_email" value="" required {% if not commenting_enabled %}disabled{% endif %}>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                {% if not commenting_enabled %}
+                                    <div class="alert alert-info mt-3">Komentáře jsou povoleny pouze pro přihlášené uživatele.</div>
+                                {% endif %}
+
+                                <div id="commentAlert" class="alert d-none mt-3" role="alert"></div>
+
+                                <button type="submit" class="btn btn-primary mt-3" {% if not commenting_enabled %}disabled{% endif %}>Odeslat</button>
+                            </form>
                         </div>
+                    </div>
 
-                        <div id="commentFormHome">
-                            <div id="commentFormWrapper">
-                                <form method="post" action="/comments" class="mt-3" id="commentForm">
-                                    <input type="hidden" name="content_id" value="{{ content.id }}">
-                                    <input type="hidden" name="parent_id" value="">
-                                    <input type="hidden" name="reply_depth" value="">
-                                    <input type="hidden" name="mention_only" value="0">
-                                    <input type="hidden" name="_csrf" value="{{ csrf_token('comment_form') }}">
+                    <hr class="my-4">
 
-                                    <div id="replyInfo" class="alert alert-secondary d-none py-2 px-3 mb-3">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div class="small"><span data-reply-label>Odpovídáte na</span> <strong id="replyTarget"></strong></div>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="cancelReply">Zrušit</button>
-                                        </div>
-                                    </div>
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                        <h2 class="h5 mb-0">Diskuse(<span data-comment-count>{{ comments|length }}</span>)</h2>
+                    </div>
 
-                                    <div id="editInfo" class="alert alert-warning d-none py-2 px-3 mb-3">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div class="small">Upravujete komentář <strong id="editTarget"></strong></div>
-                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="cancelEdit">Zrušit úpravu</button>
-                                        </div>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label for="comment_body" class="form-label">Komentář</label>
-                                        <textarea class="form-control" id="comment_body" name="body" rows="4" required {% if not commenting_enabled %}disabled{% endif %}></textarea>
-                                    </div>
-
-                                    {% if current_user %}
-                                        <div class="alert alert-light border d-flex align-items-center gap-2 mb-3">
-                                            <i class="bi bi-person-check text-primary"></i>
-                                            <span>Přihlášen jako <strong>{{ current_user.nickname ?: current_user.email }}</strong>.</span>
-                                        </div>
-                                    {% elseif comment_settings.allow_anonymous %}
-                                        <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <label for="comment_author" class="form-label">Jméno</label>
-                                                <input type="text" class="form-control" id="comment_author" name="author_name" value="" required {% if not commenting_enabled %}disabled{% endif %}>
+                    <div class="comment-thread" role="list" data-comment-thread>
+                        {% if comments %}
+                            {% for comment in comments %}
+                                {% set has_parent = comment.depth > 0 %}
+                                {% set is_mention_only = comment.mention_only ?? false %}
+                                {% set base_indent = comment_settings.max_depth is defined ? min(comment.depth, comment_settings.max_depth) : comment.depth %}
+                                {% set indent_depth = base_indent %}
+                                <article class="comment-item{% if has_parent %} has-parent{% endif %}{% if comment.depth == 0 %} is-root{% endif %}" id="comment-{{ comment.id }}" data-depth="{{ comment.depth }}" data-comment-id="{{ comment.id }}" data-comment-body="{{ comment.body|e('html_attr') }}" data-mention-only="{{ is_mention_only ? '1' : '0' }}" style="--comment-indent: {{ indent_depth }}" role="listitem">
+                                    <div class="comment-card">
+                                        <div class="comment-inner">
+                                            <div class="comment-avatar">
+                                                <span class="avatar avatar-sm bg-primary-subtle text-primary fw-bold flex-shrink-0">
+                                                    {% if comment.avatar.url %}
+                                                        <img src="{{ comment.avatar.url }}" alt="Avatar {{ comment.author_name ?: 'Anonym' }}" class="rounded-circle" loading="lazy">
+                                                    {% else %}
+                                                        {{ comment.avatar.initials }}
+                                                    {% endif %}
+                                                </span>
                                             </div>
-                                            <div class="col-md-6">
-                                                <label for="comment_email" class="form-label">E-mail</label>
-                                                <input type="email" class="form-control" id="comment_email" name="author_email" value="" required {% if not commenting_enabled %}disabled{% endif %}>
-                                            </div>
-                                        </div>
-                                    {% endif %}
-
-                                    {% if not commenting_enabled %}
-                                        <div class="alert alert-info mt-3">Komentáře jsou povoleny pouze pro přihlášené uživatele.</div>
-                                    {% endif %}
-
-                                    <div id="commentAlert" class="alert d-none mt-3" role="alert"></div>
-
-                                    <button type="submit" class="btn btn-primary mt-3" {% if not commenting_enabled %}disabled{% endif %}>Odeslat</button>
-                                </form>
-                            </div>
-                        </div>
-
-                        <hr class="my-4">
-
-                        <div class="comment-thread" role="list" data-comment-thread>
-                            {% if comments %}
-                                {% for comment in comments %}
-                                    {% set has_parent = comment.depth > 0 %}
-                                    {% set is_mention_only = comment.mention_only ?? false %}
-                                    {% set base_indent = comment_settings.max_depth is defined ? min(comment.depth, comment_settings.max_depth) : comment.depth %}
-                                    {% set indent_depth = base_indent %}
-                                    <article class="comment-item{% if has_parent %} has-parent{% endif %}{% if comment.depth == 0 %} is-root{% endif %}" id="comment-{{ comment.id }}" data-depth="{{ comment.depth }}" data-comment-id="{{ comment.id }}" data-comment-body="{{ comment.body|e('html_attr') }}" data-mention-only="{{ is_mention_only ? '1' : '0' }}" style="--comment-indent: {{ indent_depth }}" role="listitem">
-                                        <div class="comment-card">
-                                            <div class="comment-inner">
-                                                <div class="comment-avatar">
-                                                    <span class="avatar avatar-sm bg-primary-subtle text-primary fw-bold flex-shrink-0">
-                                                        {% if comment.avatar.url %}
-                                                            <img src="{{ comment.avatar.url }}" alt="Avatar {{ comment.author_name ?: 'Anonym' }}" class="rounded-circle" loading="lazy">
-                                                        {% else %}
-                                                            {{ comment.avatar.initials }}
-                                                        {% endif %}
-                                                    </span>
-                                                </div>
-                                                <div class="comment-body">
-                                                        <div class="d-flex align-items-start gap-2 flex-wrap">
-                                                            <div class="flex-grow-1 min-w-0">
-                                                                <div class="fw-semibold">
-                                                                    {% if comment.profile_url %}
-                                                                        <a href="{{ comment.profile_url }}" class="text-decoration-none">{{ comment.author_name ?: 'Anonym' }}</a>
-                                                                    {% else %}
-                                                                        {{ comment.author_name ?: 'Anonym' }}
-                                                                    {% endif %}
-                                                                </div>
-                                                            <div class="text-muted small d-flex align-items-center gap-1">
-                                                                <i class="bi bi-clock" aria-hidden="true"></i>
-                                                                <span>{{ comment.created_at|date('j. n. Y H:i') }}</span>
-                                                            </div>
-                                                            </div>
-                                                            {% if can_manage_comments %}
-                                                                <div class="d-flex align-items-start gap-1 ms-auto">
-                                                                    <button type="button" class="btn btn-sm btn-outline-secondary edit-comment" data-comment-id="{{ comment.id }}" data-comment-body="{{ comment.body|e('html_attr') }}" aria-label="Upravit komentář {{ comment.id }}">
-                                                                        <i class="bi bi-pencil" aria-hidden="true"></i>
-                                                                        <span class="visually-hidden">Upravit komentář</span>
-                                                                    </button>
-                                                                    <button type="button" class="btn btn-sm btn-outline-danger delete-comment" data-comment-id="{{ comment.id }}" aria-label="Smazat komentář {{ comment.id }}">
-                                                                        <i class="bi bi-trash" aria-hidden="true"></i>
-                                                                        <span class="visually-hidden">Smazat komentář</span>
-                                                                    </button>
-                                                                </div>
+                                            <div class="comment-body">
+                                                <div class="d-flex align-items-start gap-2 flex-wrap">
+                                                    <div class="flex-grow-1 min-w-0">
+                                                        <div class="fw-semibold">
+                                                            {% if comment.profile_url %}
+                                                                <a href="{{ comment.profile_url }}" class="text-decoration-none">{{ comment.author_name ?: 'Anonym' }}</a>
+                                                            {% else %}
+                                                                {{ comment.author_name ?: 'Anonym' }}
                                                             {% endif %}
                                                         </div>
-                                                        <div class="mt-2 comment-text">{{ comment.body|nl2br }}</div>
-                                                    {% set can_thread_reply = comment_settings.allow_replies and comment_settings.max_depth > comment.depth and commenting_enabled %}
-                                                    {% set can_mention = comment_settings.allow_replies and comment_settings.max_depth > 0 and comment_settings.max_depth <= comment.depth and commenting_enabled %}
-                                                    {% if (can_thread_reply or can_mention) %}
-                                                        <div class="comment-footer d-flex align-items-center gap-2 flex-wrap">
-                                                            <div class="d-flex gap-2 flex-wrap" data-reply-actions>
-                                                                {% if can_thread_reply or can_mention %}
-                                                                    <button
-                                                                        type="button"
-                                                                        class="btn btn-sm btn-outline-primary rounded-pill reply-button"
-                                                                        data-reply-id="{{ comment.id }}"
-                                                                        data-reply-author="{{ comment.author_name ?: 'Anonym' }}"
-                                                                        data-mention-only="{{ can_mention and not can_thread_reply ? '1' : '0' }}"
-                                                                        data-reply-depth="{{ comment.depth }}"
-                                                                        aria-label="Reagovat na {{ comment.author_name ?: 'Anonym' }}"
-                                                                    >
-                                                                        <i class="bi bi-reply me-1"></i>
-                                                                        <span class="d-none d-sm-inline">Reagovat</span>
-                                                                        <span class="visually-hidden d-sm-none">Reagovat</span>
-                                                                        {% if can_mention and not can_thread_reply %}
-                                                                            <span class="visually-hidden">(zmínka)</span>
-                                                                        {% endif %}
-                                                                    </button>
-                                                                {% endif %}
-                                                            </div>
+                                                        <div class="text-muted small d-flex align-items-center gap-1">
+                                                            <i class="bi bi-clock" aria-hidden="true"></i>
+                                                            <span>{{ comment.created_at|date('j. n. Y H:i') }}</span>
+                                                        </div>
+                                                    </div>
+                                                    {% if can_manage_comments %}
+                                                        <div class="d-flex align-items-start gap-1 ms-auto">
+                                                            <button type="button" class="btn btn-sm btn-outline-secondary edit-comment" data-comment-id="{{ comment.id }}" data-comment-body="{{ comment.body|e('html_attr') }}" aria-label="Upravit komentář {{ comment.id }}">
+                                                                <i class="bi bi-pencil" aria-hidden="true"></i>
+                                                                <span class="visually-hidden">Upravit komentář</span>
+                                                            </button>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger delete-comment" data-comment-id="{{ comment.id }}" aria-label="Smazat komentář {{ comment.id }}">
+                                                                <i class="bi bi-trash" aria-hidden="true"></i>
+                                                                <span class="visually-hidden">Smazat komentář</span>
+                                                            </button>
                                                         </div>
                                                     {% endif %}
                                                 </div>
+                                                <div class="mt-2 comment-text">{{ comment.body|nl2br }}</div>
+                                                {% set can_thread_reply = comment_settings.allow_replies and comment_settings.max_depth > comment.depth and commenting_enabled %}
+                                                {% set can_mention = comment_settings.allow_replies and comment_settings.max_depth > 0 and comment_settings.max_depth <= comment.depth and commenting_enabled %}
+                                                {% if (can_thread_reply or can_mention) %}
+                                                    <div class="comment-footer d-flex align-items-center gap-2 flex-wrap">
+                                                        <div class="d-flex gap-2 flex-wrap" data-reply-actions>
+                                                            {% if can_thread_reply or can_mention %}
+                                                                <button
+                                                                    type="button"
+                                                                    class="btn btn-sm btn-outline-primary rounded-pill reply-button"
+                                                                    data-reply-id="{{ comment.id }}"
+                                                                    data-reply-author="{{ comment.author_name ?: 'Anonym' }}"
+                                                                    data-mention-only="{{ can_mention and not can_thread_reply ? '1' : '0' }}"
+                                                                    data-reply-depth="{{ comment.depth }}"
+                                                                    aria-label="Reagovat na {{ comment.author_name ?: 'Anonym' }}"
+                                                                >
+                                                                    <i class="bi bi-reply me-1"></i>
+                                                                    <span class="d-none d-sm-inline">Reagovat</span>
+                                                                    <span class="visually-hidden d-sm-none">Reagovat</span>
+                                                                    {% if can_mention and not can_thread_reply %}
+                                                                        <span class="visually-hidden">(zmínka)</span>
+                                                                    {% endif %}
+                                                                </button>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
                                             </div>
                                         </div>
-                                    </article>
-                                {% endfor %}
-                            {% endif %}
-                        </div>
-                        <p class="text-muted mb-0{% if comments %} d-none{% endif %}" data-empty-comments>Buďte první, kdo přidá komentář.</p>
+                                    </div>
+                                </article>
+                            {% endfor %}
+                        {% endif %}
                     </div>
+                    <p class="text-muted mb-0{% if comments %} d-none{% endif %}" data-empty-comments>Buďte první, kdo přidá komentář.</p>
                 </section>
             {% else %}
                 <div class="alert alert-info mt-4">Diskuse u tohoto obsahu je uzavřena.</div>

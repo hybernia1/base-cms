@@ -58,6 +58,11 @@ class CommentController extends BaseFrontController
         $canManageComments = Auth::hasRole(['admin', 'editor']);
 
         $contentUrl = '/' . ContentType::slug((string) $content->type) . '/' . $content->slug;
+        $commentUrlBase = $contentUrl . '#comment-';
+        $commentsWithUrls = array_map(
+            static fn (array $comment): array => $comment + ['comment_url' => $commentUrlBase . $comment['id']],
+            $comments
+        );
         $typeDefinitions = ContentType::definitions();
         $type = $typeDefinitions[$content->type] ?? ['name' => (string) $content->type, 'slug' => (string) $content->type];
         $typeSlug = $type['slug'] ?? ContentType::slug((string) $content->type);
@@ -76,7 +81,7 @@ class CommentController extends BaseFrontController
             'content' => $content,
             'type' => $type,
             'content_url' => $contentUrl,
-            'comments' => $comments,
+            'comments' => $commentsWithUrls,
             'comment_allowed' => $commentAllowed,
             'comment_settings' => $commentSettings,
             'commenting_enabled' => $commentingEnabled,
@@ -245,7 +250,12 @@ class CommentController extends BaseFrontController
             return;
         }
 
-        $comments = Comment::findByContent((int) $content->id);
+        $contentUrl = '/' . ContentType::slug((string) $content->type) . '/' . $content->slug;
+        $commentUrlBase = $contentUrl . '#comment-';
+        $comments = array_map(
+            static fn (array $comment): array => $comment + ['comment_url' => $commentUrlBase . $comment['id']],
+            Comment::findByContent((int) $content->id)
+        );
 
         echo json_encode([
             'status' => 'success',

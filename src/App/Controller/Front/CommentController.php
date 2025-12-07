@@ -216,5 +216,106 @@ class CommentController extends BaseFrontController
             'comment_id' => $comment->id,
         ]);
     }
+
+    public function list(): void
+    {
+        header('Content-Type: application/json');
+
+        $contentId = (int) ($_GET['content_id'] ?? 0);
+
+        if ($contentId <= 0) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Obsah nebyl nalezen.']);
+            return;
+        }
+
+        $content = R::load('content', $contentId);
+        if (!$content || !$content->id || (string) $content->allow_comments === '0') {
+            http_response_code(404);
+            echo json_encode(['status' => 'error', 'message' => 'Diskuse není dostupná.']);
+            return;
+        }
+
+        if (Setting::get('comments_enabled', '1') !== '1') {
+            http_response_code(403);
+            echo json_encode(['status' => 'error', 'message' => 'Komentáře jsou zakázány.']);
+            return;
+        }
+
+        $comments = Comment::findByContent((int) $content->id);
+
+        echo json_encode([
+            'status' => 'success',
+            'comments' => $comments,
+            'count' => count($comments),
+        ]);
+    }
+
+    public function update(int $id): void
+    {
+        header('Content-Type: application/json');
+
+        $user = Auth::user();
+        if (!$user || !Auth::hasRole(['admin', 'editor'])) {
+            http_response_code(403);
+            echo json_encode(['status' => 'error', 'message' => 'Nemáte oprávnění upravovat komentáře.']);
+            return;
+        }
+
+        if (!Csrf::validate('comment_admin', $_POST['_csrf'] ?? null)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Platnost formuláře vypršela.']);
+            return;
+        }
+
+        $comment = Comment::find($id);
+        if (!$comment) {
+            http_response_code(404);
+            echo json_encode(['status' => 'error', 'message' => 'Komentář nebyl nalezen.']);
+            return;
+        }
+
+        $body = trim($_POST['body'] ?? '');
+        if ($body === '') {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Text komentáře je povinný.']);
+            return;
+        }
+
+        Comment::update($id, [
+            'body' => $body,
+        ]);
+
+        echo json_encode(['status' => 'success', 'message' => 'Komentář byl upraven.']);
+    }
+
+    public function delete(int $id): void
+    {
+        header('Content-Type: application/json');
+
+        $user = Auth::user();
+        if (!$user || !Auth::hasRole(['admin', 'editor'])) {
+            http_response_code(403);
+            echo json_encode(['status' => 'error', 'message' => 'Nemáte oprávnění mazat komentáře.']);
+            return;
+        }
+
+        if (!Csrf::validate('comment_admin', $_POST['_csrf'] ?? null)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Platnost formuláře vypršela.']);
+            return;
+        }
+
+        $comment = Comment::find($id);
+        if (!$comment) {
+            http_response_code(404);
+            echo json_encode(['status' => 'error', 'message' => 'Komentář nebyl nalezen.']);
+            return;
+        }
+
+        Comment::delete($id);
+
+        echo json_encode(['status' => 'success', 'message' => 'Komentář byl odstraněn.']);
+    }
 }
 

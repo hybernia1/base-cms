@@ -169,6 +169,9 @@ $router->post('/admin/extra/optimize', 'App\\Controller\\Admin\\ExtraController@
 
 $router->get('/admin/search', 'App\\Controller\\Admin\\SearchController@index');
 
+$router->get('/comments', 'App\\Controller\\Front\\CommentController@list');
+$router->post('/comments/(\\d+)/edit', 'App\\Controller\\Front\\CommentController@update');
+$router->post('/comments/(\\d+)/delete', 'App\\Controller\\Front\\CommentController@delete');
 $router->post('/comments', 'App\\Controller\\Front\\CommentController@store');
 
 $router->set404('App\\Controller\\Front\\ErrorController@notFound');

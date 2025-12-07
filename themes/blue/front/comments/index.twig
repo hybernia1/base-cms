@@ -7,6 +7,7 @@
 {% endblock %}
 
 {% block body %}
+    {% set can_manage_comments = current_user and current_user.role in ['admin', 'editor'] %}
     <div class="row justify-content-center">
         <div class="col-12">
             <div class="d-flex align-items-center gap-3 mt-4 flex-wrap">
@@ -33,7 +34,7 @@
                 <section class="card shadow-sm mt-3">
                     <div class="card-body p-4">
                         <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
-                            <h2 class="h5 mb-0">Diskuse ({{ comments|length }})</h2>
+                            <h2 class="h5 mb-0">Diskuse (<span data-comment-count>{{ comments|length }}</span>)</h2>
                             <a href="{{ content_url }}" class="btn btn-link text-decoration-none p-0">Zpět na článek</a>
                         </div>
 
@@ -84,12 +85,12 @@
 
                         <hr class="my-4">
 
-                        {% if comments %}
-                            <div class="comment-thread" role="list">
+                        <div class="comment-thread" role="list" data-comment-thread>
+                            {% if comments %}
                                 {% for comment in comments %}
                                     {% set has_parent = comment.depth > 0 %}
                                     {% set indent_depth = comment_settings.max_depth is defined ? min(comment.depth, comment_settings.max_depth) : comment.depth %}
-                                    <article class="comment-item{% if has_parent %} has-parent{% endif %}{% if comment.depth == 0 %} is-root{% endif %}" id="comment-{{ comment.id }}" data-depth="{{ comment.depth }}" style="--comment-indent: {{ indent_depth }}" role="listitem">
+                                    <article class="comment-item{% if has_parent %} has-parent{% endif %}{% if comment.depth == 0 %} is-root{% endif %}" id="comment-{{ comment.id }}" data-depth="{{ comment.depth }}" data-comment-id="{{ comment.id }}" data-comment-body="{{ comment.body|e('html_attr') }}" style="--comment-indent: {{ indent_depth }}" role="listitem">
                                         <div class="comment-card">
                                             <div class="comment-inner">
                                                 <div class="comment-avatar">
@@ -115,21 +116,27 @@
                                                         </div>
                                                         {% set can_thread_reply = comment_settings.allow_replies and comment_settings.max_depth > comment.depth and commenting_enabled %}
                                                         {% set can_mention = comment_settings.allow_replies and comment_settings.max_depth > 0 and comment_settings.max_depth <= comment.depth and commenting_enabled %}
-                                                        {% if can_thread_reply or can_mention %}
-                                                            <button
-                                                                type="button"
-                                                                class="btn btn-sm btn-outline-primary rounded-pill reply-button"
-                                                                data-reply-id="{{ comment.id }}"
-                                                                data-reply-author="{{ comment.author_name ?: 'Anonym' }}"
-                                                                data-mention-only="{{ can_mention and not can_thread_reply ? '1' : '0' }}"
-                                                                data-reply-depth="{{ comment.depth }}"
-                                                            >
-                                                                <i class="bi bi-reply me-1"></i> Reagovat
-                                                                {% if can_mention and not can_thread_reply %}
-                                                                    <span class="visually-hidden">(zmínka)</span>
-                                                                {% endif %}
-                                                            </button>
-                                                        {% endif %}
+                                                        <div class="d-flex gap-2 flex-wrap justify-content-end">
+                                                            {% if can_thread_reply or can_mention %}
+                                                                <button
+                                                                    type="button"
+                                                                    class="btn btn-sm btn-outline-primary rounded-pill reply-button"
+                                                                    data-reply-id="{{ comment.id }}"
+                                                                    data-reply-author="{{ comment.author_name ?: 'Anonym' }}"
+                                                                    data-mention-only="{{ can_mention and not can_thread_reply ? '1' : '0' }}"
+                                                                    data-reply-depth="{{ comment.depth }}"
+                                                                >
+                                                                    <i class="bi bi-reply me-1"></i> Reagovat
+                                                                    {% if can_mention and not can_thread_reply %}
+                                                                        <span class="visually-hidden">(zmínka)</span>
+                                                                    {% endif %}
+                                                                </button>
+                                                            {% endif %}
+                                                            {% if can_manage_comments %}
+                                                                <button type="button" class="btn btn-sm btn-outline-secondary edit-comment" data-comment-id="{{ comment.id }}">Upravit</button>
+                                                                <button type="button" class="btn btn-sm btn-outline-danger delete-comment" data-comment-id="{{ comment.id }}">Smazat</button>
+                                                            {% endif %}
+                                                        </div>
                                                     </div>
                                                     <div class="mt-2 comment-text">{{ comment.body|nl2br }}</div>
                                                 </div>
@@ -137,10 +144,9 @@
                                         </div>
                                     </article>
                                 {% endfor %}
-                            </div>
-                        {% else %}
-                            <p class="text-muted mb-0">Buďte první, kdo přidá komentář.</p>
-                        {% endif %}
+                            {% endif %}
+                        </div>
+                        <p class="text-muted mb-0{% if comments %} d-none{% endif %}" data-empty-comments>Buďte první, kdo přidá komentář.</p>
                     </div>
                 </section>
             {% else %}
@@ -170,61 +176,335 @@
                 const alertBox = document.getElementById('commentAlert');
                 let isMentionOnly = false;
                 let mentionPrefix = '';
-                let currentReplyDepth = '';
-                document.querySelectorAll('.reply-button').forEach((btn) => {
-                    btn.addEventListener('click', () => {
-                        if (commentBody && mentionPrefix && commentBody.value.startsWith(mentionPrefix)) {
-                            commentBody.value = commentBody.value.slice(mentionPrefix.length);
-                        }
+                let pollTimer;
 
-                        isMentionOnly = btn.dataset.mentionOnly === '1';
-                        const replyAuthor = btn.dataset.replyAuthor || 'komentář';
-                        parentField.value = btn.dataset.replyId;
-                        if (mentionField) {
-                            mentionField.value = isMentionOnly ? '1' : '0';
-                        }
+                const commentThread = document.querySelector('[data-comment-thread]');
+                const emptyState = document.querySelector('[data-empty-comments]');
+                const commentCount = document.querySelector('[data-comment-count]');
+                const commentSettings = {{ comment_settings|json_encode|raw }};
+                const commentingEnabled = {{ commenting_enabled ? 'true' : 'false' }};
+                const canManageComments = {{ can_manage_comments ? 'true' : 'false' }};
+                const adminCsrfToken = '{{ csrf_token('comment_admin') }}';
+                const contentId = {{ content.id }};
+                const initialComments = {{ comments|json_encode|raw }};
+                const pollIntervalMs = 12000;
 
-                        mentionPrefix = isMentionOnly && replyAuthor ? `@${replyAuthor} ` : '';
-                        if (commentBody && mentionPrefix && !commentBody.value.startsWith(mentionPrefix)) {
-                            const existingText = commentBody.value.trim();
-                            commentBody.value = existingText ? `${mentionPrefix}${existingText}` : mentionPrefix;
-                        }
+                const escapeHtml = (value) => {
+                    return value
+                        ? value.replace(/[&<>'"]/g, (char) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[char]))
+                        : '';
+                };
 
-                        if (replyInfo && replyTarget) {
-                            replyTarget.textContent = replyAuthor;
-                            if (replyLabel) {
-                                replyLabel.textContent = isMentionOnly ? 'Zmiňujete' : 'Odpovídáte na';
-                            }
-                            replyInfo.classList.remove('d-none');
-                        }
-                        if (commentBody) {
-                            commentBody.focus();
-                        }
-                    });
-                });
+                const nl2br = (text) => escapeHtml(text || '').replace(/\n/g, '<br>');
+
+                const updateCount = (count) => {
+                    if (commentCount) {
+                        commentCount.textContent = count;
+                    }
+                };
+
+                const toggleEmptyState = (hasComments) => {
+                    if (emptyState) {
+                        emptyState.classList.toggle('d-none', hasComments);
+                    }
+                };
+
+                const resetReply = () => {
+                    parentField.value = '';
+                    if (mentionField) {
+                        mentionField.value = '0';
+                    }
+                    if (replyDepthField) {
+                        replyDepthField.value = '';
+                    }
+                    if (commentBody && mentionPrefix && commentBody.value.startsWith(mentionPrefix)) {
+                        commentBody.value = commentBody.value.slice(mentionPrefix.length);
+                    }
+                    mentionPrefix = '';
+                    isMentionOnly = false;
+                    if (replyLabel) {
+                        replyLabel.textContent = 'Odpovídáte na';
+                    }
+                    if (replyTarget) {
+                        replyTarget.textContent = '';
+                    }
+                    if (replyInfo) {
+                        replyInfo.classList.add('d-none');
+                    }
+                };
 
                 if (cancelReply) {
-                    cancelReply.addEventListener('click', () => {
-                        parentField.value = '';
-                        if (mentionField) {
-                            mentionField.value = '0';
-                        }
-                        if (commentBody && mentionPrefix && commentBody.value.startsWith(mentionPrefix)) {
-                            commentBody.value = commentBody.value.slice(mentionPrefix.length);
-                        }
-                        mentionPrefix = '';
-                        isMentionOnly = false;
-                        if (replyLabel) {
-                            replyLabel.textContent = 'Odpovídáte na';
-                        }
-                        if (replyTarget) {
-                            replyTarget.textContent = '';
-                        }
-                        if (replyInfo) {
-                            replyInfo.classList.add('d-none');
-                        }
-                    });
+                    cancelReply.addEventListener('click', resetReply);
                 }
+
+                const handleReplyClick = (btn) => {
+                    if (commentBody && mentionPrefix && commentBody.value.startsWith(mentionPrefix)) {
+                        commentBody.value = commentBody.value.slice(mentionPrefix.length);
+                    }
+
+                    isMentionOnly = btn.dataset.mentionOnly === '1';
+                    const replyAuthor = btn.dataset.replyAuthor || 'komentář';
+                    parentField.value = btn.dataset.replyId;
+                    if (replyDepthField) {
+                        replyDepthField.value = btn.dataset.replyDepth || '';
+                    }
+                    if (mentionField) {
+                        mentionField.value = isMentionOnly ? '1' : '0';
+                    }
+
+                    mentionPrefix = isMentionOnly && replyAuthor ? `@${replyAuthor} ` : '';
+                    if (commentBody && mentionPrefix && !commentBody.value.startsWith(mentionPrefix)) {
+                        const existingText = commentBody.value.trim();
+                        commentBody.value = existingText ? `${mentionPrefix}${existingText}` : mentionPrefix;
+                    }
+
+                    if (replyInfo && replyTarget) {
+                        replyTarget.textContent = replyAuthor;
+                        if (replyLabel) {
+                            replyLabel.textContent = isMentionOnly ? 'Zmiňujete' : 'Odpovídáte na';
+                        }
+                        replyInfo.classList.remove('d-none');
+                    }
+                    if (commentBody) {
+                        commentBody.focus();
+                    }
+                };
+
+                const bindReplyButtons = (scope) => {
+                    scope.querySelectorAll('.reply-button').forEach((btn) => {
+                        btn.addEventListener('click', () => handleReplyClick(btn));
+                    });
+                };
+
+                const createActionButtons = (comment) => {
+                    const actions = document.createElement('div');
+                    actions.className = 'd-flex gap-2 flex-wrap justify-content-end';
+
+                    const maxDepth = Number(commentSettings.max_depth || 0);
+                    const canThreadReply = commentSettings.allow_replies && commentingEnabled && (maxDepth === 0 || maxDepth > comment.depth);
+                    const canMention = commentSettings.allow_replies && commentingEnabled && maxDepth > 0 && maxDepth <= comment.depth;
+
+                    if (canThreadReply || canMention) {
+                        const replyBtn = document.createElement('button');
+                        replyBtn.type = 'button';
+                        replyBtn.className = 'btn btn-sm btn-outline-primary rounded-pill reply-button';
+                        replyBtn.dataset.replyId = comment.id;
+                        replyBtn.dataset.replyAuthor = comment.author_name || 'Anonym';
+                        replyBtn.dataset.mentionOnly = canMention && !canThreadReply ? '1' : '0';
+                        replyBtn.dataset.replyDepth = comment.depth;
+                        replyBtn.innerHTML = `<i class="bi bi-reply me-1"></i> Reagovat${canMention && !canThreadReply ? '<span class="visually-hidden">(zmínka)</span>' : ''}`;
+                        actions.appendChild(replyBtn);
+                    }
+
+                    if (canManageComments) {
+                        const editBtn = document.createElement('button');
+                        editBtn.type = 'button';
+                        editBtn.className = 'btn btn-sm btn-outline-secondary edit-comment';
+                        editBtn.dataset.commentId = comment.id;
+                        editBtn.dataset.commentBody = comment.body || '';
+                        editBtn.textContent = 'Upravit';
+
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.type = 'button';
+                        deleteBtn.className = 'btn btn-sm btn-outline-danger delete-comment';
+                        deleteBtn.dataset.commentId = comment.id;
+                        deleteBtn.textContent = 'Smazat';
+
+                        actions.appendChild(editBtn);
+                        actions.appendChild(deleteBtn);
+                    }
+
+                    return actions;
+                };
+
+                const buildCommentElement = (comment) => {
+                    const article = document.createElement('article');
+                    const hasParent = comment.depth > 0;
+                    const maxDepth = Number(commentSettings.max_depth || 0);
+                    const indentDepth = maxDepth > 0 ? Math.min(comment.depth, maxDepth) : comment.depth;
+                    article.className = `comment-item${hasParent ? ' has-parent' : ''}${comment.depth === 0 ? ' is-root' : ''}`;
+                    article.id = `comment-${comment.id}`;
+                    article.dataset.depth = comment.depth;
+                    article.dataset.commentId = comment.id;
+                    article.dataset.commentBody = comment.body || '';
+                    article.style.setProperty('--comment-indent', indentDepth);
+                    article.setAttribute('role', 'listitem');
+
+                    const card = document.createElement('div');
+                    card.className = 'comment-card';
+                    const inner = document.createElement('div');
+                    inner.className = 'comment-inner';
+
+                    const avatarWrap = document.createElement('div');
+                    avatarWrap.className = 'comment-avatar';
+                    const avatarSpan = document.createElement('span');
+                    avatarSpan.className = 'avatar avatar-sm bg-primary-subtle text-primary fw-bold flex-shrink-0';
+
+                    if (comment.avatar && comment.avatar.url) {
+                        const img = document.createElement('img');
+                        img.src = comment.avatar.url;
+                        img.alt = `Avatar ${comment.author_name || 'Anonym'}`;
+                        img.loading = 'lazy';
+                        img.className = 'rounded-circle';
+                        avatarSpan.appendChild(img);
+                    } else {
+                        avatarSpan.textContent = (comment.avatar && comment.avatar.initials) ? comment.avatar.initials : '';
+                    }
+
+                    avatarWrap.appendChild(avatarSpan);
+
+                    const bodyWrap = document.createElement('div');
+                    bodyWrap.className = 'comment-body';
+
+                    const header = document.createElement('div');
+                    header.className = 'd-flex justify-content-between align-items-start gap-2 flex-wrap';
+
+                    const authorBlock = document.createElement('div');
+                    const name = document.createElement('div');
+                    name.className = 'fw-semibold';
+                    if (comment.profile_url) {
+                        const link = document.createElement('a');
+                        link.href = comment.profile_url;
+                        link.className = 'text-decoration-none';
+                        link.textContent = comment.author_name || 'Anonym';
+                        name.appendChild(link);
+                    } else {
+                        name.textContent = comment.author_name || 'Anonym';
+                    }
+                    const meta = document.createElement('div');
+                    meta.className = 'text-muted small';
+                    meta.textContent = comment.created_at_formatted || '';
+                    authorBlock.appendChild(name);
+                    authorBlock.appendChild(meta);
+
+                    header.appendChild(authorBlock);
+                    header.appendChild(createActionButtons(comment));
+
+                    const text = document.createElement('div');
+                    text.className = 'mt-2 comment-text';
+                    text.innerHTML = nl2br(comment.body || '');
+
+                    bodyWrap.appendChild(header);
+                    bodyWrap.appendChild(text);
+
+                    inner.appendChild(avatarWrap);
+                    inner.appendChild(bodyWrap);
+                    card.appendChild(inner);
+                    article.appendChild(card);
+
+                    return article;
+                };
+
+                const bindAdminButtons = (scope) => {
+                    if (!canManageComments) return;
+
+                    scope.querySelectorAll('.edit-comment').forEach((btn) => {
+                        btn.addEventListener('click', async () => {
+                            const commentId = btn.dataset.commentId;
+                            const currentBody = btn.dataset.commentBody || '';
+                            const newBody = prompt('Upravit komentář:', currentBody);
+                            if (newBody === null) return;
+
+                            const formData = new FormData();
+                            formData.append('body', newBody.trim());
+                            formData.append('_csrf', adminCsrfToken);
+
+                            try {
+                                const response = await fetch(`/comments/${commentId}/edit`, {
+                                    method: 'POST',
+                                    body: formData,
+                                    headers: { 'Accept': 'application/json' },
+                                });
+                                const data = await response.json();
+                                if (alertBox) {
+                                    alertBox.textContent = data.message || 'Komentář byl upraven.';
+                                    alertBox.className = 'alert mt-3 ' + (data.status === 'success' ? 'alert-success' : 'alert-danger');
+                                    alertBox.classList.remove('d-none');
+                                }
+                                if (data.status === 'success') {
+                                    await fetchComments();
+                                }
+                            } catch (error) {
+                                if (alertBox) {
+                                    alertBox.textContent = 'Uložení komentáře se nezdařilo.';
+                                    alertBox.className = 'alert alert-danger mt-3';
+                                    alertBox.classList.remove('d-none');
+                                }
+                            }
+                        });
+                    });
+
+                    scope.querySelectorAll('.delete-comment').forEach((btn) => {
+                        btn.addEventListener('click', async () => {
+                            const commentId = btn.dataset.commentId;
+                            const confirmed = confirm('Opravdu chcete smazat tento komentář?');
+                            if (!confirmed) return;
+
+                            const formData = new FormData();
+                            formData.append('_csrf', adminCsrfToken);
+
+                            try {
+                                const response = await fetch(`/comments/${commentId}/delete`, {
+                                    method: 'POST',
+                                    body: formData,
+                                    headers: { 'Accept': 'application/json' },
+                                });
+                                const data = await response.json();
+                                if (alertBox) {
+                                    alertBox.textContent = data.message || 'Komentář byl odstraněn.';
+                                    alertBox.className = 'alert mt-3 ' + (data.status === 'success' ? 'alert-success' : 'alert-danger');
+                                    alertBox.classList.remove('d-none');
+                                }
+                                if (data.status === 'success') {
+                                    await fetchComments();
+                                }
+                            } catch (error) {
+                                if (alertBox) {
+                                    alertBox.textContent = 'Smazání komentáře se nezdařilo.';
+                                    alertBox.className = 'alert alert-danger mt-3';
+                                    alertBox.classList.remove('d-none');
+                                }
+                            }
+                        });
+                    });
+                };
+
+                const renderComments = (comments = []) => {
+                    if (!commentThread) return;
+
+                    commentThread.innerHTML = '';
+                    const fragment = document.createDocumentFragment();
+                    comments.forEach((comment) => fragment.appendChild(buildCommentElement(comment)));
+                    commentThread.appendChild(fragment);
+                    bindReplyButtons(commentThread);
+                    bindAdminButtons(commentThread);
+                    toggleEmptyState(comments.length > 0);
+                    updateCount(comments.length);
+                };
+
+                const fetchComments = async () => {
+                    try {
+                        const response = await fetch(`/comments?content_id=${contentId}`, {
+                            headers: { 'Accept': 'application/json' },
+                        });
+                        const data = await response.json();
+                        if (data.status === 'success') {
+                            renderComments(data.comments || []);
+                        }
+                    } catch (error) {
+                        // ignore polling errors
+                    }
+                };
+
+                const startPolling = () => {
+                    clearInterval(pollTimer);
+                    pollTimer = setInterval(fetchComments, pollIntervalMs);
+                };
+
+                bindReplyButtons(document);
+                bindAdminButtons(document);
+                renderComments(initialComments || []);
+                startPolling();
 
                 form.addEventListener('submit', async (event) => {
                     event.preventDefault();
@@ -264,9 +544,8 @@
 
                         if (data.status === 'success') {
                             form.reset();
-                            if (replyInfo) {
-                                replyInfo.classList.add('d-none');
-                            }
+                            resetReply();
+                            await fetchComments();
                         }
                     } catch (error) {
                         if (alertBox) {

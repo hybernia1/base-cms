@@ -67,6 +67,62 @@
             margin-top: .35rem;
         }
 
+        .comment-header {
+            display: flex;
+            align-items: flex-start;
+            gap: .5rem;
+            width: 100%;
+            flex-wrap: nowrap;
+        }
+
+        .comment-actions {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: .35rem;
+            flex-shrink: 0;
+        }
+
+        .comment-action-btn {
+            border: none;
+            background-color: transparent;
+            box-shadow: none;
+            padding: .2rem .35rem;
+            color: var(--bs-secondary-color);
+            line-height: 1;
+        }
+
+        .comment-action-btn:hover,
+        .comment-action-btn:focus {
+            background-color: transparent;
+            color: var(--bs-body-color);
+            box-shadow: none;
+        }
+
+        .comment-action-btn:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
+        .reply-button {
+            border: none;
+            background-color: transparent;
+            box-shadow: none;
+            color: var(--accent);
+        }
+
+        .reply-button:hover,
+        .reply-button:focus {
+            background-color: transparent;
+            color: #365fa5;
+            box-shadow: none;
+        }
+
+        .reply-button:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+
         @media (max-width: 767.98px) {
             .comment-thread {
                 --comment-gap: .85rem;
@@ -96,6 +152,15 @@
 
             .comment-text {
                 line-height: 1.5;
+            }
+
+            .comment-header {
+                flex-wrap: wrap;
+            }
+
+            .comment-actions {
+                width: 100%;
+                justify-content: flex-start;
             }
         }
     </style>
@@ -211,7 +276,7 @@
                                                 </span>
                                             </div>
                                             <div class="comment-body">
-                                                <div class="d-flex align-items-start gap-2 flex-wrap">
+                                                <div class="comment-header">
                                                     <div class="flex-grow-1 min-w-0">
                                                         <div class="fw-semibold">
                                                             {% if comment.profile_url %}
@@ -226,12 +291,12 @@
                                                         </div>
                                                     </div>
                                                     {% if can_manage_comments %}
-                                                        <div class="d-flex align-items-start gap-1 ms-auto">
-                                                            <button type="button" class="btn btn-sm btn-outline-secondary edit-comment" data-comment-id="{{ comment.id }}" data-comment-body="{{ comment.body|e('html_attr') }}" aria-label="Upravit komentář {{ comment.id }}">
+                                                        <div class="comment-actions">
+                                                            <button type="button" class="btn btn-sm comment-action-btn edit-comment" data-comment-id="{{ comment.id }}" data-comment-body="{{ comment.body|e('html_attr') }}" aria-label="Upravit komentář {{ comment.id }}">
                                                                 <i class="bi bi-pencil" aria-hidden="true"></i>
                                                                 <span class="visually-hidden">Upravit komentář</span>
                                                             </button>
-                                                            <button type="button" class="btn btn-sm btn-outline-danger delete-comment" data-comment-id="{{ comment.id }}" aria-label="Smazat komentář {{ comment.id }}">
+                                                            <button type="button" class="btn btn-sm comment-action-btn delete-comment" data-comment-id="{{ comment.id }}" aria-label="Smazat komentář {{ comment.id }}">
                                                                 <i class="bi bi-trash" aria-hidden="true"></i>
                                                                 <span class="visually-hidden">Smazat komentář</span>
                                                             </button>
@@ -247,7 +312,7 @@
                                                             {% if can_thread_reply or can_mention %}
                                                                 <button
                                                                     type="button"
-                                                                    class="btn btn-sm btn-outline-primary rounded-pill reply-button"
+                                                                    class="btn btn-sm reply-button"
                                                                     data-reply-id="{{ comment.id }}"
                                                                     data-reply-author="{{ comment.author_name ?: 'Anonym' }}"
                                                                     data-mention-only="{{ can_mention and not can_thread_reply ? '1' : '0' }}"

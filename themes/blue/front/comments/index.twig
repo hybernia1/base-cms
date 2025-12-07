@@ -88,7 +88,8 @@
                             <div class="comment-thread" role="list">
                                 {% for comment in comments %}
                                     {% set has_parent = comment.depth > 0 %}
-                                    <article class="comment-item{% if has_parent %} has-parent{% endif %}{% if comment.depth == 0 %} is-root{% endif %}" id="comment-{{ comment.id }}" data-depth="{{ comment.depth }}" style="--comment-indent: {{ comment.depth }}" role="listitem">
+                                    {% set indent_depth = comment_settings.max_depth is defined ? min(comment.depth, comment_settings.max_depth) : comment.depth %}
+                                    <article class="comment-item{% if has_parent %} has-parent{% endif %}{% if comment.depth == 0 %} is-root{% endif %}" id="comment-{{ comment.id }}" data-depth="{{ comment.depth }}" style="--comment-indent: {{ indent_depth }}" role="listitem">
                                         <div class="comment-card">
                                             <div class="comment-inner">
                                                 <div class="comment-avatar">
@@ -178,7 +179,7 @@
 
                         isMentionOnly = btn.dataset.mentionOnly === '1';
                         const replyAuthor = btn.dataset.replyAuthor || 'komentář';
-                        parentField.value = isMentionOnly ? '' : btn.dataset.replyId;
+                        parentField.value = btn.dataset.replyId;
                         if (mentionField) {
                             mentionField.value = isMentionOnly ? '1' : '0';
                         }

@@ -100,6 +100,7 @@ class CommentController extends BaseFrontController
         $body = trim($_POST['body'] ?? '');
         $authorName = trim($_POST['author_name'] ?? '');
         $authorEmail = trim($_POST['author_email'] ?? '');
+        $mentionOnly = isset($_POST['mention_only']) && (string) $_POST['mention_only'] === '1';
         $currentUser = Auth::user();
         $ipAddress = RequestHelper::clientIp();
         $allowAnonymous = Setting::get('comments_allow_anonymous', '0') === '1';
@@ -177,7 +178,9 @@ class CommentController extends BaseFrontController
                 return;
             }
             $parentDepth = (int) $parent->depth;
-            if (Setting::get('comments_allow_replies', '1') !== '1' || ($parentDepth + 1) > $maxDepth) {
+            $allowReplies = Setting::get('comments_allow_replies', '1') === '1';
+            $depthExceeded = ($parentDepth + 1) > $maxDepth;
+            if (!$allowReplies || ($depthExceeded && !$mentionOnly)) {
                 http_response_code(400);
                 echo json_encode(['status' => 'error', 'message' => 'Reakce nejsou povoleny.']);
                 return;
@@ -186,6 +189,11 @@ class CommentController extends BaseFrontController
 
         $moderationEnabled = Setting::get('comments_moderation', '1') === '1' && $allowAnonymous;
         $status = ($currentUser || !$moderationEnabled) ? 'approved' : 'pending';
+        $targetDepth = $parentId ? $parentDepth + 1 : 0;
+        if ($mentionOnly && $targetDepth > $maxDepth) {
+            $targetDepth = $maxDepth;
+        }
+
         $comment = Comment::create([
             'content_id' => $contentId,
             'parent_id' => $parentId,
@@ -194,7 +202,7 @@ class CommentController extends BaseFrontController
             'author_email' => $authorEmail,
             'body' => $body,
             'status' => $status,
-            'depth' => $parentDepth + ($parentId ? 1 : 0),
+            'depth' => $targetDepth,
             'ip_address' => $ipAddress,
         ]);
 

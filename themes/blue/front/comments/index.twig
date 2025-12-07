@@ -40,6 +40,7 @@
                         <form method="post" action="/comments" class="mt-3" id="commentForm">
                             <input type="hidden" name="content_id" value="{{ content.id }}">
                             <input type="hidden" name="parent_id" value="">
+                            <input type="hidden" name="mention_only" value="0">
                             <input type="hidden" name="_csrf" value="{{ csrf_token('comment_form') }}">
 
                             <div id="replyInfo" class="alert alert-secondary d-none py-2 px-3 mb-3">
@@ -159,6 +160,7 @@
                 const replyTarget = document.getElementById('replyTarget');
                 const replyLabel = replyInfo ? replyInfo.querySelector('[data-reply-label]') : null;
                 const cancelReply = document.getElementById('cancelReply');
+                const mentionField = form.querySelector('input[name="mention_only"]');
 
                 const commentBody = document.getElementById('comment_body');
                 const alertBox = document.getElementById('commentAlert');

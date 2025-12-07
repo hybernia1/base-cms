@@ -201,7 +201,7 @@
                                     {% set has_parent = comment.depth > 0 %}
                                     {% set is_mention_only = comment.mention_only ?? false %}
                                     {% set base_indent = comment_settings.max_depth is defined ? min(comment.depth, comment_settings.max_depth) : comment.depth %}
-                                    {% set indent_depth = (is_mention_only and comment.depth > 0) ? max([base_indent - 1, 0]) : base_indent %}
+                                    {% set indent_depth = base_indent %}
                                     <article class="comment-item{% if has_parent %} has-parent{% endif %}{% if comment.depth == 0 %} is-root{% endif %}" id="comment-{{ comment.id }}" data-depth="{{ comment.depth }}" data-comment-id="{{ comment.id }}" data-comment-body="{{ comment.body|e('html_attr') }}" data-mention-only="{{ is_mention_only ? '1' : '0' }}" style="--comment-indent: {{ indent_depth }}" role="listitem">
                                         <div class="comment-card">
                                             <div class="comment-inner">
@@ -761,7 +761,7 @@
                     const hasParent = comment.depth > 0;
                     const maxDepth = Number(commentSettings.max_depth || 0);
                     const baseDepth = maxDepth > 0 ? Math.min(comment.depth, maxDepth) : comment.depth;
-                    const indentDepth = comment.mention_only && comment.depth > 0 ? Math.max(baseDepth - 1, 0) : baseDepth;
+                    const indentDepth = baseDepth;
                     article.className = `comment-item${hasParent ? ' has-parent' : ''}${comment.depth === 0 ? ' is-root' : ''}${isReply ? ' is-reply' : ''}`;
                     article.id = `comment-${comment.id}`;
                     article.dataset.depth = comment.depth;

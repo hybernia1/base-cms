@@ -298,7 +298,6 @@
             --comment-indent-size: 52px;
             --comment-avatar-size: 44px;
             --comment-padding-y: .85rem;
-            --comment-connector: var(--stroke, #edf1f6);
             display: flex;
             flex-direction: column;
             row-gap: var(--comment-gap);
@@ -307,48 +306,23 @@
         .comment-item {
             position: relative;
             margin-left: calc(var(--comment-indent, 0) * var(--comment-indent-size));
-            padding: var(--comment-padding-y) 1rem .75rem;
+            padding: var(--comment-padding-y) 0;
         }
         .comment-item.is-root {
             --comment-avatar-size: 55px;
         }
         .comment-item.has-parent {
-            padding-left: 1.6rem;
+            --comment-card-bg: linear-gradient(135deg, #f7faff 0%, #f3f6fb 100%);
         }
-        .comment-item.has-parent::after {
-            content: '';
-            position: absolute;
-            left: calc((var(--comment-avatar-size) / 2) - var(--comment-indent-size));
-            top: calc(var(--comment-padding-y) + (var(--comment-avatar-size) / 2));
-            width: var(--comment-indent-size);
-            border-top: 2px solid var(--comment-connector);
+        .comment-card {
+            background: var(--comment-card-bg, #ffffff);
+            border: 1px solid var(--stroke);
+            border-radius: 16px;
+            padding: 1rem 1.1rem;
+            box-shadow: 0 8px 30px rgba(15, 26, 43, 0.05);
+            transition: transform .15s ease, box-shadow .15s ease;
         }
-        .comment-depth-line {
-            position: absolute;
-            top: var(--connector-start);
-            height: var(--connector-height);
-            left: calc((var(--comment-avatar-size) / 2) - var(--comment-indent-size));
-            width: 2px;
-            background: var(--comment-connector);
-            display: none;
-        }
-        .comment-item.has-parent > .comment-depth-line {
-            display: block;
-        }
-        .comment-connector-stack {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: calc((var(--comment-avatar-size) / 2) - var(--comment-indent-size));
-            width: 2px;
-            pointer-events: none;
-            opacity: 0;
-        }
-        .comment-connector-stack.has-lines {
-            opacity: 1;
-            background: var(--comment-connector);
-            box-shadow: var(--stack-shadows);
-        }
+        .comment-card:hover { box-shadow: 0 12px 36px rgba(15, 26, 43, 0.07); transform: translateY(-1px); }
         .comment-inner { display: flex; gap: .95rem; align-items: flex-start; }
         .comment-avatar { flex-shrink: 0; }
         .comment-avatar .avatar {

@@ -175,6 +175,9 @@
                         isMentionOnly = btn.dataset.mentionOnly === '1';
                         const replyAuthor = btn.dataset.replyAuthor || 'komentář';
                         parentField.value = isMentionOnly ? '' : btn.dataset.replyId;
+                        if (mentionField) {
+                            mentionField.value = isMentionOnly ? '1' : '0';
+                        }
 
                         mentionPrefix = isMentionOnly && replyAuthor ? `@${replyAuthor} ` : '';
                         if (commentBody && mentionPrefix && !commentBody.value.startsWith(mentionPrefix)) {
@@ -198,6 +201,9 @@
                 if (cancelReply) {
                     cancelReply.addEventListener('click', () => {
                         parentField.value = '';
+                        if (mentionField) {
+                            mentionField.value = '0';
+                        }
                         if (commentBody && mentionPrefix && commentBody.value.startsWith(mentionPrefix)) {
                             commentBody.value = commentBody.value.slice(mentionPrefix.length);
                         }

@@ -128,7 +128,7 @@ class Comment
         );
 
         $users = [];
-        $result = [];
+        $prepared = [];
 
         foreach ($items as $item) {
             $displayName = $item->author_name ?: 'Anonym';
@@ -150,7 +150,7 @@ class Comment
                 }
             }
 
-            $result[] = [
+            $prepared[] = [
                 'id' => (int) $item->id,
                 'content_id' => (int) $item->content_id,
                 'parent_id' => $item->parent_id,
@@ -164,6 +164,34 @@ class Comment
                 'avatar' => $item->user_id && $user ? Avatar::forUser($user, $displayName) : Avatar::forName($displayName),
             ];
         }
+
+        $byParent = [];
+        foreach ($prepared as $comment) {
+            $parentKey = $comment['parent_id'] ? (int) $comment['parent_id'] : 0;
+            $byParent[$parentKey] = $byParent[$parentKey] ?? [];
+            $byParent[$parentKey][] = $comment;
+        }
+
+        $result = [];
+
+        $sortChildren = static function (&$children): void {
+            usort($children, static function ($a, $b) {
+                return [$a['created_at'], $a['id']] <=> [$b['created_at'], $b['id']];
+            });
+        };
+
+        $flatten = static function ($parentId, $depth) use (&$flatten, &$byParent, &$result, $sortChildren): void {
+            $children = $byParent[$parentId] ?? [];
+            $sortChildren($children);
+
+            foreach ($children as $child) {
+                $child['depth'] = $depth;
+                $result[] = $child;
+                $flatten((int) $child['id'], $depth + 1);
+            }
+        };
+
+        $flatten(0, 0);
 
         return $result;
     }

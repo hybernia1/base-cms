@@ -161,6 +161,9 @@ class Comment
                 'status' => $item->status,
                 'depth' => (int) $item->depth,
                 'created_at' => $item->created_at,
+                'created_at_formatted' => $item->created_at
+                    ? date('j. n. Y H:i', strtotime($item->created_at))
+                    : '',
                 'avatar' => $item->user_id && $user ? Avatar::forUser($user, $displayName) : Avatar::forName($displayName),
             ];
         }

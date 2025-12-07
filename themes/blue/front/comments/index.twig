@@ -989,9 +989,9 @@
                     });
                 };
 
-                const renderComments = (comments = []) => {
+                const renderComments = (comments = [], { force = false } = {}) => {
                     if (!commentThread) return;
-                    if (isFormInteracting()) return;
+                    if (!force && isFormInteracting()) return;
 
                     const expandedThreads = new Set(expandedThreadIds);
                     getExpandedThreadIds().forEach((id) => expandedThreads.add(id));
@@ -1046,7 +1046,7 @@
                         });
                         const data = await response.json();
                         if (data.status === 'success') {
-                            renderComments(data.comments || []);
+                            renderComments(data.comments || [], { force: true });
                         }
                     } catch (error) {
                         // ignore fetch errors

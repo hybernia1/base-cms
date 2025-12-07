@@ -87,39 +87,37 @@
                                 {% for comment in comments %}
                                     {% set has_parent = comment.depth > 0 %}
                                     <article class="comment-item{% if has_parent %} has-parent{% endif %}{% if comment.depth == 0 %} is-root{% endif %}" id="comment-{{ comment.id }}" data-depth="{{ comment.depth }}" style="--comment-indent: {{ comment.depth }}" role="listitem">
-                                        {% if has_parent %}
-                                            <span class="comment-depth-line" aria-hidden="true"></span>
-                                            <span class="comment-connector-stack" aria-hidden="true"></span>
-                                        {% endif %}
-                                        <div class="comment-inner">
-                                            <div class="comment-avatar">
-                                                <span class="avatar avatar-sm bg-primary-subtle text-primary fw-bold flex-shrink-0">
-                                                    {% if comment.avatar.url %}
-                                                        <img src="{{ comment.avatar.url }}" alt="Avatar {{ comment.author_name ?: 'Anonym' }}" class="rounded-circle" loading="lazy">
-                                                    {% else %}
-                                                        {{ comment.avatar.initials }}
-                                                    {% endif %}
-                                                </span>
-                                            </div>
-                                            <div class="comment-body">
-                                                <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
-                                                    <div>
-                                                        <div class="fw-semibold">
-                                                            {% if comment.profile_url %}
-                                                                <a href="{{ comment.profile_url }}" class="text-decoration-none">{{ comment.author_name ?: 'Anonym' }}</a>
-                                                            {% else %}
-                                                                {{ comment.author_name ?: 'Anonym' }}
-                                                            {% endif %}
-                                                        </div>
-                                                        <div class="text-muted small">{{ comment.created_at|date('j. n. Y H:i') }}</div>
-                                                    </div>
+                                        <div class="comment-card">
+                                            <div class="comment-inner">
+                                                <div class="comment-avatar">
+                                                    <span class="avatar avatar-sm bg-primary-subtle text-primary fw-bold flex-shrink-0">
+                                                        {% if comment.avatar.url %}
+                                                            <img src="{{ comment.avatar.url }}" alt="Avatar {{ comment.author_name ?: 'Anonym' }}" class="rounded-circle" loading="lazy">
+                                                        {% else %}
+                                                            {{ comment.avatar.initials }}
+                                                        {% endif %}
+                                                    </span>
                                                 </div>
-                                                <div class="mt-2 comment-text">{{ comment.body|nl2br }}</div>
-                                                {% if comment_settings.allow_replies and comment_settings.max_depth > comment.depth and commenting_enabled %}
-                                                    <button type="button" class="btn btn-sm btn-link text-decoration-none px-0 reply-button" data-reply-id="{{ comment.id }}" data-reply-author="{{ comment.author_name ?: 'Anonym' }}">
-                                                        Odpovědět
-                                                    </button>
-                                                {% endif %}
+                                                <div class="comment-body">
+                                                    <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                                                        <div>
+                                                            <div class="fw-semibold">
+                                                                {% if comment.profile_url %}
+                                                                    <a href="{{ comment.profile_url }}" class="text-decoration-none">{{ comment.author_name ?: 'Anonym' }}</a>
+                                                                {% else %}
+                                                                    {{ comment.author_name ?: 'Anonym' }}
+                                                                {% endif %}
+                                                            </div>
+                                                            <div class="text-muted small">{{ comment.created_at|date('j. n. Y H:i') }}</div>
+                                                        </div>
+                                                        {% if comment_settings.allow_replies and comment_settings.max_depth > comment.depth and commenting_enabled %}
+                                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill reply-button" data-reply-id="{{ comment.id }}" data-reply-author="{{ comment.author_name ?: 'Anonym' }}">
+                                                                <i class="bi bi-reply me-1"></i> Odpovědět
+                                                            </button>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="mt-2 comment-text">{{ comment.body|nl2br }}</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </article>
@@ -173,97 +171,6 @@
                         }
                     });
                 }
-
-                const thread = document.querySelector('.comment-thread');
-
-                const recalcConnectors = () => {
-                    if (!thread) return;
-
-                    const items = Array.from(thread.querySelectorAll('.comment-item'));
-
-                    const getDepth = (element) => parseInt(element.dataset.depth || '0', 10);
-
-                    const measurements = items.map((item) => {
-                        const avatar = item.querySelector('.comment-avatar');
-                        const depth = getDepth(item);
-                        const itemTop = item.offsetTop;
-                        const avatarCenter = avatar
-                            ? itemTop + (avatar.offsetTop + (avatar.offsetHeight / 2))
-                            : itemTop;
-
-                        return {
-                            item,
-                            depth,
-                            itemTop,
-                            avatarCenter,
-                        };
-                    });
-
-                    const continuingMap = new Map();
-                    const futureDepths = new Set();
-
-                    for (let index = measurements.length - 1; index >= 0; index -= 1) {
-                        const { depth } = measurements[index];
-                        const continuing = [...futureDepths].filter((level) => level <= depth);
-                        continuingMap.set(index, continuing);
-
-                        [...futureDepths]
-                            .filter((level) => level > depth)
-                            .forEach((level) => futureDepths.delete(level));
-
-                        futureDepths.add(depth);
-                    }
-
-                    const lastAtDepth = [];
-
-                    measurements.forEach((data, index) => {
-                        const { item, depth, itemTop, avatarCenter } = data;
-                        const ancestor = lastAtDepth[depth - 1];
-
-                        if (item.classList.contains('has-parent')) {
-                            const currentCenterRelative = avatarCenter - itemTop;
-
-                            if (ancestor) {
-                                const connectorStart = ancestor.avatarCenter - itemTop;
-                                const connectorHeight = Math.max(0, currentCenterRelative - connectorStart);
-
-                                item.style.setProperty('--connector-start', `${connectorStart}px`);
-                                item.style.setProperty('--connector-height', `${connectorHeight}px`);
-                            } else {
-                                item.style.setProperty('--connector-start', '0px');
-                                item.style.setProperty('--connector-height', '0px');
-                            }
-
-                            const continuingLevels = continuingMap.get(index) || [];
-                            const stackOffsets = continuingLevels
-                                .filter((level) => level > 0 && level <= depth)
-                                .sort((a, b) => a - b)
-                                .map((level) => `calc(-1 * var(--comment-indent-size) * ${depth - level}) 0 0 0 var(--comment-connector)`);
-
-                            let stackEl = item.querySelector('.comment-connector-stack');
-                            if (!stackEl) {
-                                stackEl = document.createElement('span');
-                                stackEl.className = 'comment-connector-stack';
-                                item.prepend(stackEl);
-                            }
-
-                            if (stackOffsets.length) {
-                                stackEl.style.setProperty('--stack-shadows', stackOffsets.join(', '));
-                                stackEl.classList.add('has-lines');
-                            } else {
-                                stackEl.style.removeProperty('--stack-shadows');
-                                stackEl.classList.remove('has-lines');
-                            }
-                        }
-
-                        lastAtDepth[depth] = { avatarCenter };
-                        lastAtDepth.length = depth + 1;
-                    });
-                };
-
-                recalcConnectors();
-                window.addEventListener('resize', recalcConnectors);
-                window.addEventListener('load', recalcConnectors);
 
                 form.addEventListener('submit', async (event) => {
                     event.preventDefault();

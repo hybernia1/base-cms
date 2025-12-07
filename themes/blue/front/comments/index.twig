@@ -200,27 +200,35 @@
 
                         const currentDepth = parseInt(item.dataset.depth || '0', 10);
                         const currentCenter = centers.get(item) || 0;
+                        const itemRect = item.getBoundingClientRect();
+                        const itemTop = itemRect.top - threadRect.top;
 
                         const ancestor = [...items.slice(0, index)]
                             .reverse()
                             .find((candidate) => parseInt(candidate.dataset.depth || '0', 10) === currentDepth - 1);
 
-                        if (ancestor) {
-                            const ancestorCenter = centers.get(ancestor) || 0;
-                            item.style.setProperty('--connector-top', `${ancestorCenter - currentCenter}px`);
-                        } else {
-                            item.style.setProperty('--connector-top', `calc(-1 * var(--comment-gap) - var(--comment-padding-y) - (var(--comment-avatar-size) / 2))`);
-                        }
-
                         const nextRelevant = items.slice(index + 1)
                             .find((candidate) => parseInt(candidate.dataset.depth || '0', 10) >= currentDepth);
 
-                        if (nextRelevant) {
-                            const nextCenter = centers.get(nextRelevant) || 0;
-                            const connectorBottom = nextCenter - currentCenter + (nextRelevant.getBoundingClientRect().top - threadRect.top) - (item.getBoundingClientRect().top - threadRect.top);
-                            item.style.setProperty('--connector-bottom', `${connectorBottom}px`);
+                        const currentCenterRelative = currentCenter - itemTop;
+
+                        let connectorStart = null;
+                        if (ancestor) {
+                            const ancestorCenter = centers.get(ancestor) || 0;
+                            connectorStart = ancestorCenter - itemTop;
+                        }
+
+                        const connectorEnd = nextRelevant
+                            ? (centers.get(nextRelevant) || 0) - itemTop
+                            : currentCenterRelative;
+
+                        if (connectorStart !== null) {
+                            const connectorHeight = Math.max(0, connectorEnd - connectorStart);
+                            item.style.setProperty('--connector-start', `${connectorStart}px`);
+                            item.style.setProperty('--connector-height', `${connectorHeight}px`);
                         } else {
-                            item.style.setProperty('--connector-bottom', 'calc(var(--comment-padding-y) + (var(--comment-avatar-size) / 2))');
+                            item.style.setProperty('--connector-start', `calc(-1 * var(--comment-gap) - var(--comment-padding-y) - (var(--comment-avatar-size) / 2))`);
+                            item.style.setProperty('--connector-height', `calc(var(--comment-gap) + var(--comment-padding-y) + (var(--comment-avatar-size) / 2) + ${connectorEnd}px)`);
                         }
 
                         const continuingLevels = [];

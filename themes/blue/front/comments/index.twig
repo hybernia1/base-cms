@@ -179,92 +179,91 @@
                 const recalcConnectors = () => {
                     if (!thread) return;
 
-                    const threadRect = thread.getBoundingClientRect();
                     const items = Array.from(thread.querySelectorAll('.comment-item'));
 
                     const getDepth = (element) => parseInt(element.dataset.depth || '0', 10);
 
-                    const getAvatarCenter = (element) => {
-                        const avatar = element.querySelector('.comment-avatar');
-                        if (!avatar) return 0;
+                    const measurements = items.map((item) => {
+                        const avatar = item.querySelector('.comment-avatar');
+                        const depth = getDepth(item);
+                        const itemTop = item.offsetTop;
+                        const avatarCenter = avatar
+                            ? itemTop + (avatar.offsetTop + (avatar.offsetHeight / 2))
+                            : itemTop;
 
-                        const rect = avatar.getBoundingClientRect();
-                        return (rect.top - threadRect.top) + (rect.height / 2);
-                    };
-
-                    const centers = new Map();
-                    items.forEach((item) => {
-                        centers.set(item, getAvatarCenter(item));
+                        return {
+                            item,
+                            depth,
+                            itemTop,
+                            avatarCenter,
+                        };
                     });
 
-                    items.forEach((item, index) => {
-                        if (!item.classList.contains('has-parent')) return;
+                    const continuingMap = new Map();
+                    const futureDepths = new Set();
 
-                        const currentDepth = getDepth(item);
-                        const currentCenter = centers.get(item) || 0;
-                        const itemRect = item.getBoundingClientRect();
-                        const itemTop = itemRect.top - threadRect.top;
+                    for (let index = measurements.length - 1; index >= 0; index -= 1) {
+                        const { depth } = measurements[index];
+                        const continuing = [...futureDepths].filter((level) => level <= depth);
+                        continuingMap.set(index, continuing);
 
-                        const ancestor = [...items.slice(0, index)]
-                            .reverse()
-                            .find((candidate) => getDepth(candidate) === currentDepth - 1);
+                        [...futureDepths]
+                            .filter((level) => level > depth)
+                            .forEach((level) => futureDepths.delete(level));
 
-                        const currentCenterRelative = currentCenter - itemTop;
+                        futureDepths.add(depth);
+                    }
 
-                        if (ancestor) {
-                            const ancestorCenter = centers.get(ancestor) || 0;
-                            const connectorStart = ancestorCenter - itemTop;
-                            const connectorHeight = Math.max(0, currentCenterRelative - connectorStart);
+                    const lastAtDepth = [];
 
-                            item.style.setProperty('--connector-start', `${connectorStart}px`);
-                            item.style.setProperty('--connector-height', `${connectorHeight}px`);
-                        } else {
-                            item.style.setProperty('--connector-start', '0px');
-                            item.style.setProperty('--connector-height', '0px');
-                        }
+                    measurements.forEach((data, index) => {
+                        const { item, depth, itemTop, avatarCenter } = data;
+                        const ancestor = lastAtDepth[depth - 1];
 
-                        const continuingLevels = [];
-                        for (let level = 1; level < currentDepth; level += 1) {
-                            let hasContinuation = false;
+                        if (item.classList.contains('has-parent')) {
+                            const currentCenterRelative = avatarCenter - itemTop;
 
-                            for (let lookAhead = index + 1; lookAhead < items.length; lookAhead += 1) {
-                                const candidateDepth = getDepth(items[lookAhead]);
+                            if (ancestor) {
+                                const connectorStart = ancestor.avatarCenter - itemTop;
+                                const connectorHeight = Math.max(0, currentCenterRelative - connectorStart);
 
-                                if (candidateDepth < level) break;
-                                if (candidateDepth >= level) {
-                                    hasContinuation = true;
-                                    break;
-                                }
+                                item.style.setProperty('--connector-start', `${connectorStart}px`);
+                                item.style.setProperty('--connector-height', `${connectorHeight}px`);
+                            } else {
+                                item.style.setProperty('--connector-start', '0px');
+                                item.style.setProperty('--connector-height', '0px');
                             }
 
-                            if (hasContinuation) {
-                                continuingLevels.push(level);
+                            const continuingLevels = continuingMap.get(index) || [];
+                            const stackOffsets = continuingLevels
+                                .filter((level) => level > 0 && level <= depth)
+                                .sort((a, b) => a - b)
+                                .map((level) => `calc(-1 * var(--comment-indent-size) * ${depth - level}) 0 0 0 var(--comment-connector)`);
+
+                            let stackEl = item.querySelector('.comment-connector-stack');
+                            if (!stackEl) {
+                                stackEl = document.createElement('span');
+                                stackEl.className = 'comment-connector-stack';
+                                item.prepend(stackEl);
+                            }
+
+                            if (stackOffsets.length) {
+                                stackEl.style.setProperty('--stack-shadows', stackOffsets.join(', '));
+                                stackEl.classList.add('has-lines');
+                            } else {
+                                stackEl.style.removeProperty('--stack-shadows');
+                                stackEl.classList.remove('has-lines');
                             }
                         }
 
-                        const stackOffsets = continuingLevels
-                            .sort((a, b) => a - b)
-                            .map((level) => `calc(-1 * var(--comment-indent-size) * ${currentDepth - level}) 0 0 0 var(--comment-connector)`);
-
-                        let stackEl = item.querySelector('.comment-connector-stack');
-                        if (!stackEl) {
-                            stackEl = document.createElement('span');
-                            stackEl.className = 'comment-connector-stack';
-                            item.prepend(stackEl);
-                        }
-
-                        if (stackOffsets.length) {
-                            stackEl.style.setProperty('--stack-shadows', stackOffsets.join(', '));
-                            stackEl.classList.add('has-lines');
-                        } else {
-                            stackEl.style.removeProperty('--stack-shadows');
-                            stackEl.classList.remove('has-lines');
-                        }
+                        lastAtDepth[depth] = { avatarCenter };
+                        lastAtDepth.length = depth + 1;
                     });
                 };
 
                 recalcConnectors();
                 window.addEventListener('resize', recalcConnectors);
+                window.addEventListener('load', recalcConnectors);
 
                 form.addEventListener('submit', async (event) => {
                     event.preventDefault();

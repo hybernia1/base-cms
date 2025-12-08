@@ -11,7 +11,7 @@ class HomeController extends BaseFrontController
     {
         $posts = R::findAll(
             'content',
-            ' type = ? AND status = ? AND publish_at <= ? ORDER BY publish_at DESC ',
+            ' type = ? AND status = ? AND publish_at <= ? AND deleted_at IS NULL ORDER BY publish_at DESC ',
             ['post', 'published', date('Y-m-d H:i:s')]
         );
         $posts = $this->attachAuthors($posts);
@@ -37,7 +37,7 @@ class HomeController extends BaseFrontController
 
         $items = R::findAll(
             'content',
-            ' type = ? AND status = ? AND publish_at <= ? ORDER BY publish_at DESC ',
+            ' type = ? AND status = ? AND publish_at <= ? AND deleted_at IS NULL ORDER BY publish_at DESC ',
             [$typeKey, 'published', date('Y-m-d H:i:s')]
         );
         $items = $this->attachAuthors($items);

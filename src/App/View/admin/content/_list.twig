@@ -42,17 +42,10 @@
         {% endif %}
     </div>
 {% else %}
-    <form id="bulkContentForm" action="/admin/content/{{ current_type.slug }}/bulk-delete" method="post">
-        <input type="hidden" name="redirect" value="{{ pagination.current_url }}">
-    </form>
-
     <div class="table-responsive">
         <table class="table align-middle">
             <thead>
                 <tr>
-                    <th class="text-center" style="width: 40px;">
-                        <input type="checkbox" class="form-check-input" data-check-all="#bulkContentForm .js-bulk-item">
-                    </th>
                     <th>Název</th>
                     <th>Upraveno</th>
                     <th class="text-end">Akce</th>
@@ -61,9 +54,6 @@
             <tbody>
                 {% for item in items %}
                     <tr>
-                        <td class="text-center">
-                            <input type="checkbox" class="form-check-input js-bulk-item" form="bulkContentForm" name="ids[]" value="{{ item.id }}" aria-label="Vybrat obsah">
-                        </td>
                         <td class="fw-semibold">
                             {# Stav + Titulek #}
                             <div class="d-flex align-items-center gap-2">
@@ -83,43 +73,41 @@
                             </div>
                         </td>
 
-                        <td>
-                            {% if item.updated_at is not empty %}
-                                {{ item.updated_at|date(df ~ ' ' ~ tf) }}
-                            {% endif %}
-                        </td>
+                        <td>    {% if item.updated_at is not empty %}
+        {{ item.updated_at|date(df ~ ' ' ~ tf) }}
+    {% endif %}</td>
 
-                        <td class="text-end">
-                            {% set deleteConfirm = current_status == 'trash'
-                                ? 'Opravdu nenávratně smazat tento obsah?'
-                                : 'Přesunout obsah do koše?'
-                            %}
+        <td class="text-end">
+            {% set deleteConfirm = current_status == 'trash'
+                ? 'Opravdu nenávratně smazat tento obsah?'
+                : 'Přesunout obsah do koše?'
+            %}
 
-                            {% set extraActions = [] %}
-                            {% if current_status == 'trash' %}
-                                {% set extraActions = extraActions|merge([{
-                                    type: 'form',
-                                    action: '/admin/content/' ~ current_type.slug ~ '/' ~ item.id ~ '/restore',
-                                    variant: 'success',
-                                    icon: 'bi-arrow-counterclockwise',
-                                    ajax: true,
-                                    hidden: { redirect: pagination.current_url },
-                                    confirm: 'Obnovit tento obsah?'
-                                }]) %}
-                            {% endif %}
+            {% set extraActions = [] %}
+            {% if current_status == 'trash' %}
+                {% set extraActions = extraActions|merge([{
+                    type: 'form',
+                    action: '/admin/content/' ~ current_type.slug ~ '/' ~ item.id ~ '/restore',
+                    variant: 'success',
+                    icon: 'bi-arrow-counterclockwise',
+                    ajax: true,
+                    hidden: { redirect: pagination.current_url },
+                    confirm: 'Obnovit tento obsah?'
+                }]) %}
+            {% endif %}
 
-                            {{ ui.crud_actions('/admin/content/' ~ current_type.slug ~ '/' ~ item.id, {
-                                delete: {
-                                    confirm: deleteConfirm,
-                                    ajax: true,
-                                    hidden: { redirect: pagination.current_url },
-                                    variant: 'danger',
-                                    icon: current_status == 'trash' ? 'bi-trash3' : 'bi-trash'
-                                },
-                                extra: extraActions
-                            }) }}
-                        </td>
-                    </tr>
+            {{ ui.crud_actions('/admin/content/' ~ current_type.slug ~ '/' ~ item.id, {
+                delete: {
+                    confirm: deleteConfirm,
+                    ajax: true,
+                    hidden: { redirect: pagination.current_url },
+                    variant: 'danger',
+                    icon: current_status == 'trash' ? 'bi-trash3' : 'bi-trash'
+                },
+                extra: extraActions
+            }) }}
+        </td>
+    </tr>
                 {% endfor %}
             </tbody>
         </table>

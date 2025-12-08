@@ -294,53 +294,6 @@ class CommentController extends AjaxController
         exit;
     }
 
-    public function bulkDelete(): void
-    {
-        Auth::requireRole(['admin', 'editor']);
-
-        $ids = array_values(array_unique(array_map('intval', $_POST['ids'] ?? [])));
-        $status = $_POST['status'] ?? null;
-        $redirect = $_POST['redirect'] ?? null;
-
-        if (!$ids) {
-            Flash::addError('Vyberte alespoň jeden komentář.');
-            header('Location: ' . $this->redirectToList($redirect, $status));
-            exit;
-        }
-
-        $trashed = 0;
-        $deleted = 0;
-
-        foreach ($ids as $id) {
-            $comment = Comment::find((int) $id);
-            if (!$comment) {
-                continue;
-            }
-
-            if ($comment->deleted_at === null) {
-                CommentNotifier::sendDeletedNotification($comment);
-                $trashed++;
-            } else {
-                $deleted++;
-            }
-
-            Comment::delete((int) $id);
-        }
-
-        $message = 'Komentáře byly zpracovány.';
-        if ($deleted > 0 && $trashed > 0) {
-            $message = 'Vybrané komentáře byly přesunuty do koše nebo nenávratně smazány.';
-        } elseif ($deleted > 0) {
-            $message = 'Vybrané komentáře byly nenávratně smazány.';
-        } elseif ($trashed > 0) {
-            $message = 'Vybrané komentáře byly přesunuty do koše.';
-        }
-
-        Flash::addSuccess($message);
-        header('Location: ' . $this->redirectToList($redirect, $status));
-        exit;
-    }
-
     public function restore($id): void
     {
         Auth::requireRole(['admin', 'editor']);
@@ -357,23 +310,5 @@ class CommentController extends AjaxController
         Flash::addSuccess('Koš komentářů byl vysypán.');
         header('Location: /admin/comments?status=trash');
         exit;
-    }
-
-    private function redirectToList(?string $redirect, ?string $status): string
-    {
-        $default = '/admin/comments' . ($status ? '?status=' . $status : '');
-
-        if (!$redirect) {
-            return $default;
-        }
-
-        $parsed = parse_url($redirect);
-        $path = $parsed['path'] ?? '';
-        if (strpos($path, '/admin/comments') !== 0) {
-            return $default;
-        }
-
-        $query = isset($parsed['query']) ? '?' . $parsed['query'] : '';
-        return $path . $query;
     }
 }

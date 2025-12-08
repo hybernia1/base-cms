@@ -26,7 +26,7 @@ class ContentController extends AjaxController
     {
         Auth::requireRole(['admin', 'editor']);
 
-        [$typeKey] = $this->resolveType($slug);
+        [$typeKey, $definition] = $this->resolveType($slug);
 
         $statusFilter = trim($_GET['status'] ?? 'all');
         $allowedStatuses = ['published', 'draft', 'trash', 'all'];
@@ -178,7 +178,7 @@ class ContentController extends AjaxController
     {
         Auth::requireRole(['admin', 'editor']);
 
-        [$typeKey] = $this->resolveType($slug);
+        [$typeKey, $definition] = $this->resolveType($slug);
         $allowedTermTypes = $this->allowedTermTypes($typeKey);
 
         $this->render('admin/content/form.twig', [
@@ -214,7 +214,7 @@ class ContentController extends AjaxController
     {
         Auth::requireRole(['admin', 'editor']);
 
-        [$typeKey] = $this->resolveType($slug);
+        [$typeKey, $definition] = $this->resolveType($slug);
         $data = $this->sanitizeInput($typeKey);
 
         [$data, $uploadError] = $this->handleThumbnailUpload($data);
@@ -468,61 +468,6 @@ class ContentController extends AjaxController
 
         Flash::addSuccess($message);
         header('Location: ' . $this->redirectToList($content->type, $redirect));
-        exit;
-    }
-
-    public function bulkDelete($slug)
-    {
-        Auth::requireRole(['admin', 'editor']);
-
-        [$typeKey] = $this->resolveType($slug);
-        $ids = array_values(array_unique(array_map('intval', $_POST['ids'] ?? [])));
-        $redirect = $_POST['redirect'] ?? null;
-
-        if (!$ids) {
-            Flash::addError('Vyberte alespoň jeden obsah pro hromadné mazání.');
-            header('Location: ' . $this->redirectToList($typeKey, $redirect));
-            exit;
-        }
-
-        $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        $items = $placeholders
-            ? R::findAll('content', ' type = ? AND id IN (' . $placeholders . ') ', array_merge([$typeKey], $ids))
-            : [];
-
-        $trashed = 0;
-        $deleted = 0;
-
-        foreach ($items as $item) {
-            if ($item->deleted_at !== null) {
-                $this->forceDeleteContent($item);
-                $deleted++;
-                continue;
-            }
-
-            Meta::deleteForTarget(Meta::TARGET_CONTENT, (int) $item->id);
-            $item->deleted_at = date('Y-m-d H:i:s');
-            R::store($item);
-            $trashed++;
-        }
-
-        $message = 'Vybrané položky byly zpracovány.';
-        if ($deleted > 0 && $trashed > 0) {
-            $message = 'Vybrané položky byly přesunuty do koše nebo nenávratně smazány.';
-        } elseif ($deleted > 0) {
-            $message = 'Vybrané položky byly nenávratně smazány.';
-        } elseif ($trashed > 0) {
-            $message = 'Vybrané položky byly přesunuty do koše.';
-        }
-
-        if ($this->wantsJson()) {
-            $this->respondApi([], $message, 200, [
-                'redirect_to' => $this->redirectToList($typeKey, $redirect),
-            ]);
-        }
-
-        Flash::addSuccess($message);
-        header('Location: ' . $this->redirectToList($typeKey, $redirect));
         exit;
     }
 

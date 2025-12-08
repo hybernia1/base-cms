@@ -25,26 +25,6 @@
         }]) %}
     {% endif %}
 
-    {% if items is not empty %}
-        {% set bulkConfirm = current_status == 'trash'
-            ? 'Opravdu nenávratně smazat vybraný obsah?'
-            : 'Přesunout vybraný obsah do koše?'
-        %}
-
-        {% set header_actions = header_actions|merge([{
-            type: 'button',
-            button_type: 'submit',
-            label: 'Smazat vybrané',
-            variant: current_status == 'trash' ? 'danger' : 'warning',
-            icon: 'bi-check2-square',
-            attributes: {
-                form: 'bulkContentForm',
-                'data-confirm': bulkConfirm,
-                'data-confirm-title': current_status == 'trash' ? 'Trvalé smazání' : 'Přesun do koše'
-            }
-        }]) %}
-    {% endif %}
-
     {{ ui.page_header(current_type.plural_name|default('Obsah'), header_actions) }}
 
     {% if current_status == 'trash' %}

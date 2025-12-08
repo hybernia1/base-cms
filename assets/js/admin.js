@@ -224,40 +224,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const attachBulkSelectHandlers = (scope = document) => {
-        scope.querySelectorAll('[data-check-all]').forEach((master) => {
-            if (master.dataset.checkAllAttached === '1') {
-                return;
-            }
-
-            const targetSelector = master.getAttribute('data-check-all');
-            const getTargets = () => targetSelector ? Array.from(scope.querySelectorAll(targetSelector)) : [];
-
-            const updateMaster = () => {
-                const targets = getTargets().filter((checkbox) => !checkbox.disabled);
-                if (!targets.length) {
-                    master.checked = false;
-                    return;
-                }
-
-                master.checked = targets.every((checkbox) => checkbox.checked);
-            };
-
-            master.addEventListener('change', () => {
-                const targets = getTargets().filter((checkbox) => !checkbox.disabled);
-                targets.forEach((checkbox) => {
-                    checkbox.checked = master.checked;
-                });
-            });
-
-            getTargets().forEach((checkbox) => {
-                checkbox.addEventListener('change', updateMaster);
-            });
-
-            master.dataset.checkAllAttached = '1';
-        });
-    };
-
     const appendAjaxParam = (url) => {
         try {
             const parsed = new URL(url, window.location.origin);
@@ -400,40 +366,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 return `
                     <tr>
-                        <td class="text-center">
-                            <input type="checkbox" class="form-check-input js-bulk-item" form="bulkTermsForm" name="ids[]" value="${item.id}" aria-label="Vybrat term">
-                        </td>
                         <td class="fw-semibold">
+                            <span class="badge text-bg-light text-body border me-2">${escapeHtml(types[item.type] || item.type)}</span>
                             ${escapeHtml(item.name)}
                             <div class="text-muted small mt-1"><code>${escapeHtml(item.slug)}</code></div>
                         </td>
                         <td>${contentBadges}</td>
+                        <td>${item.updated_at_formatted ? escapeHtml(item.updated_at_formatted) : ''}</td>
                         <td class="text-end">${actions}</td>
                     </tr>`;
             }).join('');
 
-            const bulkButton = `
-                <div class="d-flex justify-content-end mb-2">
-                    <button type="submit" class="btn btn-outline-danger btn-sm" form="bulkTermsForm" data-confirm="Opravdu smazat vybrané termy?" data-confirm-title="Trvalé smazání">
-                        <i class="bi bi-check2-square me-1"></i>Smazat vybrané
-                    </button>
-                </div>`;
-
             return `
-                ${bulkButton}
-                <form id="bulkTermsForm" action="/admin/terms/bulk-delete" method="post">
-                    <input type="hidden" name="redirect" value="${escapeHtml(context.pagination?.current_url || '')}">
-                    <input type="hidden" name="type" value="${escapeHtml(currentType?.key || '')}">
-                </form>
                 <div class="table-responsive">
                     <table class="table align-middle">
                         <thead>
                             <tr>
-                                <th class="text-center" style="width: 40px;">
-                                    <input type="checkbox" class="form-check-input" data-check-all="#bulkTermsForm .js-bulk-item">
-                                </th>
                                 <th>Název</th>
                                 <th>Typy obsahu</th>
+                                <th>Upraveno</th>
                                 <th class="text-end">Akce</th>
                             </tr>
                         </thead>
@@ -469,10 +420,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 return `<ul class="nav nav-pills mb-3">${statusTabs}</ul><div class="alert alert-info">${escapeHtml(emptyMessage)}</div>`;
             }
 
-            const deleteConfirm = currentStatus === 'trash'
-                ? 'Opravdu nenávratně smazat tento obsah?'
-                : 'Přesunout obsah do koše?';
-
             const rows = context.items.map((item) => {
                 const actions = renderActions([
                     {
@@ -486,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         type: 'form',
                         action: `/admin/content/${context.current_type?.slug || ''}/${item.id}/delete`,
                         variant: 'danger',
-                        confirm: deleteConfirm,
+                        confirm: 'Opravdu smazat tento obsah?',
                         icon: 'bi-trash',
                         ajax: true,
                         hidden: {redirect: context.pagination?.current_url || ''},
@@ -499,9 +446,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 return `
                     <tr>
-                        <td class="text-center">
-                            <input type="checkbox" class="form-check-input js-bulk-item" form="bulkContentForm" name="ids[]" value="${item.id}" aria-label="Vybrat obsah">
-                        </td>
                         <td class="fw-semibold">
                             <div class="d-flex align-items-center gap-2">${statusBadge}<span>${escapeHtml(item.title)}</span></div>
                             <div class="small text-muted mt-1"><code>${escapeHtml(item.slug)}</code></div>
@@ -513,13 +457,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             return `
                 <ul class="nav nav-pills mb-3">${statusTabs}</ul>
-                <form id="bulkContentForm" action="/admin/content/${context.current_type?.slug || ''}/bulk-delete" method="post">
-                    <input type="hidden" name="redirect" value="${escapeHtml(context.pagination?.current_url || '')}">
-                </form>
                 <div class="table-responsive">
                     <table class="table align-middle">
                         <thead>
-                            <tr><th class="text-center" style="width: 40px;"><input type="checkbox" class="form-check-input" data-check-all="#bulkContentForm .js-bulk-item"></th><th>Název</th><th>Upraveno</th><th class="text-end">Akce</th></tr>
+                            <tr><th>Název</th><th>Upraveno</th><th class="text-end">Akce</th></tr>
                         </thead>
                         <tbody>${rows}</tbody>
                     </table>
@@ -537,19 +478,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const currentStatus = context.status || 'pending';
             const isTrash = currentStatus === 'trash';
-            const hasComments = Array.isArray(context.comments) && context.comments.length > 0;
-            const bulkConfirm = isTrash
-                ? 'Opravdu nenávratně smazat vybrané komentáře?'
-                : 'Přesunout vybrané komentáře do koše?';
 
-            const headerActions = [
-                isTrash
-                    ? `<button type="submit" class="btn btn-danger" form="emptyCommentsTrash" data-confirm="Chcete nenávratně smazat všechny komentáře v koši?" data-confirm-title="Trvalé smazání"><i class="bi bi-trash me-1"></i>Vysypat koš</button>`
-                    : '',
-                hasComments
-                    ? `<button type="submit" class="btn ${isTrash ? 'btn-danger' : 'btn-warning'}" form="bulkCommentsForm" data-confirm="${escapeHtml(bulkConfirm)}" data-confirm-title="${isTrash ? 'Trvalé smazání' : 'Přesun do koše'}"><i class="bi bi-check2-square me-1"></i>Smazat vybrané</button>`
-                    : '',
-            ].filter(Boolean).join('');
+            const headerActions = isTrash
+                ? `<button type="submit" class="btn btn-danger" form="emptyCommentsTrash" data-confirm="Chcete nenávratně smazat všechny komentáře v koši?" data-confirm-title="Trvalé smazání"><i class="bi bi-trash me-1"></i>Vysypat koš</button>`
+                : '';
 
             const pageHeader = `
                 <div class="page-header">
@@ -624,9 +556,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 return `
                     <tr>
-                        <td class="text-center">
-                            <input type="checkbox" class="form-check-input js-bulk-item" form="bulkCommentsForm" name="ids[]" value="${comment.id}" aria-label="Vybrat komentář">
-                        </td>
                         <td>
                             <div class="fw-semibold">${escapeHtml(comment.author_name || 'Anonym')}</div>
                             <div class="text-muted small">${escapeHtml(comment.author_email || '')}</div>
@@ -655,14 +584,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${pageHeader}
                 ${emptyTrashForm}
                 <ul class="nav nav-pills mb-3">${statusTabs}</ul>
-                <form id="bulkCommentsForm" action="/admin/comments/bulk-delete" method="post">
-                    <input type="hidden" name="redirect" value="${escapeHtml(context.pagination?.current_url || '')}">
-                    <input type="hidden" name="status" value="${escapeHtml(currentStatus)}">
-                </form>
                 <div class="table-responsive">
                     <table class="table align-middle mb-0">
                         <thead>
-                            <tr><th class="text-center" style="width: 40px;"><input type="checkbox" class="form-check-input" data-check-all="#bulkCommentsForm .js-bulk-item"></th><th>Autor</th><th>Text</th><th>Vazba</th><th>Obsah</th><th>Stav</th><th class="text-end">Akce</th></tr>
+                            <tr><th>Autor</th><th>Text</th><th>Vazba</th><th>Obsah</th><th>Stav</th><th class="text-end">Akce</th></tr>
                         </thead>
                         <tbody>${rows}</tbody>
                     </table>
@@ -840,19 +765,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const slug = type.slug || '';
         const actionLabel = `Nový ${(type.name || 'obsah').toLowerCase()}`;
 
-        const hasItems = Array.isArray(context.items) && context.items.length > 0;
-        const bulkConfirm = isTrash
-            ? 'Opravdu nenávratně smazat vybraný obsah?'
-            : 'Přesunout vybraný obsah do koše?';
-
-        const headerActions = [
-            isTrash
-                ? `<button type="submit" class="btn btn-danger" form="emptyContentTrash" data-confirm="Opravdu vysypat koš? Tato akce nenávratně smaže všechny položky." data-confirm-title="Trvalé smazání"><i class="bi bi-trash me-1"></i>Vysypat koš</button>`
-                : `<a href="/admin/content/${slug}/create" class="btn btn-primary"><i class="bi bi-plus me-1"></i>${escapeHtml(actionLabel)}</a>`,
-            hasItems
-                ? `<button type="submit" class="btn ${isTrash ? 'btn-danger' : 'btn-warning'}" form="bulkContentForm" data-confirm="${escapeHtml(bulkConfirm)}" data-confirm-title="${isTrash ? 'Trvalé smazání' : 'Přesun do koše'}"><i class="bi bi-check2-square me-1"></i>Smazat vybrané</button>`
-                : '',
-        ].filter(Boolean).join('');
+        const headerActions = isTrash
+            ? `<button type="submit" class="btn btn-danger" form="emptyContentTrash" data-confirm="Opravdu vysypat koš? Tato akce nenávratně smaže všechny položky." data-confirm-title="Trvalé smazání"><i class="bi bi-trash me-1"></i>Vysypat koš</button>`
+            : `<a href="/admin/content/${slug}/create" class="btn btn-primary"><i class="bi bi-plus me-1"></i>${escapeHtml(actionLabel)}</a>`;
 
         const pageHeader = `
             <div class="page-header">
@@ -917,7 +832,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             attachConfirmHandlers(container);
             attachAjaxDeleteHandlers(container);
-            attachBulkSelectHandlers(container);
         } catch (error) {
             adminNotify.show({
                 title: 'Chyba',
@@ -1022,6 +936,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     attachConfirmHandlers();
     attachAjaxDeleteHandlers();
-    attachBulkSelectHandlers();
     initAjaxContainers();
 });

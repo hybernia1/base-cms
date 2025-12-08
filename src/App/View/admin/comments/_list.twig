@@ -16,6 +16,26 @@
     }]) %}
 {% endif %}
 
+{% if comments is not empty %}
+    {% set bulkConfirm = status == 'trash'
+        ? 'Opravdu nenávratně smazat vybrané komentáře?'
+        : 'Přesunout vybrané komentáře do koše?'
+    %}
+
+    {% set header_actions = header_actions|merge([{
+        type: 'button',
+        button_type: 'submit',
+        label: 'Smazat vybrané',
+        variant: status == 'trash' ? 'danger' : 'warning',
+        icon: 'bi-check2-square',
+        attributes: {
+            form: 'bulkCommentsForm',
+            'data-confirm': bulkConfirm,
+            'data-confirm-title': status == 'trash' ? 'Trvalé smazání' : 'Přesun do koše'
+        }
+    }]) %}
+{% endif %}
+
 {{ ui.page_header('Komentáře', header_actions) }}
 
 {% if status == 'trash' %}
@@ -48,10 +68,18 @@
 {% if comments is empty %}
     <div class="alert alert-info">Žádné komentáře pro zvolený filtr.</div>
 {% else %}
+    <form id="bulkCommentsForm" action="/admin/comments/bulk-delete" method="post">
+        <input type="hidden" name="redirect" value="{{ pagination.current_url }}">
+        <input type="hidden" name="status" value="{{ status }}">
+    </form>
+
     <div class="table-responsive">
         <table class="table align-middle mb-0">
             <thead>
                 <tr>
+                    <th class="text-center" style="width: 40px;">
+                        <input type="checkbox" class="form-check-input" data-check-all="#bulkCommentsForm .js-bulk-item">
+                    </th>
                     <th>Autor</th>
                     <th>Text</th>
                     <th>Vazba</th>
@@ -63,6 +91,9 @@
             <tbody>
                 {% for comment in comments %}
                     <tr>
+                        <td class="text-center">
+                            <input type="checkbox" class="form-check-input js-bulk-item" form="bulkCommentsForm" name="ids[]" value="{{ comment.id }}" aria-label="Vybrat komentář">
+                        </td>
                         <td>
                             <div class="fw-semibold">{{ comment.author_name ?: 'Anonym' }}</div>
                             <div class="text-muted small">{{ comment.author_email }}</div>

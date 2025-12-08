@@ -223,6 +223,45 @@ class TermController extends AjaxController
         exit;
     }
 
+    public function bulkDelete()
+    {
+        Auth::requireRole(['admin', 'editor']);
+
+        $ids = array_values(array_unique(array_map('intval', $_POST['ids'] ?? [])));
+        $type = trim($_POST['type'] ?? '');
+        $redirect = $_POST['redirect'] ?? null;
+
+        $fallbackType = $type ?: (array_key_first(TermType::definitions()) ?: 'tag');
+
+        if (!$ids) {
+            Flash::addError('Vyberte alespoň jeden term pro hromadné smazání.');
+            header('Location: ' . $this->redirectToList($fallbackType, $redirect));
+            exit;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $terms = $placeholders ? R::findAll('term', ' id IN (' . $placeholders . ') ', $ids) : [];
+
+        foreach ($terms as $term) {
+            Meta::deleteForTarget(Meta::TARGET_TERM, (int) $term->id);
+            R::trash($term);
+        }
+
+        $message = 'Vybrané termy byly smazány.';
+
+        if ($this->wantsJson()) {
+            $this->respondAjaxMessage($message, [
+                'redirect_to' => $this->redirectToList($type ?: ($terms[0]->type ?? $fallbackType), $redirect),
+                'success' => true,
+            ]);
+        }
+
+        Flash::addSuccess($message);
+        $primaryType = $type ?: ($terms ? $terms[0]->type : $fallbackType);
+        header('Location: ' . $this->redirectToList($primaryType, $redirect));
+        exit;
+    }
+
     private function renderIndex(string $typeKey): void
     {
         Auth::requireRole(['admin', 'editor']);

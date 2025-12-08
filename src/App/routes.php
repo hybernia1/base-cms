@@ -45,6 +45,10 @@ foreach (ContentType::definitions() as $definition) {
         (new \App\Controller\Front\HomeController())->listByType($slug);
     });
 
+    $router->get('/' . $slug . '/([^/]+)/(\\d+)', function ($contentSlug, $page) use ($slug) {
+        (new \App\Controller\Front\ContentController())->show($slug, $contentSlug, (int) $page);
+    });
+
     $router->get('/' . $slug . '/([^/]+)', function ($contentSlug) use ($slug) {
         (new \App\Controller\Front\ContentController())->show($slug, $contentSlug);
     });

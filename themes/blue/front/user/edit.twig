@@ -28,6 +28,13 @@
                     {% if errors.avatar %}
                         <div class="text-danger small mt-1">{{ errors.avatar }}</div>
                     {% endif %}
+                    {% if avatar.url %}
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" value="1" id="remove_avatar" name="remove_avatar">
+                            <label class="form-check-label" for="remove_avatar">Odebrat aktuální avatar</label>
+                            <div class="form-text">Pokud je zaškrtnuto, avatar se po uložení odstraní.</div>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

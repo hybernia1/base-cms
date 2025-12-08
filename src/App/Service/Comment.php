@@ -8,6 +8,7 @@ class Comment
 {
     private const TABLE = 'comment';
     private const STATUSES = ['pending', 'approved'];
+    public const MAX_DEPTH = 1;
 
     public static function ensureSchema(): void
     {

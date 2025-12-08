@@ -37,10 +37,11 @@ class ContentController extends BaseFrontController
         $comments = [];
         $commentAllowed = false;
         $author = null;
+        $allowReplies = Setting::get('comments_allow_replies', '1') === '1';
         $commentSettings = [
-            'allow_replies' => Setting::get('comments_allow_replies', '1') === '1',
+            'allow_replies' => $allowReplies,
             'allow_anonymous' => Setting::get('comments_allow_anonymous', '0') === '1',
-            'max_depth' => (int) Setting::get('comments_max_depth', 0),
+            'max_depth' => $allowReplies ? Comment::MAX_DEPTH : 0,
         ];
         $currentUser = Auth::user();
         $adminBarContext = [];

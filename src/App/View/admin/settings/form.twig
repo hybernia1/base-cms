@@ -188,12 +188,6 @@
                             <label class="form-check-label" for="comments_allow_replies">Povolit odpovědi na komentáře</label>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="comments_max_depth" class="form-label">Maximální úroveň reakcí</label>
-                            <input type="number" class="form-control" id="comments_max_depth" name="comments_max_depth" value="{{ values.comments_max_depth|default(1) }}" min="0" max="1">
-                            <div class="form-text">Pro jednoduchou diskuzi ponechte hodnotu 1. Hodnota 0 odpovědi zcela zakáže.</div>
-                        </div>
-
                         <div class="form-check form-switch mb-3">
                             <input class="form-check-input" type="checkbox" role="switch" id="comments_moderation" name="comments_moderation" value="1" {% if values.comments_moderation == '1' %}checked{% endif %}>
                             <label class="form-check-label" for="comments_moderation">Vyžadovat schválení komentářů</label>

@@ -38,10 +38,11 @@ class CommentController extends BaseFrontController
 
         $commentAllowed = Setting::get('comments_enabled', '1') === '1'
             && (string) ($content->allow_comments ?? '1') !== '0';
+        $allowReplies = Setting::get('comments_allow_replies', '1') === '1';
         $commentSettings = [
-            'allow_replies' => Setting::get('comments_allow_replies', '1') === '1',
+            'allow_replies' => $allowReplies,
             'allow_anonymous' => Setting::get('comments_allow_anonymous', '0') === '1',
-            'max_depth' => (int) Setting::get('comments_max_depth', 0),
+            'max_depth' => $allowReplies ? Comment::MAX_DEPTH : 0,
         ];
 
         $thumbnail = null;
@@ -175,7 +176,8 @@ class CommentController extends BaseFrontController
             }
         }
 
-        $maxDepth = (int) Setting::get('comments_max_depth', 0);
+        $allowReplies = Setting::get('comments_allow_replies', '1') === '1';
+        $maxDepth = $allowReplies ? Comment::MAX_DEPTH : 0;
         $parentDepth = 0;
         if ($parentId) {
             $parent = R::load('comment', (int) $parentId);
@@ -185,7 +187,6 @@ class CommentController extends BaseFrontController
                 return;
             }
             $parentDepth = (int) $parent->depth;
-            $allowReplies = Setting::get('comments_allow_replies', '1') === '1';
             $depthExceeded = ($parentDepth + 1) > $maxDepth;
             if (!$allowReplies || ($depthExceeded && !$mentionOnly)) {
                 http_response_code(400);

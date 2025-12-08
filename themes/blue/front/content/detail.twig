@@ -88,6 +88,35 @@
                         {{ (rendered_body ?? item.body)|raw }}
                     </div>
 
+                    {% set has_pagination = pagination is defined and pagination.total is defined and pagination.total > 1 %}
+                    {% if has_pagination %}
+                        <nav class="mt-4" aria-label="Stránkování obsahu">
+                            <ul class="pagination">
+                                {% set current_page = pagination.current|default(1) %}
+                                {% set total_pages = pagination.total|default(1) %}
+                                {% set page_links = pagination.urls|default([]) %}
+
+                                <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                                    <a class="page-link" href="{{ current_page == 1 ? '#' : page_links[current_page - 1] }}" aria-label="Předchozí">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+
+                                {% for page_number in 1..total_pages %}
+                                    <li class="page-item {% if page_number == current_page %}active{% endif %}">
+                                        <a class="page-link" href="{{ page_links[page_number] ?? '#' }}">{{ page_number }}</a>
+                                    </li>
+                                {% endfor %}
+
+                                <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                                    <a class="page-link" href="{{ current_page == total_pages ? '#' : page_links[current_page + 1] }}" aria-label="Další">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    {% endif %}
+
                     {% if meta_values %}
                         <div class="mt-4">
                             <h2 class="h6 mb-3">Meta údaje</h2>

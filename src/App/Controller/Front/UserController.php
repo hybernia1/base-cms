@@ -82,6 +82,7 @@ class UserController extends BaseFrontController
         $errors = $this->validateProfile($data);
 
         $avatarPath = $user->avatar_path ?? null;
+        $removeAvatar = isset($_POST['remove_avatar']);
         $uploadedAvatar = null;
         if (isset($_FILES['avatar'])) {
             [$uploadedAvatar, $avatarError] = Avatar::upload($_FILES['avatar']);
@@ -115,6 +116,9 @@ class UserController extends BaseFrontController
                 Avatar::delete($avatarPath);
             }
             $user->avatar_path = $uploadedAvatar;
+        } elseif ($removeAvatar && $avatarPath) {
+            Avatar::delete($avatarPath);
+            $user->avatar_path = null;
         }
 
         R::store($user);

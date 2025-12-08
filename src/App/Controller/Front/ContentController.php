@@ -12,7 +12,7 @@ use RedBeanPHP\R as R;
 
 class ContentController extends BaseFrontController
 {
-    public function show(string $typeSlug, string $contentSlug): void
+    public function show(string $typeSlug, string $contentSlug, int $page = 1): void
     {
         $typeKey = ContentType::keyFromSlug($typeSlug);
         if (!$typeKey) {
@@ -46,9 +46,12 @@ class ContentController extends BaseFrontController
         $currentUser = Auth::user();
         $adminBarContext = [];
         $renderedBody = null;
+        $pageUrls = [];
+        $pageCount = 1;
         $metaValues = [];
         $metaDefinitions = [];
         $relatedPosts = [];
+        $page = max(1, $page);
         if ($item) {
             $termIds = R::getCol('SELECT term_id FROM content_term WHERE content_id = ?', [$item->id]);
             if ($termIds) {
@@ -70,7 +73,21 @@ class ContentController extends BaseFrontController
 
             $author = $this->loadAuthor((int) ($item->author_id ?? 0));
 
-            $renderedBody = ContentProtection::render((string) ($item->body ?? ''));
+            $pages = $this->splitBodyIntoPages((string) ($item->body ?? ''));
+            $pageCount = max(1, count($pages));
+            if ($page > $pageCount) {
+                $this->renderNotFound([
+                    'message' => 'Stránka obsahu nebyla nalezena.',
+                ]);
+                return;
+            }
+
+            $renderedPages = array_map(static function (string $content): string {
+                return ContentProtection::render($content);
+            }, $pages ?: ['']);
+
+            $renderedBody = $renderedPages[$page - 1] ?? ContentProtection::render((string) ($item->body ?? ''));
+            $pageUrls = $this->buildPageUrls($typeSlug, (string) $item->slug, $pageCount);
 
             $metaValues = Meta::valuesFor(Meta::TARGET_CONTENT, (int) $item->id);
             if ($metaValues !== []) {
@@ -82,7 +99,7 @@ class ContentController extends BaseFrontController
 
             $relatedItems = R::findAll(
                 'content',
-                ' type = ? AND status = ? AND publish_at <= ? AND id != ? ORDER BY publish_at DESC LIMIT 5 ',
+                ' type = ? AND status = ? AND publish_at <= ? AND deleted_at IS NULL AND id != ? ORDER BY publish_at DESC LIMIT 5 ',
                 [$typeKey, 'published', date('Y-m-d H:i:s'), $item->id]
             );
             $relatedPosts = $relatedItems ? $this->attachAuthors($relatedItems) : [];
@@ -129,6 +146,11 @@ class ContentController extends BaseFrontController
             'breadcrumbs' => $breadcrumbs,
             'related_posts' => $relatedPosts,
             'content_types' => $contentTypeDefinitions,
+            'pagination' => [
+                'current' => $page,
+                'total' => $pageCount,
+                'urls' => $pageUrls,
+            ],
         ]);
     }
 
@@ -165,6 +187,29 @@ class ContentController extends BaseFrontController
             'profile_url' => (int) ($user->is_profile_public ?? 1) === 1 ? '/users/' . $user->id : null,
             'avatar' => Avatar::forUser($user),
         ];
+    }
+
+    private function splitBodyIntoPages(string $body): array
+    {
+        $parts = preg_split('/<!--\s*pagebreak\s*-->/i', $body);
+
+        if ($parts === false || $parts === []) {
+            return [$body];
+        }
+
+        return array_values($parts);
+    }
+
+    private function buildPageUrls(string $typeSlug, string $contentSlug, int $totalPages): array
+    {
+        $baseUrl = '/' . trim($typeSlug, '/') . '/' . trim($contentSlug, '/');
+
+        $urls = [];
+        for ($i = 1; $i <= $totalPages; $i++) {
+            $urls[$i] = $i === 1 ? $baseUrl : $baseUrl . '/' . $i;
+        }
+
+        return $urls;
     }
 
 }

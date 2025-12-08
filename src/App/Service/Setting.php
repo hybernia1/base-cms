@@ -13,7 +13,6 @@ class Setting
         'breadcrumbs_enabled' => '1',
         'comments_enabled' => '1',
         'comments_allow_replies' => '1',
-        'comments_max_depth' => '1',
         'comments_moderation' => '1',
         'comments_allow_anonymous' => '0',
         'comments_rate_limit_seconds' => '60',

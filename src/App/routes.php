@@ -121,6 +121,7 @@ $router->get('/admin/content/([\\w-]+)/(\\d+)/edit', 'App\\Controller\\Admin\\Co
 $router->post('/admin/content/([\\w-]+)/(\\d+)/edit', 'App\\Controller\\Admin\\ContentController@update');
 $router->post('/admin/content/([\\w-]+)/(\\d+)/restore', 'App\\Controller\\Admin\\ContentController@restore');
 $router->post('/admin/content/([\\w-]+)/(\\d+)/delete', 'App\\Controller\\Admin\\ContentController@delete');
+$router->post('/admin/content/([\\w-]+)/bulk-delete', 'App\\Controller\\Admin\\ContentController@bulkDelete');
 $router->post('/admin/content/([\\w-]+)/trash/empty', 'App\\Controller\\Admin\\ContentController@emptyTrash');
 $router->get('/admin/terms', 'App\\Controller\\Admin\\TermController@index');
 $router->get('/admin/terms/type/([\\w-]+)', 'App\\Controller\\Admin\\TermController@indexByType');
@@ -129,6 +130,7 @@ $router->post('/admin/terms/create', 'App\\Controller\\Admin\\TermController@cre
 $router->get('/admin/terms/(\\d+)/edit', 'App\\Controller\\Admin\\TermController@editForm');
 $router->post('/admin/terms/(\\d+)/edit', 'App\\Controller\\Admin\\TermController@update');
 $router->post('/admin/terms/(\\d+)/delete', 'App\\Controller\\Admin\\TermController@delete');
+$router->post('/admin/terms/bulk-delete', 'App\\Controller\\Admin\\TermController@bulkDelete');
 $router->get('/admin/navigation', 'App\\Controller\\Admin\\NavigationController@index');
 $router->post('/admin/navigation/create', 'App\\Controller\\Admin\\NavigationController@create');
 $router->post('/admin/navigation/(\\d+)/edit', 'App\\Controller\\Admin\\NavigationController@update');
@@ -155,6 +157,7 @@ $router->get('/admin/comments/(\\d+)/edit', 'App\\Controller\\Admin\\CommentCont
 $router->post('/admin/comments/(\\d+)/edit', 'App\\Controller\\Admin\\CommentController@update');
 $router->post('/admin/comments/(\\d+)/restore', 'App\\Controller\\Admin\\CommentController@restore');
 $router->post('/admin/comments/(\\d+)/delete', 'App\\Controller\\Admin\\CommentController@delete');
+$router->post('/admin/comments/bulk-delete', 'App\\Controller\\Admin\\CommentController@bulkDelete');
 $router->post('/admin/comments/trash/empty', 'App\\Controller\\Admin\\CommentController@emptyTrash');
 $router->get('/admin/meta', 'App\\Controller\\Admin\\MetaController@index');
 $router->post('/admin/meta/create', 'App\\Controller\\Admin\\MetaController@create');

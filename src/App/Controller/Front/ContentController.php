@@ -191,7 +191,7 @@ class ContentController extends BaseFrontController
 
     private function splitBodyIntoPages(string $body): array
     {
-        $parts = preg_split('/<!--\s*pagebreak\s*-->/i', $body);
+        $parts = preg_split('/(?:<!--\s*pagebreak\s*-->)|\[\s*pagebreak\s*\]/i', $body);
 
         if ($parts === false || $parts === []) {
             return [$body];

@@ -12,6 +12,11 @@ class Shortcode
                 'description' => 'Zobrazí obsah jen přihlášeným uživatelům. Nepřihlášeným se ukáže informační hláška s odkazem na přihlášení.',
                 'example' => '[logged]Tento obsah uvidí jen přihlášení[/logged]',
             ],
+            'pagebreak' => [
+                'label' => 'Zalomit stránku',
+                'description' => 'Rozdělí článek na více stránek (např. /2, /3).',
+                'example' => '[pagebreak]',
+            ],
         ];
     }
 
@@ -20,6 +25,8 @@ class Shortcode
         if ($body === '') {
             return $body;
         }
+
+        $body = preg_replace('/\[\s*pagebreak\s*\]/i', '', $body);
 
         $definitions = self::definitions();
         $tags = array_keys($definitions);
@@ -41,6 +48,8 @@ class Shortcode
                     }
 
                     return '<div class="alert alert-info my-3">Tato část obsahu je dostupná jen přihlášeným uživatelům. <a href="/login">Přihlásit se</a></div>';
+                case 'pagebreak':
+                    return '';
                 default:
                     return $matches[0] ?? '';
             }

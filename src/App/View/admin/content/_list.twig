@@ -97,6 +97,7 @@
             {% endif %}
 
             {{ ui.crud_actions('/admin/content/' ~ current_type.slug ~ '/' ~ item.id, {
+                edit: current_status == 'trash' ? false : {},
                 delete: {
                     confirm: deleteConfirm,
                     ajax: true,

@@ -54,9 +54,7 @@
                 <tr>
                     <th>Autor</th>
                     <th>Text</th>
-                    <th>Vazba</th>
                     <th>Obsah</th>
-                    <th>Stav</th>
                     <th class="text-end">Akce</th>
                 </tr>
             </thead>
@@ -69,24 +67,27 @@
                             <div class="text-muted small">{{ comment.created_at|date('j. n. Y H:i') }}</div>
                             <div class="text-muted small">IP: {{ comment.ip_address ?: 'Neznámá' }}</div>
                         </td>
-                        <td>{{ comment.body|slice(0, 180) }}{% if comment.body|length > 180 %}…{% endif %}</td>
-                        <td class="text-muted small">
-                            {% if comment.parent_id %}
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-secondary-subtle text-secondary">Odpověď</span>
-                                    <span>#{{ comment.parent_id }}</span>
-                                </div>
-                                {% set parent = parent_map[comment.parent_id]|default(null) %}
-                                {% if parent %}
-                                    <div class="text-truncate mt-1" title="{{ parent.body }}">{{ parent.body|slice(0, 90) }}{% if parent.body|length > 90 %}…{% endif %}</div>
+                        <td>
+                            <div>{{ comment.body|slice(0, 180) }}{% if comment.body|length > 180 %}…{% endif %}</div>
+
+                            <div class="text-muted small mt-2">
+                                {% if comment.parent_id %}
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-secondary-subtle text-secondary">Odpověď</span>
+                                        <span>#{{ comment.parent_id }}</span>
+                                    </div>
+                                    {% set parent = parent_map[comment.parent_id]|default(null) %}
+                                    {% if parent %}
+                                        <div class="text-truncate mt-1" title="{{ parent.body }}">{{ parent.body|slice(0, 90) }}{% if parent.body|length > 90 %}…{% endif %}</div>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-primary-subtle text-primary">Rodič</span>
                                 {% endif %}
-                            {% else %}
-                                <span class="badge bg-primary-subtle text-primary">Rodič</span>
-                            {% endif %}
-                            {% set replyCount = child_counts[comment.id]|default(0) %}
-                            {% if replyCount > 0 %}
-                                <div class="mt-1">{{ replyCount }} reakce</div>
-                            {% endif %}
+                                {% set replyCount = child_counts[comment.id]|default(0) %}
+                                {% if replyCount > 0 %}
+                                    <div class="mt-1">{{ replyCount }} reakce</div>
+                                {% endif %}
+                            </div>
                         </td>
                         <td class="text-muted small">
                             {% set content = content_map[comment.content_id]|default(null) %}
@@ -97,20 +98,13 @@
                                 <em>Nenalezeno</em>
                             {% endif %}
                         </td>
-                        <td>
-                            {% if status == 'trash' %}
-                                <span class="badge bg-secondary-subtle text-secondary">V koši</span>
-                            {% elseif comment.status == 'approved' %}
-                                <span class="badge bg-success-subtle text-success">Schváleno</span>
-                            {% else %}
-                                <span class="badge bg-warning-subtle text-warning">Čeká</span>
-                            {% endif %}
-                        </td>
                         <td class="text-end">
                             <div class="btn-group-sm" role="group">
-                                <a href="/admin/comments/{{ comment.id }}/edit" class="btn btn-outline-secondary btn-icon" title="Detail" aria-label="Detail">
-                                    <i class="bi bi-box-arrow-up-right"></i>
-                                </a>
+                                {% if status != 'trash' %}
+                                    <a href="/admin/comments/{{ comment.id }}/edit" class="btn btn-outline-secondary btn-icon" title="Detail" aria-label="Detail">
+                                        <i class="bi bi-box-arrow-up-right"></i>
+                                    </a>
+                                {% endif %}
 
                                 {% if comment.status != 'approved' and status != 'trash' %}
                                     <form method="post" action="/admin/comments/{{ comment.id }}/approve" class="d-inline">

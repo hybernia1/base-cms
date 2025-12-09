@@ -297,6 +297,13 @@
                         </div>
                     </form>
 
+                    <div class="row mb-3">
+                        <div class="col-md-6 col-lg-4">
+                            <label class="form-label" for="mediaLibrarySearch">Hledat v knihovně</label>
+                            <input type="search" id="mediaLibrarySearch" class="form-control" placeholder="Název nebo popisek obrázku">
+                        </div>
+                    </div>
+
                     <div class="row row-cols-2 row-cols-md-4 row-cols-xl-6 g-3" id="mediaLibraryGrid">
                         {% for mediaItem in media %}
                             {% if mediaItem.is_image %}
@@ -408,6 +415,7 @@
         const mediaGrid = document.getElementById('mediaLibraryGrid');
         const mediaModalEl = document.getElementById('mediaLibraryModal');
         const mediaEmptyAlert = document.getElementById('mediaLibraryEmpty');
+        const mediaSearchInput = document.getElementById('mediaLibrarySearch');
         const removeThumbnailBtn = document.getElementById('removeThumbnailBtn');
         const deleteContentTrigger = document.getElementById('deleteContentTrigger');
         const deleteContentForm = document.getElementById('deleteContentForm');
@@ -430,6 +438,7 @@
         const unsavedModal = unsavedModalEl ? bootstrap.Modal.getOrCreateInstance(unsavedModalEl) : null;
         let pendingNavigationUrl = null;
         let hasUnsavedChanges = false;
+        const defaultMediaEmptyText = (mediaEmptyAlert?.textContent || '').trim();
 
         const markUnsaved = () => {
             hasUnsavedChanges = true;
@@ -514,6 +523,44 @@
         };
 
         ensureBodyMediaInputs();
+
+        const filterMediaGrid = () => {
+            if (!mediaGrid) return;
+
+            const query = (mediaSearchInput?.value || '').trim().toLowerCase();
+            const cards = mediaGrid.querySelectorAll('.media-card');
+            let visibleCount = 0;
+
+            cards.forEach((card) => {
+                const col = card.closest('.col');
+                const label = (card.dataset.mediaLabel || '').toLowerCase();
+                const altText = (card.querySelector('img')?.alt || '').toLowerCase();
+                const matches = !query || label.includes(query) || altText.includes(query);
+
+                if (col) {
+                    col.style.display = matches ? '' : 'none';
+                } else {
+                    card.style.display = matches ? '' : 'none';
+                }
+
+                if (matches) {
+                    visibleCount += 1;
+                }
+            });
+
+            if (mediaEmptyAlert) {
+                const totalCards = cards.length;
+                if (visibleCount === 0) {
+                    mediaEmptyAlert.textContent = totalCards === 0
+                        ? (defaultMediaEmptyText || 'Zatím žádné obrázky.')
+                        : 'Žádné výsledky pro zadané hledání.';
+                    mediaEmptyAlert.style.display = '';
+                } else {
+                    mediaEmptyAlert.textContent = defaultMediaEmptyText || mediaEmptyAlert.textContent;
+                    mediaEmptyAlert.style.display = 'none';
+                }
+            }
+        };
 
         function updatePreview(url, label) {
             if (!thumbnailPreview) return;
@@ -688,6 +735,10 @@
             });
         });
 
+        if (mediaSearchInput) {
+            mediaSearchInput.addEventListener('input', filterMediaGrid);
+        }
+
         if (mediaGrid) {
             mediaGrid.addEventListener('click', function (event) {
                 const card = event.target.closest('.media-card');
@@ -699,9 +750,7 @@
                 handleMediaSelection(id, url, label);
             });
 
-            if (mediaEmptyAlert) {
-                mediaEmptyAlert.style.display = mediaGrid.querySelector('.media-card') ? 'none' : '';
-            }
+            filterMediaGrid();
         }
 
         const mediaUploadForm = document.getElementById('mediaUploadForm');
@@ -760,13 +809,14 @@
             col.className = 'col';
             col.innerHTML = `
                 <div class="card h-100 media-card" role="button" tabindex="0" data-media-id="${id}" data-media-url="${url}" data-media-label="${label}">
-                    <img src="${url}" class="card-img-top" alt="">
+                    <img src="${url}" class="card-img-top" alt="${label}">
                     <div class="card-body p-2">
                         <div class="small text-truncate" title="${label}">${label}</div>
                     </div>
                 </div>
             `;
             mediaGrid.prepend(col);
+            filterMediaGrid();
         }
 
         if (shortcodeModalEl) {

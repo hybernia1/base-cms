@@ -113,6 +113,34 @@
                             <label class="form-check-label" for="allow_webp">Povolit generování WebP variant</label>
                         </div>
 
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="upload_image_max_width" class="form-label">Maximální šířka obrázků</label>
+                                {% set selectedWidth = values.upload_image_max_width|default('0') %}
+                                <select id="upload_image_max_width" name="upload_image_max_width" class="form-select">
+                                    {% for preset in image_presets %}
+                                        <option value="{{ preset.width }}" {% if selectedWidth == preset.width|str %}selected{% endif %}>
+                                            {{ preset.label }}{% if preset.width > 0 %} ({{ preset.width }} px){% endif %}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Obrázky budou při nahrání případně zmenšeny na uvedenou šířku.</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="upload_image_max_kb" class="form-label">Maximální velikost obrázku</label>
+                                {% set selectedSize = values.upload_image_max_kb|default('0') %}
+                                <select id="upload_image_max_kb" name="upload_image_max_kb" class="form-select">
+                                    {% for preset in image_presets %}
+                                        <option value="{{ preset.size_kb }}" {% if selectedSize == preset.size_kb|str %}selected{% endif %}>
+                                            {{ preset.label }}{% if preset.size_kb > 0 %} ({{ preset.size_kb }} kB){% endif %}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Velikost je uváděna v kB, zmenšování proběhne automaticky po uploadu.</div>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <label for="allowed_upload_types" class="form-label">Povolené přípony uploadů</label>
                             <input type="text" name="allowed_upload_types" id="allowed_upload_types" value="{{ values.allowed_upload_types }}" class="form-control">

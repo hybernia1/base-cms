@@ -9,6 +9,8 @@ class Setting
         'site_name' => 'CMS',
         'allow_webp' => '0',
         'allowed_upload_types' => 'jpg,jpeg,png,gif,webp,avif,pdf,zip',
+        'upload_image_max_width' => '0',
+        'upload_image_max_kb' => '0',
         'allow_registration' => '1',
         'breadcrumbs_enabled' => '1',
         'comments_enabled' => '1',

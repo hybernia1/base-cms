@@ -425,6 +425,13 @@
                             </div>
                         </form>
 
+                        <div class="row mb-3">
+                            <div class="col-md-6 col-lg-4">
+                                <label class="form-label" for="mediaLibrarySearch">Hledat v knihovně</label>
+                                <input type="search" id="mediaLibrarySearch" class="form-control" placeholder="Název nebo popisek obrázku">
+                            </div>
+                        </div>
+
                         <div class="row row-cols-2 row-cols-md-4 row-cols-xl-6 g-3" id="mediaLibraryGrid">
                             {% for mediaItem in media %}
                                 {% if mediaItem.is_image %}
@@ -457,6 +464,7 @@
                 const mediaGrid = document.getElementById('mediaLibraryGrid');
                 const mediaModalEl = document.getElementById('mediaLibraryModal');
                 const mediaEmptyAlert = document.getElementById('mediaLibraryEmpty');
+                const mediaSearchInput = document.getElementById('mediaLibrarySearch');
                 const logoPreview = document.getElementById('siteLogoPreview');
                 const faviconPreview = document.getElementById('siteFaviconPreview');
                 const logoInput = document.getElementById('site_logo_id');
@@ -467,10 +475,49 @@
                 const mediaActionButtons = document.querySelectorAll('[data-media-action]');
 
                 let currentMediaAction = 'logo';
+                const defaultMediaEmptyText = (mediaEmptyAlert?.textContent || '').trim();
 
                 const renderPlaceholder = (target) => {
                     if (!target) return;
                     target.innerHTML = '<div class="text-muted small">Zatím nevybráno</div>';
+                };
+
+                const filterMediaGrid = () => {
+                    if (!mediaGrid) return;
+
+                    const query = (mediaSearchInput?.value || '').trim().toLowerCase();
+                    const cards = mediaGrid.querySelectorAll('.media-card');
+                    let visibleCount = 0;
+
+                    cards.forEach((card) => {
+                        const col = card.closest('.col');
+                        const label = (card.dataset.mediaLabel || '').toLowerCase();
+                        const altText = (card.querySelector('img')?.alt || '').toLowerCase();
+                        const matches = !query || label.includes(query) || altText.includes(query);
+
+                        if (col) {
+                            col.style.display = matches ? '' : 'none';
+                        } else {
+                            card.style.display = matches ? '' : 'none';
+                        }
+
+                        if (matches) {
+                            visibleCount += 1;
+                        }
+                    });
+
+                    if (mediaEmptyAlert) {
+                        const totalCards = cards.length;
+                        if (visibleCount === 0) {
+                            mediaEmptyAlert.textContent = totalCards === 0
+                                ? (defaultMediaEmptyText || 'Zatím žádné obrázky.')
+                                : 'Žádné výsledky pro zadané hledání.';
+                            mediaEmptyAlert.style.display = '';
+                        } else {
+                            mediaEmptyAlert.textContent = defaultMediaEmptyText || mediaEmptyAlert.textContent;
+                            mediaEmptyAlert.style.display = 'none';
+                        }
+                    }
                 };
 
                 const updatePreview = (target, url, label, maxHeight) => {
@@ -510,6 +557,10 @@
                     });
                 });
 
+                if (mediaSearchInput) {
+                    mediaSearchInput.addEventListener('input', filterMediaGrid);
+                }
+
                 if (removeLogoBtn) {
                     removeLogoBtn.addEventListener('click', () => clearSelection('logo'));
                 }
@@ -536,6 +587,8 @@
                             modalInstance.hide();
                         }
                     });
+
+                    filterMediaGrid();
                 }
 
                 const addMediaCard = (id, url, label) => {
@@ -556,6 +609,7 @@
                     `;
 
                     mediaGrid.prepend(col);
+                    filterMediaGrid();
                 };
 
                 if (mediaUploadForm) {

@@ -25,6 +25,62 @@ class MediaController extends AjaxController
         $this->renderMediaPage(false, 'admin/media/files.twig', 'admin/media/_files_list.twig', 'media:files');
     }
 
+    public function picker(): void
+    {
+        Auth::requireRole(['admin', 'editor']);
+
+        $search = trim($_GET['q'] ?? '');
+        $condition = ' is_image = 1 ';
+        $params = [];
+
+        if ($search !== '') {
+            $condition .= ' AND (original_name LIKE ? OR filename LIKE ?) ';
+            $like = '%' . $search . '%';
+            $params = [$like, $like];
+        }
+
+        $total = R::count('media', $condition, $params);
+        $pagination = $this->buildPagination((int) $total, 24);
+
+        $items = R::findAll(
+            'media',
+            $condition . ' ORDER BY created_at DESC LIMIT ? OFFSET ? ',
+            array_merge($params, [$pagination['per_page'], $pagination['offset']])
+        );
+
+        $serialized = [];
+        foreach ($items as $item) {
+            $path = '/' . ltrim((string) $item->path, '/');
+            $filename = $item->webp_filename ?: $item->filename;
+
+            $serialized[] = [
+                'id' => (int) $item->id,
+                'label' => $item->original_name ?: $item->filename,
+                'url' => $path . '/' . $filename,
+                'alt' => $item->alt ?: ($item->original_name ?: $item->filename),
+                'mime_type' => $item->mime_type,
+                'size' => (int) $item->size,
+            ];
+        }
+
+        $this->respondApi(
+            ['items' => $serialized],
+            null,
+            200,
+            [
+                'pagination' => [
+                    'page' => $pagination['page'],
+                    'pages' => $pagination['pages'],
+                    'per_page' => $pagination['per_page'],
+                    'total' => $pagination['total'],
+                    'has_prev' => $pagination['has_prev'],
+                    'has_next' => $pagination['has_next'],
+                ],
+                'search' => $search,
+            ]
+        );
+    }
+
     private function prepareMediaAjaxPayload(array $items, array $context): array
     {
         $serializedItems = [];

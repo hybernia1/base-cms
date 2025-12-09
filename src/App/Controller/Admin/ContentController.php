@@ -7,6 +7,7 @@ use App\Service\Flash;
 use App\Service\Slugger;
 use App\Service\Comment;
 use App\Service\Meta;
+use App\Service\Setting;
 use DateTime;
 use RedBeanPHP\R as R;
 use App\Service\Upload;
@@ -197,7 +198,7 @@ class ContentController extends AjaxController
             'heading' => $this->newContentHeading($definition),
             'form_action' => '/admin/content/' . $definition['slug'] . '/create',
             'current_menu' => $definition['slug'],
-            'media' => $this->mediaList(),
+            'thumbnail' => null,
             'terms' => $this->termsByType($typeKey, array_keys($allowedTermTypes)),
             'selected_terms' => [],
             'term_types' => TermType::definitions(),
@@ -237,7 +238,7 @@ class ContentController extends AjaxController
                 'heading' => $this->newContentHeading($definition),
                 'form_action' => '/admin/content/' . $definition['slug'] . '/create',
                 'current_menu' => $definition['slug'],
-                'media' => $this->mediaList(),
+                'thumbnail' => $this->thumbnailDetails((int) ($data['thumbnail_id'] ?? 0)),
                 'terms' => $this->termsByType($data['type'] ?: $typeKey, array_keys($this->allowedTermTypes($typeKey))),
                 'selected_terms' => $data['terms'],
                 'term_types' => TermType::definitions(),
@@ -330,7 +331,7 @@ class ContentController extends AjaxController
             'form_action' => "/admin/content/{$menuSlug}/{$content->id}/edit",
             'current_menu' => $menuSlug,
             'content_id' => $content->id,
-            'media' => $this->mediaList(),
+            'thumbnail' => $this->thumbnailDetails((int) $content->thumbnail_id),
             'terms' => $this->termsByType($content->type, array_keys($allowedTermTypes)),
             'selected_terms' => $this->loadTermIdsForContent((int) $content->id),
             'term_types' => TermType::definitions(),
@@ -381,7 +382,7 @@ class ContentController extends AjaxController
                 'form_action' => "/admin/content/{$menuSlug}/{$content->id}/edit",
                 'current_menu' => $menuSlug,
                 'content_id' => $content->id,
-                'media' => $this->mediaList(),
+                'thumbnail' => $this->thumbnailDetails((int) ($data['thumbnail_id'] ?? 0)),
                 'terms' => $this->termsByType($data['type'] ?: $content->type, array_keys($this->allowedTermTypes($content->type))),
                 'selected_terms' => $data['terms'],
                 'term_types' => TermType::definitions(),
@@ -748,9 +749,9 @@ class ContentController extends AjaxController
         ));
     }
 
-    private function mediaList(): array
+    private function thumbnailDetails(?int $thumbnailId): ?array
     {
-        return R::findAll('media', ' ORDER BY created_at DESC LIMIT 100 ');
+        return Setting::mediaDetails($thumbnailId);
     }
 
     private function syncMediaAttachments(int $contentId, array $mediaIds, ?int $thumbnailId = null): void

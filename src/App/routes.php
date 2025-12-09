@@ -140,6 +140,7 @@ $router->post('/admin/navigation/(\\d+)/delete', 'App\\Controller\\Admin\\Naviga
 $router->get('/admin/media', 'App\\Controller\\Admin\\MediaController@index');
 $router->get('/admin/media/gallery', 'App\\Controller\\Admin\\MediaController@gallery');
 $router->get('/admin/media/files', 'App\\Controller\\Admin\\MediaController@files');
+$router->get('/admin/media/picker', 'App\\Controller\\Admin\\MediaController@picker');
 $router->post('/admin/media/upload', 'App\\Controller\\Admin\\MediaController@upload');
 $router->post('/admin/media/(\\d+)/update', 'App\\Controller\\Admin\\MediaController@update');
 $router->post('/admin/media/(\\d+)/delete', 'App\\Controller\\Admin\\MediaController@delete');

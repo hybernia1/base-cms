@@ -209,14 +209,10 @@
                             <button class="btn btn-outline-danger {% if not values.thumbnail_id %}d-none{% endif %}" type="button" id="removeThumbnailBtn">Odebrat náhled</button>
                         </div>
 
-                        <div id="thumbnailPreview" class="border rounded p-2 bg-light" style="max-width: 320px;{% if not values.thumbnail_id %} display:none;{% endif %}">
-                            {% if values.thumbnail_id %}
-                                {% for mediaItem in media %}
-                                    {% if mediaItem.id == values.thumbnail_id %}
-                                        <img src="/{{ mediaItem.path }}/{{ mediaItem.webp_filename ?: mediaItem.filename }}" class="img-fluid" alt="{{ mediaItem.alt }}">
-                                        <div class="small mt-1 text-muted">{{ mediaItem.original_name ?: mediaItem.filename }}</div>
-                                    {% endif %}
-                                {% endfor %}
+                        <div id="thumbnailPreview" class="border rounded p-2 bg-light" style="max-width: 320px;{% if not thumbnail %} display:none;{% endif %}">
+                            {% if thumbnail %}
+                                <img src="{{ thumbnail.url }}" class="img-fluid" alt="{{ thumbnail.alt }}">
+                                <div class="small mt-1 text-muted">{{ thumbnail.original_name }}</div>
                             {% endif %}
                         </div>
                         <div class="form-text">Vyber existující obrázek z knihovny nebo nahraj nový.</div>
@@ -304,21 +300,14 @@
                         </div>
                     </div>
 
-                    <div class="row row-cols-2 row-cols-md-4 row-cols-xl-6 g-3" id="mediaLibraryGrid">
-                        {% for mediaItem in media %}
-                            {% if mediaItem.is_image %}
-                                <div class="col">
-                                    <div class="card h-100 media-card" role="button" tabindex="0" data-media-id="{{ mediaItem.id }}" data-media-url="/{{ mediaItem.path }}/{{ mediaItem.webp_filename ?: mediaItem.filename }}" data-media-label="{{ mediaItem.original_name ?: mediaItem.filename }}">
-                                        <img src="/{{ mediaItem.path }}/{{ mediaItem.webp_filename ?: mediaItem.filename }}" class="card-img-top" alt="{{ mediaItem.alt }}">
-                                        <div class="card-body p-2">
-                                            <div class="small text-truncate" title="{{ mediaItem.original_name ?: mediaItem.filename }}">{{ mediaItem.original_name ?: mediaItem.filename }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endif %}
-                        {% endfor %}
+                    <div class="text-center my-3 d-none" id="mediaLibraryLoading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Načítání...</span>
+                        </div>
                     </div>
-                    <div class="alert alert-info mt-3" id="mediaLibraryEmpty" {% if media is not empty %}style="display:none;"{% endif %}>Zatím žádné obrázky.</div>
+                    <div class="row row-cols-2 row-cols-md-4 row-cols-xl-6 g-3" id="mediaLibraryGrid"></div>
+                    <div class="alert alert-info mt-3" id="mediaLibraryEmpty">Zatím žádné obrázky.</div>
+                    <div class="d-flex justify-content-between align-items-center mt-3" id="mediaLibraryPagination"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zavřít</button>
@@ -416,6 +405,8 @@
         const mediaModalEl = document.getElementById('mediaLibraryModal');
         const mediaEmptyAlert = document.getElementById('mediaLibraryEmpty');
         const mediaSearchInput = document.getElementById('mediaLibrarySearch');
+        const mediaLoading = document.getElementById('mediaLibraryLoading');
+        const mediaPagination = document.getElementById('mediaLibraryPagination');
         const removeThumbnailBtn = document.getElementById('removeThumbnailBtn');
         const deleteContentTrigger = document.getElementById('deleteContentTrigger');
         const deleteContentForm = document.getElementById('deleteContentForm');
@@ -439,6 +430,9 @@
         let pendingNavigationUrl = null;
         let hasUnsavedChanges = false;
         const defaultMediaEmptyText = (mediaEmptyAlert?.textContent || '').trim();
+        let mediaPage = 1;
+        let mediaHasLoaded = false;
+        let mediaSearchTimeout = null;
 
         const markUnsaved = () => {
             hasUnsavedChanges = true;
@@ -524,41 +518,114 @@
 
         ensureBodyMediaInputs();
 
-        const filterMediaGrid = () => {
+        const setMediaLoading = (isLoading) => {
+            if (!mediaLoading) return;
+            mediaLoading.classList.toggle('d-none', !isLoading);
+        };
+
+        const renderMediaGrid = (items = []) => {
             if (!mediaGrid) return;
 
-            const query = (mediaSearchInput?.value || '').trim().toLowerCase();
-            const cards = mediaGrid.querySelectorAll('.media-card');
-            let visibleCount = 0;
+            mediaGrid.innerHTML = '';
 
-            cards.forEach((card) => {
-                const col = card.closest('.col');
-                const label = (card.dataset.mediaLabel || '').toLowerCase();
-                const altText = (card.querySelector('img')?.alt || '').toLowerCase();
-                const matches = !query || label.includes(query) || altText.includes(query);
+            items.forEach((item) => {
+                const col = document.createElement('div');
+                col.className = 'col';
 
-                if (col) {
-                    col.style.display = matches ? '' : 'none';
-                } else {
-                    card.style.display = matches ? '' : 'none';
-                }
+                const label = item.label || `Médium #${item.id || ''}`;
+                const alt = item.alt || label;
+                const url = item.url || '';
 
-                if (matches) {
-                    visibleCount += 1;
-                }
+                col.innerHTML = `
+                    <div class="card h-100 media-card" role="button" tabindex="0"
+                         data-media-id="${item.id || ''}"
+                         data-media-url="${url}"
+                         data-media-label="${label}">
+                        <img src="${url}" class="card-img-top" alt="${alt}">
+                        <div class="card-body p-2">
+                            <div class="small text-truncate" title="${label}">${label}</div>
+                        </div>
+                    </div>
+                `;
+
+                mediaGrid.appendChild(col);
             });
 
             if (mediaEmptyAlert) {
-                const totalCards = cards.length;
-                if (visibleCount === 0) {
-                    mediaEmptyAlert.textContent = totalCards === 0
-                        ? (defaultMediaEmptyText || 'Zatím žádné obrázky.')
-                        : 'Žádné výsledky pro zadané hledání.';
-                    mediaEmptyAlert.style.display = '';
-                } else {
-                    mediaEmptyAlert.textContent = defaultMediaEmptyText || mediaEmptyAlert.textContent;
-                    mediaEmptyAlert.style.display = 'none';
+                const hasResults = items.length > 0;
+                const query = (mediaSearchInput?.value || '').trim();
+                mediaEmptyAlert.textContent = hasResults
+                    ? (defaultMediaEmptyText || mediaEmptyAlert.textContent)
+                    : (query ? 'Žádné výsledky pro zadané hledání.' : (defaultMediaEmptyText || 'Zatím žádné obrázky.'));
+                mediaEmptyAlert.style.display = hasResults ? 'none' : '';
+            }
+        };
+
+        const renderMediaPagination = (meta = {}) => {
+            if (!mediaPagination) return;
+
+            const page = meta.page || 1;
+            const pages = meta.pages || 1;
+            const total = meta.total || 0;
+            const hasPrev = Boolean(meta.has_prev);
+            const hasNext = Boolean(meta.has_next);
+
+            mediaPagination.innerHTML = `
+                <div class="text-muted small">Stránka ${page} / ${pages} · ${total} souborů</div>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-page="${page - 1}" ${hasPrev ? '' : 'disabled'}>
+                        Předchozí
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-page="${page + 1}" ${hasNext ? '' : 'disabled'}>
+                        Další
+                    </button>
+                </div>
+            `;
+        };
+
+        const loadMediaPage = async (targetPage = 1) => {
+            if (!mediaGrid) return;
+
+            const query = (mediaSearchInput?.value || '').trim();
+            const url = `/admin/media/picker?page=${targetPage}&q=${encodeURIComponent(query)}`;
+
+            if (mediaEmptyAlert) {
+                mediaEmptyAlert.style.display = 'none';
+            }
+            setMediaLoading(true);
+
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+
+                const result = await response.json();
+                if (!response.ok || result.error || result.success === false) {
+                    throw new Error(result.error || result.message || 'Načtení knihovny se nezdařilo.');
                 }
+
+                const items = result.data?.items || result.items || [];
+                const meta = result.meta?.pagination || {};
+
+                renderMediaGrid(items);
+                renderMediaPagination(meta);
+
+                mediaPage = meta.page || targetPage;
+                mediaHasLoaded = true;
+            } catch (error) {
+                if (typeof adminNotify !== 'undefined' && adminNotify && typeof adminNotify.show === 'function') {
+                    adminNotify.show({
+                        title: 'Chyba',
+                        message: error.message || 'Načtení knihovny se nezdařilo.',
+                        variant: 'danger',
+                        autohide: false,
+                    });
+                }
+            } finally {
+                setMediaLoading(false);
             }
         };
 
@@ -735,8 +802,34 @@
             });
         });
 
+        const triggerMediaSearch = () => {
+            if (mediaSearchTimeout) {
+                clearTimeout(mediaSearchTimeout);
+            }
+            mediaSearchTimeout = window.setTimeout(() => loadMediaPage(1), 300);
+        };
+
+        if (mediaModalEl) {
+            mediaModalEl.addEventListener('shown.bs.modal', () => {
+                if (!mediaHasLoaded) {
+                    loadMediaPage(mediaPage);
+                }
+            });
+        }
+
         if (mediaSearchInput) {
-            mediaSearchInput.addEventListener('input', filterMediaGrid);
+            mediaSearchInput.addEventListener('input', triggerMediaSearch);
+        }
+
+        if (mediaPagination) {
+            mediaPagination.addEventListener('click', (event) => {
+                const button = event.target.closest('[data-page]');
+                const targetPage = Number(button?.dataset.page || mediaPage);
+                if (!Number.isNaN(targetPage)) {
+                    event.preventDefault();
+                    loadMediaPage(targetPage);
+                }
+            });
         }
 
         if (mediaGrid) {
@@ -749,8 +842,6 @@
                 const label = card.dataset.mediaLabel;
                 handleMediaSelection(id, url, label);
             });
-
-            filterMediaGrid();
         }
 
         const mediaUploadForm = document.getElementById('mediaUploadForm');
@@ -790,33 +881,13 @@
                         || '';
                     const label = payload.original_name || payload.filename || `Médium #${payload.id || ''}`;
 
-                    appendMediaCard(payload.id, url, label);
                     handleMediaSelection(payload.id, url, label);
                     mediaUploadForm.reset();
+                    loadMediaPage(1);
                 } catch (error) {
                     adminDialog.alert('Nahrávání se nezdařilo.', {variant: 'danger'});
                 }
             });
-        }
-
-        function appendMediaCard(id, url, label) {
-            if (!mediaGrid) return;
-            if (mediaEmptyAlert) {
-                mediaEmptyAlert.style.display = 'none';
-            }
-
-            const col = document.createElement('div');
-            col.className = 'col';
-            col.innerHTML = `
-                <div class="card h-100 media-card" role="button" tabindex="0" data-media-id="${id}" data-media-url="${url}" data-media-label="${label}">
-                    <img src="${url}" class="card-img-top" alt="${label}">
-                    <div class="card-body p-2">
-                        <div class="small text-truncate" title="${label}">${label}</div>
-                    </div>
-                </div>
-            `;
-            mediaGrid.prepend(col);
-            filterMediaGrid();
         }
 
         if (shortcodeModalEl) {

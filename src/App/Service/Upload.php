@@ -180,6 +180,10 @@ class Upload
             return;
         }
 
+        if (!extension_loaded('gd') || !function_exists('imagescale')) {
+            return;
+        }
+
         clearstatcache(true, $filePath);
         if (filesize($filePath) <= $maxBytes) {
             return;

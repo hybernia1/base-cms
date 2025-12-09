@@ -119,7 +119,7 @@
                                 {% set selectedWidth = values.upload_image_max_width|default('0') %}
                                 <select id="upload_image_max_width" name="upload_image_max_width" class="form-select">
                                     {% for preset in image_presets %}
-                                        <option value="{{ preset.width }}" {% if selectedWidth == preset.width|str %}selected{% endif %}>
+                                        <option value="{{ preset.width }}" {% if selectedWidth == preset.width %}selected{% endif %}>
                                             {{ preset.label }}{% if preset.width > 0 %} ({{ preset.width }} px){% endif %}
                                         </option>
                                     {% endfor %}
@@ -132,7 +132,7 @@
                                 {% set selectedSize = values.upload_image_max_kb|default('0') %}
                                 <select id="upload_image_max_kb" name="upload_image_max_kb" class="form-select">
                                     {% for preset in image_presets %}
-                                        <option value="{{ preset.size_kb }}" {% if selectedSize == preset.size_kb|str %}selected{% endif %}>
+                                        <option value="{{ preset.size_kb }}" {% if selectedSize == preset.size_kb %}selected{% endif %}>
                                             {{ preset.label }}{% if preset.size_kb > 0 %} ({{ preset.size_kb }} kB){% endif %}
                                         </option>
                                     {% endfor %}

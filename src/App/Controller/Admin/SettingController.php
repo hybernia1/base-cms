@@ -13,6 +13,13 @@ use DateTimeZone;
 
 class SettingController extends AjaxController
 {
+    private const IMAGE_PRESETS = [
+        'web' => ['label' => 'Web', 'width' => 1920, 'size_kb' => 1200],
+        'graphic' => ['label' => 'Grafika', 'width' => 2560, 'size_kb' => 4096],
+        'small' => ['label' => 'Malé', 'width' => 1200, 'size_kb' => 400],
+        'unlimited' => ['label' => 'Žádné omezení', 'width' => 0, 'size_kb' => 0],
+    ];
+
     private const SECTION_DEFINITIONS = [
         'main' => ['label' => 'Základní', 'icon' => 'bi-gear'],
         'uploads' => ['label' => 'Uploady', 'icon' => 'bi-upload'],
@@ -62,6 +69,7 @@ class SettingController extends AjaxController
             'settings_sections' => self::SECTION_DEFINITIONS,
             'themes' => $themes,
             'active_theme' => $activeTheme,
+            'image_presets' => self::IMAGE_PRESETS,
         ]);
     }
 
@@ -142,9 +150,23 @@ class SettingController extends AjaxController
     {
         $allowWebp = isset($_POST['allow_webp']) ? '1' : '0';
         $allowedTypes = trim($_POST['allowed_upload_types'] ?? '');
+        $imageWidth = (int) ($_POST['upload_image_max_width'] ?? Setting::DEFAULTS['upload_image_max_width']);
+        $imageMaxKb = (int) ($_POST['upload_image_max_kb'] ?? Setting::DEFAULTS['upload_image_max_kb']);
+
+        $validWidths = array_unique(array_map(fn ($preset) => (int) $preset['width'], self::IMAGE_PRESETS));
+        $validSizes = array_unique(array_map(fn ($preset) => (int) $preset['size_kb'], self::IMAGE_PRESETS));
+
+        if (!in_array($imageWidth, $validWidths, true)) {
+            $imageWidth = (int) Setting::DEFAULTS['upload_image_max_width'];
+        }
+        if (!in_array($imageMaxKb, $validSizes, true)) {
+            $imageMaxKb = (int) Setting::DEFAULTS['upload_image_max_kb'];
+        }
 
         Setting::set('allow_webp', $allowWebp);
         Setting::set('allowed_upload_types', $allowedTypes ?: Setting::DEFAULTS['allowed_upload_types']);
+        Setting::set('upload_image_max_width', (string) $imageWidth);
+        Setting::set('upload_image_max_kb', (string) $imageMaxKb);
 
         Flash::addSuccess('Nastavení uploadů bylo uloženo.');
     }

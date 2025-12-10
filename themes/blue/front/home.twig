@@ -9,14 +9,14 @@
         <p class="text-muted">{{ empty_message|default('Žádné příspěvky zatím nejsou publikovány.') }}</p>
     {% else %}
         <div class="article-stack card article-list">
-            <div class="article-list-body">
+            <div class="article-list-body reel-feed">
                 {% for post in posts %}
                     {% set type_def = content_types[post.type]|default({'slug': post.type, 'name': post.type}) %}
                     {% set thumb = post.thumbnail ?? null %}
                     {% set preview = post.excerpt ?: post.body %}
                     {% set preview_text = preview ? preview|striptags : null %}
                     {% if loop.first %}
-                        <article class="article-feature">
+                        <article class="article-feature reel-card">
                             <div class="article-feature-thumb">
                                 {% if thumb %}
                                     <div class="ratio ratio-16x9 h-100">
@@ -38,7 +38,7 @@
                             </div>
                         </article>
                     {% else %}
-                        <article class="article-row d-flex align-items-center align-items-md-start gap-3 gap-md-4">
+                        <article class="article-row reel-card d-flex align-items-center align-items-md-start gap-3 gap-md-4">
                             <div class="article-thumb flex-shrink-0 d-flex align-items-center justify-content-center text-uppercase fw-bold" aria-hidden="true">
                                 {% if thumb %}
                                     <img src="/{{ thumb.path }}/{{ thumb.webp_filename ?: thumb.filename }}" alt="{{ thumb.alt ?: post.title }}" loading="lazy" decoding="async">
@@ -56,6 +56,9 @@
                                 {% endif %}
                             </div>
                         </article>
+                    {% endif %}
+                    {% if not loop.last %}
+                        <div class="reel-prompt d-md-none" aria-hidden="true">Posuňte se dolů na další příspěvek</div>
                     {% endif %}
                 {% endfor %}
             </div>

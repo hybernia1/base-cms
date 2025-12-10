@@ -149,7 +149,8 @@
         }
         .header-search-overlay.show { display: flex; }
         .header-search-overlay .nav-search { width: 100%; }
-        .header-search-overlay .nav-search .form-control { background: #fff; }
+        .header-search-overlay .nav-search .form-control { background: #fff; font-size: 16px; }
+        .header-search-overlay .nav-search .btn { font-size: 16px; }
         .header-search-overlay .btn-close-search { border: 1px solid var(--stroke); border-radius: 999px; }
         .nav-scroller {
             border-top: 1px solid var(--stroke);
@@ -404,9 +405,32 @@
                         </span>
                     </a>
                 {% else %}
-                    <a class="btn btn-icon" href="/login" aria-label="Přihlásit se">
-                        <i class="bi bi-person"></i>
-                    </a>
+                    <div class="dropdown">
+                        <button class="btn btn-icon dropdown-toggle" type="button" id="guestUserMenu" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Otevřít menu uživatele">
+                            <i class="bi bi-person"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="guestUserMenu" style="min-width: 280px;">
+                            <h6 class="dropdown-header">Vítejte zpět</h6>
+                            <form method="post" action="/login" class="d-flex flex-column gap-2">
+                                <input type="hidden" name="_csrf" value="{{ csrf_token('front_login') }}">
+                                <div>
+                                    <label class="form-label small mb-1" for="dropdownEmail">E-mail</label>
+                                    <input type="email" name="email" id="dropdownEmail" class="form-control" required autocomplete="email">
+                                </div>
+                                <div>
+                                    <label class="form-label small mb-1" for="dropdownPassword">Heslo</label>
+                                    <input type="password" name="password" id="dropdownPassword" class="form-control" required autocomplete="current-password">
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">Přihlásit se</button>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <a href="/register" class="small">Registrovat</a>
+                                    <a href="/password-reset" class="small">Zapomněli jste heslo?</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 {% endif %}
             </div>
         </div>

@@ -33,38 +33,11 @@ abstract class BaseFrontController
         $googleAnalyticsId = Setting::get('google_analytics_id', '');
         $breadcrumbsEnabled = Setting::get('breadcrumbs_enabled', Setting::DEFAULTS['breadcrumbs_enabled'] ?? '1') === '1';
         $navigation = Navigation::tree();
-        $contentTypes = ContentType::definitions();
 
         $hooks = [
             'head' => [],
             'footer' => [],
         ];
-
-        $stories = [];
-        $storiesCover = null;
-
-        try {
-            $storyItems = R::findAll(
-                'content',
-                ' type = ? AND status = ? AND publish_at <= ? AND deleted_at IS NULL ORDER BY publish_at DESC LIMIT 12 ',
-                ['post', 'published', date('Y-m-d H:i:s')]
-            );
-
-            $stories = $this->attachAuthors($storyItems);
-
-            foreach ($stories as $story) {
-                if (($story['thumbnail'] ?? null) !== null) {
-                    $storiesCover = $story;
-                    break;
-                }
-            }
-
-            if ($stories && !$storiesCover) {
-                $storiesCover = $stories[0];
-            }
-        } catch (\Throwable $e) {
-            error_log('[Stories preload] ' . $e->getMessage());
-        }
 
         if ($googleAnalyticsId !== '') {
             $escapedAnalyticsId = htmlspecialchars($googleAnalyticsId, ENT_QUOTES, 'UTF-8');
@@ -81,6 +54,7 @@ HTML;
         }
 
         if ($currentUser) {
+            $contentTypes = ContentType::definitions();
             $createLinks = [];
 
             $currentUserAvatar = Avatar::forUser($currentUser);
@@ -126,14 +100,11 @@ HTML;
                 'favicon' => $siteFavicon,
             ],
             'navigation' => $navigation,
-            'content_types' => $contentTypes,
             'seo' => [
                 'indexing_enabled' => $indexingEnabled,
             ],
             'hooks' => $hooks,
             'breadcrumbs_enabled' => $breadcrumbsEnabled,
-            'stories' => $stories,
-            'stories_cover' => $storiesCover,
         ], $context);
 
         if ($adminBar || isset($context['admin_bar'])) {

@@ -9,7 +9,7 @@
         <p class="text-muted">{{ empty_message|default('Žádné příspěvky zatím nejsou publikovány.') }}</p>
     {% else %}
         <div class="article-stack card article-list">
-            <div class="article-list-body reel-feed">
+            <div class="article-list-body reel-feed" data-reel-feed>
                 {% for post in posts %}
                     {% set type_def = content_types[post.type]|default({'slug': post.type, 'name': post.type}) %}
                     {% set thumb = post.thumbnail ?? null %}

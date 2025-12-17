@@ -328,9 +328,12 @@
                 scroll-snap-type: y mandatory;
                 scroll-snap-stop: always;
                 gap: 0;
+                height: 100svh;
+                overflow-y: auto;
+                overscroll-behavior: contain;
             }
             .reel-card {
-                min-height: 100vh;
+                min-height: 100svh;
                 scroll-snap-align: start;
                 scroll-snap-stop: always;
                 border-radius: 0;
